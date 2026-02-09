@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { AgentCardGrid } from "@/components/dashboard/AgentCardGrid";
 import { AgentDetailsModal } from "@/components/dashboard/AgentDetailsModal";
@@ -24,17 +23,7 @@ export default function SalesPage() {
       <PageShell
         title="Sales API Dashboard"
         subtitle={salesDataset.label}
-        actions={
-          <>
-            <Link
-              href="/"
-              className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50"
-            >
-              Home
-            </Link>
-            <Button onClick={() => setIsSyncOpen(true)}>Sync Sales</Button>
-          </>
-        }
+        actions={<Button onClick={() => setIsSyncOpen(true)}>Sync Sales</Button>}
       >
         <TimeRangeSelector
           value={range}

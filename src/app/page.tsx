@@ -5,8 +5,8 @@ import { AgentCardGrid } from "@/components/dashboard/AgentCardGrid";
 import { AgentDetailsModal } from "@/components/dashboard/AgentDetailsModal";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
-import { FloatingActionButtonGroup } from "@/components/layout/FloatingActionButtonGroup";
 import { PageShell } from "@/components/layout/PageShell";
+import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { dashboardAgents, dashboardSummary } from "@/lib/mock/dashboard";
 import { AgentPerformance, TimeRange } from "@/types/dashboard";
@@ -20,7 +20,11 @@ export default function HomePage() {
 
   return (
     <>
-      <PageShell title="Dashboard" subtitle="Home/Index - Sales performance overview">
+      <PageShell
+        title="Dashboard"
+        subtitle="Home/Index - Sales performance overview"
+        actions={<Button onClick={() => setIsSyncOpen(true)}>Sync All</Button>}
+      >
         <TimeRangeSelector
           value={range}
           onChange={setRange}
@@ -32,8 +36,6 @@ export default function HomePage() {
         <SummaryCardGrid stats={dashboardSummary} />
         <AgentCardGrid agents={dashboardAgents} onAgentSelect={setSelectedAgent} />
       </PageShell>
-
-      <FloatingActionButtonGroup onSyncAll={() => setIsSyncOpen(true)} />
 
       <AgentDetailsModal agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
       <Modal isOpen={isSyncOpen} title="Sync Complete" onClose={() => setIsSyncOpen(false)}>

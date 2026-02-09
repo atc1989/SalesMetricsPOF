@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { DailyInventoryTable } from "@/components/daily-sales/DailyInventoryTable";
 import { DailySalesReportTables } from "@/components/daily-sales/DailySalesReportTables";
@@ -49,14 +48,6 @@ export default function DailySalesPage() {
       <TopHeader
         title="Daily Sales"
         subtitle="DailySales/Index - mock multi-tab workspace"
-        actions={
-          <Link
-            href="/"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50"
-          >
-            Home
-          </Link>
-        }
       />
 
       <Tabs items={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
