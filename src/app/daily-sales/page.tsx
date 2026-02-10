@@ -2,18 +2,16 @@
 
 import { useState } from "react";
 import { DailyInventoryTable } from "@/components/daily-sales/DailyInventoryTable";
+import { DailySalesEntryForm } from "@/components/daily-sales/DailySalesEntryForm";
 import { DailySalesReportTables } from "@/components/daily-sales/DailySalesReportTables";
 import { PrintPreviewModal } from "@/components/daily-sales/PrintPreviewModal";
 import { RecentSalesTable } from "@/components/daily-sales/RecentSalesTable";
 import { ReportsTable } from "@/components/daily-sales/ReportsTable";
-import { SalesEntryForm } from "@/components/daily-sales/SalesEntryForm";
+import { SalesMetricsDashboard } from "@/components/daily-sales/SalesMetricsDashboard";
 import { SalesOverviewKPIs } from "@/components/daily-sales/SalesOverviewKPIs";
 import { Tabs } from "@/components/daily-sales/Tabs";
 import { CashOnHandTable } from "@/components/daily-sales/CashOnHandTable";
 import { UsersTable } from "@/components/daily-sales/UsersTable";
-import { ExpensesForm } from "@/components/encoder/ExpensesForm";
-import { LeaderSelector } from "@/components/encoder/LeaderSelector";
-import { TargetRatioForm } from "@/components/encoder/TargetRatioForm";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card } from "@/components/ui/Card";
 import {
@@ -26,7 +24,6 @@ import {
   retailBreakdown,
   salesOverviewKpis,
 } from "@/lib/mock/dailySales";
-import { initialExpenses, initialTargetRatio, leaders } from "@/lib/mock/encoder";
 import { userRows } from "@/lib/mock/users";
 
 const tabs = [
@@ -58,9 +55,7 @@ export default function DailySalesPage() {
 
       {activeTab === "encoder" ? (
         <div className="space-y-4">
-          <TargetRatioForm initialValue={initialTargetRatio} />
-          <LeaderSelector leaders={leaders} />
-          <ExpensesForm initialExpenses={initialExpenses} />
+          <DailySalesEntryForm />
         </div>
       ) : null}
 
@@ -68,18 +63,22 @@ export default function DailySalesPage() {
 
       {activeTab === "daily-inventory" ? <DailyInventoryTable rows={inventoryRows} /> : null}
 
-      {activeTab === "daily-sales" ? <SalesEntryForm /> : null}
+      {activeTab === "daily-sales" ? (
+        <div className="space-y-4">
+          <Card>
+            <h3 className="text-lg font-semibold text-slate-900">Daily Sales</h3>
+            <p className="mt-2 text-sm text-slate-700">Daily Sales transactions (coming next)</p>
+          </Card>
+          <DailySalesReportTables packageRows={packageBreakdown} retailRows={retailBreakdown} paymentRows={paymentBreakdown} />
+          <CashOnHandTable rows={cashOnHandRows} />
+        </div>
+      ) : null}
 
       {activeTab === "users" ? <UsersTable rows={userRows} /> : null}
 
       {activeTab === "sales-metrics" ? (
         <div className="space-y-4">
-          <DailySalesReportTables packageRows={packageBreakdown} retailRows={retailBreakdown} paymentRows={paymentBreakdown} />
-          <CashOnHandTable rows={cashOnHandRows} />
-          <Card>
-            <h3 className="text-lg font-semibold text-slate-900">Sales Metrics Notes</h3>
-            <p className="mt-2 text-sm text-slate-700">This section simulates package, retail, and payment summaries for end-of-day review.</p>
-          </Card>
+          <SalesMetricsDashboard />
         </div>
       ) : null}
 
