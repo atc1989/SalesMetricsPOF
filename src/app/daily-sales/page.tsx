@@ -1,88 +1,86 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { DailyInventoryTable } from "@/components/daily-sales/DailyInventoryTable";
-import { DailySalesEntryForm } from "@/components/daily-sales/DailySalesEntryForm";
-import { DailySalesReportTables } from "@/components/daily-sales/DailySalesReportTables";
-import { PrintPreviewModal } from "@/components/daily-sales/PrintPreviewModal";
-import { RecentSalesTable } from "@/components/daily-sales/RecentSalesTable";
-import { ReportsTable } from "@/components/daily-sales/ReportsTable";
-import { SalesMetricsDashboard } from "@/components/daily-sales/SalesMetricsDashboard";
-import { SalesOverviewKPIs } from "@/components/daily-sales/SalesOverviewKPIs";
-import { Tabs } from "@/components/daily-sales/Tabs";
-import { CashOnHandTable } from "@/components/daily-sales/CashOnHandTable";
-import { UsersTable } from "@/components/daily-sales/UsersTable";
-import { PageShell } from "@/components/layout/PageShell";
-import { Card } from "@/components/ui/Card";
-import {
-  cashOnHandRows,
-  inventoryRows,
-  packageBreakdown,
-  paymentBreakdown,
-  recentSales,
-  reportsRows,
-  retailBreakdown,
-  salesOverviewKpis,
-} from "@/lib/mock/dailySales";
-import { userRows } from "@/lib/mock/users";
-
-const tabs = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "encoder", label: "Encoder" },
-  { id: "reports", label: "Reports" },
-  { id: "daily-inventory", label: "Daily Inventory" },
-  { id: "daily-sales", label: "Daily Sales" },
-  { id: "users", label: "Users" },
-  { id: "sales-metrics", label: "Sales Metrics" },
-];
+import { useMemo, useState } from 'react';
+import DashboardFilters from '../../components/daily-sales/DashboardFilters';
+import RecentSalesTable from '../../components/daily-sales/RecentSalesTable';
+import { recentSalesRows, type PaymentMode } from '../../lib/mock/dailySales';
 
 export default function DailySalesPage() {
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredRows = useMemo(() => {
+    const search = searchQuery.trim().toLowerCase();
+
+    return recentSalesRows.filter((row) => {
+      if (fromDate && row.date < fromDate) {
+        return false;
+      }
+
+      if (toDate && row.date > toDate) {
+        return false;
+      }
+
+      if (paymentMode !== 'ALL' && row.paymentMode !== paymentMode) {
+        return false;
+      }
+
+      if (
+        search &&
+        !row.invoice.toLowerCase().includes(search) &&
+        !row.customer.toLowerCase().includes(search)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [fromDate, toDate, paymentMode, searchQuery]);
+
+  const totalSales = filteredRows.reduce((sum, row) => sum + row.sales, 0);
+  const totalOrders = filteredRows.length;
+  const totalBottles = filteredRows.reduce((sum, row) => sum + row.bottles, 0);
+  const totalBlisters = filteredRows.reduce((sum, row) => sum + row.blisters, 0);
 
   return (
-    <PageShell
-      title="Daily Sales"
-      subtitle="DailySales/Index - mock multi-tab workspace"
-      headerCenter={<Tabs items={tabs} activeTab={activeTab} onTabChange={setActiveTab} />}
-    >
-      {activeTab === "dashboard" ? (
-        <div className="space-y-4">
-          <SalesOverviewKPIs kpis={salesOverviewKpis} />
-          <RecentSalesTable rows={recentSales} />
+    <main className="mx-auto max-w-7xl p-6">
+      <h1 className="mb-4 text-2xl font-semibold text-slate-900">Daily Sales</h1>
+
+      <section id="dashboard" className="space-y-4">
+        <DashboardFilters
+          fromDate={fromDate}
+          toDate={toDate}
+          paymentMode={paymentMode}
+          searchQuery={searchQuery}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
+          onPaymentModeChange={setPaymentMode}
+          onSearchQueryChange={setSearchQuery}
+        />
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-md border border-gray-200 bg-white p-3">
+            <p className="text-xs text-gray-600">Total Sales</p>
+            <p className="text-lg font-semibold">₱{totalSales.toLocaleString()}</p>
+          </div>
+          <div className="rounded-md border border-gray-200 bg-white p-3">
+            <p className="text-xs text-gray-600">Total Orders</p>
+            <p className="text-lg font-semibold">{totalOrders}</p>
+          </div>
+          <div className="rounded-md border border-gray-200 bg-white p-3">
+            <p className="text-xs text-gray-600">Total Bottles Sold</p>
+            <p className="text-lg font-semibold">{totalBottles}</p>
+          </div>
+          <div className="rounded-md border border-gray-200 bg-white p-3">
+            <p className="text-xs text-gray-600">Total Blister Sold</p>
+            <p className="text-lg font-semibold">{totalBlisters}</p>
+          </div>
         </div>
-      ) : null}
 
-      {activeTab === "encoder" ? (
-        <div className="space-y-4">
-          <DailySalesEntryForm />
-        </div>
-      ) : null}
-
-      {activeTab === "reports" ? <ReportsTable rows={reportsRows} onPreview={() => setIsPrintPreviewOpen(true)} /> : null}
-
-      {activeTab === "daily-inventory" ? <DailyInventoryTable rows={inventoryRows} /> : null}
-
-      {activeTab === "daily-sales" ? (
-        <div className="space-y-4">
-          <Card>
-            <h3 className="text-lg font-semibold text-slate-900">Daily Sales</h3>
-            <p className="mt-2 text-sm text-slate-700">Daily Sales transactions (coming next)</p>
-          </Card>
-          <DailySalesReportTables packageRows={packageBreakdown} retailRows={retailBreakdown} paymentRows={paymentBreakdown} />
-          <CashOnHandTable rows={cashOnHandRows} />
-        </div>
-      ) : null}
-
-      {activeTab === "users" ? <UsersTable rows={userRows} /> : null}
-
-      {activeTab === "sales-metrics" ? (
-        <div className="space-y-4">
-          <SalesMetricsDashboard />
-        </div>
-      ) : null}
-
-      <PrintPreviewModal isOpen={isPrintPreviewOpen} onClose={() => setIsPrintPreviewOpen(false)} />
-    </PageShell>
+        <RecentSalesTable rows={filteredRows} />
+      </section>
+    </main>
   );
 }
