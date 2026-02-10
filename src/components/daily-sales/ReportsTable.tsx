@@ -19,6 +19,8 @@ export function ReportsTable({ rows, onPreview }: ReportsTableProps) {
         data={rows}
         columns={[
           { key: "name", header: "Report Item" },
+          { key: "type", header: "Type" },
+          { key: "date", header: "Date" },
           { key: "value", header: "Value" },
         ]}
       />
