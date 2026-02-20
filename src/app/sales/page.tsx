@@ -17,6 +17,13 @@ export default function SalesPage() {
   const [customEndDate, setCustomEndDate] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<AgentPerformance | null>(null);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const rankedAgents = [...salesDataset.agents].sort((a, b) => b.conversionRate - a.conversionRate || b.sales - a.sales);
+  const selectedAgentRank = selectedAgent ? rankedAgents.findIndex((agent) => agent.id === selectedAgent.id) + 1 : null;
+
+  const handleRefresh = () => {
+    setRefreshTick((value) => value + 1);
+  };
 
   return (
     <>
@@ -24,22 +31,27 @@ export default function SalesPage() {
         title="Sales API Dashboard"
         subtitle={salesDataset.label}
         headerCenter={
-          <TimeRangeSelector
-            value={range}
-            onChange={setRange}
-            customStartDate={customStartDate}
-            customEndDate={customEndDate}
-            onCustomStartDateChange={setCustomStartDate}
-            onCustomEndDateChange={setCustomEndDate}
-          />
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <TimeRangeSelector
+              value={range}
+              onChange={setRange}
+              customStartDate={customStartDate}
+              customEndDate={customEndDate}
+              onCustomStartDateChange={setCustomStartDate}
+              onCustomEndDateChange={setCustomEndDate}
+            />
+            <Button variant="secondary" size="sm" onClick={handleRefresh}>
+              Refresh
+            </Button>
+          </div>
         }
         actions={<Button onClick={() => setIsSyncOpen(true)}>Sync Sales</Button>}
       >
-        <SummaryCardGrid stats={salesDataset.summary} />
-        <AgentCardGrid agents={salesDataset.agents} onAgentSelect={setSelectedAgent} />
+        <SummaryCardGrid key={`summary-${refreshTick}`} stats={salesDataset.summary} />
+        <AgentCardGrid key={`agents-${refreshTick}`} agents={salesDataset.agents} onAgentSelect={setSelectedAgent} />
       </PageShell>
 
-      <AgentDetailsModal agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
+      <AgentDetailsModal agent={selectedAgent} rank={selectedAgentRank} onClose={() => setSelectedAgent(null)} />
       <Modal isOpen={isSyncOpen} title="Sync Complete" onClose={() => setIsSyncOpen(false)}>
         Sales API sync completed successfully (mock).
       </Modal>

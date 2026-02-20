@@ -1,41 +1,11 @@
-import type { PrintLineItem, PrintTransaction } from '@/types/dailySales';
-
-export type PaymentMode =
-  | 'ALL'
-  | 'CASH'
-  | 'BANK'
-  | 'MAYA(IGI)'
-  | 'MAYA(ATC)'
-  | 'SBCOLLECT(IGI)'
-  | 'SBCOLLECT(ATC)'
-  | 'EWALLET'
-  | 'CHEQUE'
-  | 'EPOINTS'
-  | 'CONSIGNMENT'
-  | 'AR(CSA)';
-
-export interface RecentSale {
-  id: string;
-  pofNumber: string;
-  invoice: string;
-  ggTransNo: string;
-  date: string;
-  customer: string;
-  zeroOne: string;
-  packageType: string;
-  bottles: number;
-  blisters: number;
-  sales: number;
-  paymentMode: Exclude<PaymentMode, 'ALL'>;
-  status: 'Released' | 'To Follow';
-}
-
-export type ReportType =
-  | 'ALL'
-  | 'SALES SUMMARY'
-  | 'PAYMENT SUMMARY'
-  | 'INVENTORY SUMMARY'
-  | 'AGENT PERFORMANCE';
+import type {
+  InventoryRow,
+  PrintLineItem,
+  PrintTransaction,
+  RecentSale,
+  ReportType,
+} from '@/types/dailySales';
+export type { PaymentMode, RecentSale, ReportType } from '@/types/dailySales';
 
 export interface ReportRow {
   id: string;
@@ -43,15 +13,6 @@ export interface ReportRow {
   value: string;
   type: Exclude<ReportType, 'ALL'>;
   date: string;
-}
-
-export interface InventoryRow {
-  id: string;
-  date: string;
-  item: string;
-  beginning: number;
-  sold: number;
-  ending: number;
 }
 
 export const reportTypes: ReportType[] = [
@@ -66,10 +27,9 @@ export const recentSalesRows: RecentSale[] = [
   {
     id: 'sale-001',
     pofNumber: 'POF-040325-001',
-    invoice: 'POF-040325-001',
     ggTransNo: 'GG-24001',
     date: '2025-04-03',
-    customer: 'Airyne Dytes Obalag',
+    memberName: 'Airyne Dytes Obalag',
     zeroOne: 'HeadEagle01',
     packageType: 'SILVER',
     bottles: 1,
@@ -81,10 +41,9 @@ export const recentSalesRows: RecentSale[] = [
   {
     id: 'sale-002',
     pofNumber: 'POF-040425-002',
-    invoice: 'POF-040425-002',
     ggTransNo: 'GG-24002',
     date: '2025-04-04',
-    customer: 'Jane Cruz',
+    memberName: 'Jane Cruz',
     zeroOne: 'HERA01',
     packageType: 'GOLD',
     bottles: 3,
@@ -96,10 +55,9 @@ export const recentSalesRows: RecentSale[] = [
   {
     id: 'sale-003',
     pofNumber: 'POF-040525-003',
-    invoice: 'POF-040525-003',
     ggTransNo: 'GG-24003',
     date: '2025-04-05',
-    customer: 'Mark Villanueva',
+    memberName: 'Mark Villanueva',
     zeroOne: 'Romar01',
     packageType: 'RETAIL',
     bottles: 2,
@@ -111,10 +69,9 @@ export const recentSalesRows: RecentSale[] = [
   {
     id: 'sale-004',
     pofNumber: 'POF-040625-004',
-    invoice: 'POF-040625-004',
     ggTransNo: 'GG-24004',
     date: '2025-04-06',
-    customer: 'Leah Santos',
+    memberName: 'Leah Santos',
     zeroOne: 'Ironman',
     packageType: 'BLISTER',
     bottles: 0,

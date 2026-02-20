@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button';
 import type { PaymentMode } from '../../lib/mock/dailySales';
 
 type DashboardFiltersProps = {
@@ -9,6 +10,7 @@ type DashboardFiltersProps = {
   onToDateChange: (value: string) => void;
   onPaymentModeChange: (value: PaymentMode) => void;
   onSearchQueryChange: (value: string) => void;
+  onApply?: () => void;
 };
 
 const paymentModes: PaymentMode[] = [
@@ -35,9 +37,10 @@ export default function DashboardFilters({
   onToDateChange,
   onPaymentModeChange,
   onSearchQueryChange,
+  onApply,
 }: DashboardFiltersProps) {
   return (
-    <div className="mb-4 grid gap-2 rounded-md border border-gray-200 bg-white p-3 md:grid-cols-4">
+    <div className="mb-4 grid gap-2 rounded-md border border-gray-200 bg-white p-3 md:grid-cols-5">
       <label className="flex flex-col text-xs font-medium text-gray-700">
         FROM
         <input
@@ -83,10 +86,16 @@ export default function DashboardFilters({
           type="text"
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
-          placeholder="Search invoice or customer"
+          placeholder="Search POF, member, mode, GG Trans No"
           className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
         />
       </label>
+
+      <div className="flex items-end">
+        <Button variant="secondary" className="w-full md:w-auto" onClick={() => onApply?.()}>
+          Apply
+        </Button>
+      </div>
     </div>
   );
 }

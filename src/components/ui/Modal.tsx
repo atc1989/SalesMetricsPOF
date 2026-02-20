@@ -9,9 +9,27 @@ type ModalProps = {
   children: ReactNode;
   onClose: () => void;
   footer?: ReactNode;
+  panelClassName?: string;
+  headerClassName?: string;
+  titleClassName?: string;
+  closeButtonContent?: ReactNode;
+  closeButtonClassName?: string;
+  closeButtonAriaLabel?: string;
 };
 
-export function Modal({ isOpen, title, children, onClose, footer }: ModalProps) {
+export function Modal({
+  isOpen,
+  title,
+  children,
+  onClose,
+  footer,
+  panelClassName = "",
+  headerClassName = "",
+  titleClassName = "",
+  closeButtonContent = "Close",
+  closeButtonClassName = "",
+  closeButtonAriaLabel = "Close modal",
+}: ModalProps) {
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -33,11 +51,11 @@ export function Modal({ isOpen, title, children, onClose, footer }: ModalProps) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" aria-modal="true" role="dialog">
-      <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white shadow-lg">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-          <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-          <Button variant="ghost" size="sm" aria-label="Close modal" onClick={onClose}>
-            Close
+      <div className={`w-full max-w-lg rounded-lg border border-slate-200 bg-white shadow-lg ${panelClassName}`}>
+        <div className={`flex items-center justify-between border-b border-slate-200 px-5 py-3 ${headerClassName}`}>
+          <h2 className={`text-lg font-semibold text-slate-900 ${titleClassName}`}>{title}</h2>
+          <Button variant="ghost" size="sm" aria-label={closeButtonAriaLabel} onClick={onClose} className={closeButtonClassName}>
+            {closeButtonContent}
           </Button>
         </div>
         <div className="px-5 py-4 text-sm text-slate-700">{children}</div>
