@@ -11,7 +11,7 @@ type PageShellProps = {
 export function PageShell({ title, subtitle, headerCenter, actions, children }: PageShellProps) {
   return (
     <section className="space-y-5">
-      <header className="rounded-lg border border-slate-200 bg-white p-5">
+      <header className="rounded-lg border border-slate-200 !bg-white p-5">
         <div className="grid grid-cols-[1fr_auto] items-start gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>

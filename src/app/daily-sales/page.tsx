@@ -26,7 +26,7 @@ export default function DailySalesPage() {
 
   return (
     <main className="mx-auto max-w-7xl p-6">
-      <Card className="mb-6 space-y-4">
+      <Card className="mb-6 space-y-4 bg-white">
         <h1 className="text-2xl font-semibold text-slate-900">Daily Sales</h1>
         <Tabs items={tabItems} activeTab={activeTab} onTabChange={setActiveTab} />
       </Card>
