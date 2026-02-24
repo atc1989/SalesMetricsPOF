@@ -9,6 +9,7 @@ import { ReportsTab } from '../../components/daily-sales/tabs/ReportsTab';
 import { SalesReportTab } from '../../components/daily-sales/tabs/SalesReportTab';
 import { SalesMetricsTab } from '../../components/daily-sales/tabs/SalesMetricsTab';
 import { UsersTab } from '../../components/daily-sales/tabs/UsersTab';
+import { Card } from '../../components/ui/Card';
 
 export default function DailySalesPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -25,8 +26,10 @@ export default function DailySalesPage() {
 
   return (
     <main className="mx-auto max-w-7xl p-6">
-      <h1 className="mb-4 text-2xl font-semibold text-slate-900">Daily Sales</h1>
-      <Tabs items={tabItems} activeTab={activeTab} onTabChange={setActiveTab} />
+      <Card className="mb-6 space-y-4">
+        <h1 className="text-2xl font-semibold text-slate-900">Daily Sales</h1>
+        <Tabs items={tabItems} activeTab={activeTab} onTabChange={setActiveTab} />
+      </Card>
 
       {activeTab === 'dashboard' && <DashboardTab />}
       {activeTab === 'encoder' && <EncoderTab />}
