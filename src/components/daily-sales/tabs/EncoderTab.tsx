@@ -182,16 +182,42 @@ const buildInitialForm = (): EncoderFormModel => {
   return applyMemberPackageRules(base, base.memberType, base.packageType);
 };
 
-const applyComputedFields = (input: EncoderFormModel): EncoderFormModel => {
+type ManualOverrideKey =
+  | 'oneTimeDiscount'
+  | 'price'
+  | 'sales'
+  | 'released'
+  | 'releasedBlpk'
+  | 'toFollow'
+  | 'toFollowBlpk'
+  | 'salesTwo';
+
+type ManualOverrides = Record<ManualOverrideKey, boolean>;
+
+const initialManualOverrides: ManualOverrides = {
+  oneTimeDiscount: false,
+  price: false,
+  sales: false,
+  released: false,
+  releasedBlpk: false,
+  toFollow: false,
+  toFollowBlpk: false,
+  salesTwo: false,
+};
+
+const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOverrides): EncoderFormModel => {
   const quantity = Math.max(input.quantity, 0);
   const discount = Math.max(input.discount, 0);
-  const oneTimeDiscount = Math.max(input.oneTimeDiscount, 0);
-  const price = Math.max(input.originalPrice - discount, 0);
+  const oneTimeDiscount = manualOverrides.oneTimeDiscount ? input.oneTimeDiscount : Math.max(input.oneTimeDiscount, 0);
+  const price = manualOverrides.price ? input.price : Math.max(input.originalPrice - discount, 0);
   const blisterCount = input.isToBlister === '1' ? quantity * 10 : 0;
   const noOfBottles = quantity * packageBottleCounts[input.packageType];
-  const sales = Math.max(price * quantity - oneTimeDiscount, 0);
-  const normalizedSalesTwo =
-    input.paymentMode === 'EPOINTS' ? sales : Math.min(Math.max(input.salesTwo, 0), sales);
+  const sales = manualOverrides.sales ? input.sales : Math.max(price * quantity - oneTimeDiscount, 0);
+  const normalizedSalesTwo = manualOverrides.salesTwo
+    ? input.salesTwo
+    : input.paymentMode === 'EPOINTS'
+      ? sales
+      : Math.min(Math.max(input.salesTwo, 0), sales);
 
   return {
     ...input,
@@ -209,7 +235,9 @@ const applyComputedFields = (input: EncoderFormModel): EncoderFormModel => {
 type NumericField =
   | 'quantity'
   | 'discount'
+  | 'price'
   | 'oneTimeDiscount'
+  | 'sales'
   | 'released'
   | 'releasedBlpk'
   | 'toFollow'
@@ -217,34 +245,96 @@ type NumericField =
   | 'salesTwo';
 
 export function EncoderTab() {
-  const [form, setForm] = useState<EncoderFormModel>(() => applyComputedFields(buildInitialForm()));
+  const [form, setForm] = useState<EncoderFormModel>(() => applyComputedFields(buildInitialForm(), initialManualOverrides));
+  const [manualOverrides, setManualOverrides] = useState<ManualOverrides>(initialManualOverrides);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [paymentModeTwoError, setPaymentModeTwoError] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const primaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentMode), [form.paymentMode]);
   const secondaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentModeTwo), [form.paymentModeTwo]);
   const primaryTypeIsReadOnly = primaryPaymentTypeOptions.length === 1 && primaryPaymentTypeOptions[0].value === 'N/A';
   const secondaryTypeIsReadOnly = secondaryPaymentTypeOptions.length === 1 && secondaryPaymentTypeOptions[0].value === 'N/A';
-  const salesTwoIsReadOnly = form.paymentMode === 'EPOINTS';
-
   const resetForm = () => {
-    setForm(applyComputedFields(buildInitialForm()));
+    setForm(applyComputedFields(buildInitialForm(), initialManualOverrides));
+    setManualOverrides(initialManualOverrides);
     setPaymentModeTwoError('');
   };
 
   const updateField = <K extends keyof EncoderFormModel>(key: K, value: EncoderFormModel[K]) => {
-    setForm((prev) => applyComputedFields({ ...prev, [key]: value }));
+    setForm((prev) => applyComputedFields({ ...prev, [key]: value }, manualOverrides));
   };
 
-  const updateNumericField = (key: NumericField, value: string) => {
-    const parsed = Number(value);
-    updateField(key, Number.isFinite(parsed) ? parsed : 0);
+  const updateNumericField = (key: NumericField, value: string, manualKey?: ManualOverrideKey) => {
+    const parsed = Number(value || 0);
+    const numericValue = Number.isFinite(parsed) ? parsed : 0;
+    const nextOverrides = manualKey
+      ? { ...manualOverrides, [manualKey]: true }
+      : manualOverrides;
+
+    if (manualKey) {
+      setManualOverrides(nextOverrides);
+    }
+
+    setForm((prev) => applyComputedFields({ ...prev, [key]: numericValue }, nextOverrides));
   };
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSavedOpen(true);
-    resetForm();
+    setSubmitError(null);
+
+    const payload = {
+      event_name: form.event,
+      trans_date: form.date,
+      pof_number: form.pofNumber,
+      member_name: form.name,
+      username: form.username,
+      is_new_member: form.newMember === '1',
+      member_type: form.memberType,
+      package_type: form.packageType,
+      original_price: form.originalPrice,
+      quantity: form.quantity,
+      is_to_blister: form.isToBlister === '1',
+      blister_count: form.blisterCount,
+      discount: form.discount,
+      price_after_discount: form.price,
+      one_time_discount: form.oneTimeDiscount,
+      bottle_count: form.noOfBottles,
+      released_count: form.released,
+      released_blpk_count: form.releasedBlpk,
+      to_follow_count: form.toFollow,
+      to_follow_blpk_count: form.toFollowBlpk,
+      sales: form.sales,
+      mode_of_payment: form.paymentMode === 'N/A' ? null : form.paymentMode,
+      payment_type: form.paymentType === 'N/A' ? null : form.paymentType,
+      reference_number: form.referenceNo === 'N/A' ? null : form.referenceNo,
+      sales_two: form.salesTwo,
+      mode_of_payment_two: form.paymentModeTwo === 'N/A' ? null : form.paymentModeTwo,
+      payment_type_two: form.paymentTypeTwo === 'N/A' ? null : form.paymentTypeTwo,
+      reference_number_two: form.referenceNoTwo === 'N/A' ? null : form.referenceNoTwo,
+      remarks: form.remarks,
+      received_by: form.receivedBy,
+      collected_by: form.collectedBy,
+      fullfilment_date: form.date,
+    };
+
+    try {
+      const response = await fetch('/api/daily-sales/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = (await response.json()) as { success?: boolean; message?: string };
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message ?? 'Failed to save daily sales entry.');
+      }
+
+      setIsSavedOpen(true);
+      resetForm();
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Failed to save daily sales entry.');
+    }
   };
 
   const onReset = (event: FormEvent<HTMLFormElement>) => {
@@ -253,11 +343,11 @@ export function EncoderTab() {
   };
 
   const onMemberTypeChange = (value: EncoderMemberTypeOption) => {
-    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, value, prev.packageType)));
+    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, value, prev.packageType), manualOverrides));
   };
 
   const onPackageTypeChange = (value: EncoderPackageTypeOption) => {
-    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, prev.memberType, value)));
+    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, prev.memberType, value), manualOverrides));
   };
 
   const onPaymentModeChange = (value: Exclude<EncoderPaymentModeOption, 'N/A'>) => {
@@ -265,7 +355,11 @@ export function EncoderTab() {
       const primaryOptions = getPaymentTypeOptions(value);
       const nextPaymentType = primaryOptions[0]?.value ?? 'N/A';
       const nextReferenceNo = nextPaymentType === 'N/A' ? 'N/A' : '';
-      const nextSalesTwo = value === 'EPOINTS' ? prev.sales : prev.salesTwo;
+      const nextSalesTwo = manualOverrides.salesTwo
+        ? prev.salesTwo
+        : value === 'EPOINTS'
+          ? prev.sales
+          : prev.salesTwo;
 
       if (prev.paymentModeTwo !== 'N/A' && prev.paymentModeTwo === value) {
         setPaymentModeTwoError('Secondary payment mode cannot match primary mode.');
@@ -278,7 +372,7 @@ export function EncoderTab() {
           paymentModeTwo: 'N/A',
           paymentTypeTwo: 'N/A',
           referenceNoTwo: 'N/A',
-        });
+        }, manualOverrides);
       }
 
       return applyComputedFields({
@@ -287,7 +381,7 @@ export function EncoderTab() {
         paymentType: nextPaymentType,
         referenceNo: nextReferenceNo,
         salesTwo: nextSalesTwo,
-      });
+      }, manualOverrides);
     });
   };
 
@@ -300,7 +394,7 @@ export function EncoderTab() {
           paymentModeTwo: 'N/A',
           paymentTypeTwo: 'N/A',
           referenceNoTwo: 'N/A',
-        })
+        }, manualOverrides)
       );
       return;
     }
@@ -316,7 +410,7 @@ export function EncoderTab() {
         paymentModeTwo: value,
         paymentTypeTwo: nextPaymentTypeTwo,
         referenceNoTwo: nextReferenceNoTwo,
-      })
+      }, manualOverrides)
     );
   };
 
@@ -325,6 +419,7 @@ export function EncoderTab() {
       <section id="encoder" className="mt-4">
         <Card>
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Encoder</h2>
+          {submitError ? <p className="mb-3 text-sm text-red-600">{submitError}</p> : null}
           <form id="salesForm" className="space-y-6" onSubmit={onSubmit} onReset={onReset}>
             <div className="grid gap-3 md:grid-cols-3">
               <label className="flex flex-col gap-1 text-sm text-slate-700">
@@ -471,7 +566,7 @@ export function EncoderTab() {
                   id="price"
                   type="number"
                   value={form.price}
-                  readOnly
+                  onChange={(event) => updateNumericField('price', event.target.value, 'price')}
                   className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
                 />
               </label>
@@ -482,7 +577,7 @@ export function EncoderTab() {
                   type="number"
                   min="0"
                   value={form.oneTimeDiscount}
-                  onChange={(event) => updateNumericField('oneTimeDiscount', event.target.value)}
+                  onChange={(event) => updateNumericField('oneTimeDiscount', event.target.value, 'oneTimeDiscount')}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -502,7 +597,7 @@ export function EncoderTab() {
                   id="sales"
                   type="number"
                   value={form.sales}
-                  readOnly
+                  onChange={(event) => updateNumericField('sales', event.target.value, 'sales')}
                   className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
                 />
               </label>
@@ -591,9 +686,8 @@ export function EncoderTab() {
                   type="number"
                   min="0"
                   value={form.salesTwo}
-                  onChange={(event) => updateNumericField('salesTwo', event.target.value)}
-                  readOnly={salesTwoIsReadOnly}
-                  className={`h-10 rounded-md border border-slate-300 px-3 ${salesTwoIsReadOnly ? 'bg-slate-50 text-slate-500' : ''}`}
+                  onChange={(event) => updateNumericField('salesTwo', event.target.value, 'salesTwo')}
+                  className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
             </div>
@@ -606,7 +700,7 @@ export function EncoderTab() {
                   type="number"
                   min="0"
                   value={form.released}
-                  onChange={(event) => updateNumericField('released', event.target.value)}
+                  onChange={(event) => updateNumericField('released', event.target.value, 'released')}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -617,7 +711,7 @@ export function EncoderTab() {
                   type="number"
                   min="0"
                   value={form.releasedBlpk}
-                  onChange={(event) => updateNumericField('releasedBlpk', event.target.value)}
+                  onChange={(event) => updateNumericField('releasedBlpk', event.target.value, 'releasedBlpk')}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -628,7 +722,7 @@ export function EncoderTab() {
                   type="number"
                   min="0"
                   value={form.toFollow}
-                  onChange={(event) => updateNumericField('toFollow', event.target.value)}
+                  onChange={(event) => updateNumericField('toFollow', event.target.value, 'toFollow')}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -639,7 +733,7 @@ export function EncoderTab() {
                   type="number"
                   min="0"
                   value={form.toFollowBlpk}
-                  onChange={(event) => updateNumericField('toFollowBlpk', event.target.value)}
+                  onChange={(event) => updateNumericField('toFollowBlpk', event.target.value, 'toFollowBlpk')}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -685,6 +779,19 @@ export function EncoderTab() {
           </form>
         </Card>
       </section>
+
+      {/* Dev test payload example:
+          {
+            "event_name":"DAVAO",
+            "trans_date":"2026-02-27",
+            "pof_number":"POF-TEST-0002",
+            "member_name":"Test Member",
+            "username":"tester01",
+            "is_new_member":true,
+            "package_type":"SILVER",
+            "sales":3500
+          }
+      */}
 
       <Modal isOpen={isSavedOpen} title="Saved" onClose={() => setIsSavedOpen(false)}>
         Daily sales entry saved successfully (mock).

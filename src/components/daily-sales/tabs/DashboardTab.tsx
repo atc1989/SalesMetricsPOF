@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { recentSalesRows, type PaymentMode } from '@/lib/mock/dailySales';
+import { recentSalesRows, type PaymentMode, type RecentSale } from '@/lib/mock/dailySales';
 
 const paymentModes: PaymentMode[] = [
   'ALL',
@@ -20,32 +20,150 @@ const paymentModes: PaymentMode[] = [
   'AR(CSA)',
 ];
 
+const validPaymentModes: Array<RecentSale['paymentMode']> = [
+  'CASH',
+  'BANK',
+  'MAYA(IGI)',
+  'MAYA(ATC)',
+  'SBCOLLECT(IGI)',
+  'SBCOLLECT(ATC)',
+  'EWALLET',
+  'CHEQUE',
+  'EPOINTS',
+  'CONSIGNMENT',
+  'AR(CSA)',
+  'AR(LEADERSUPPORT)',
+];
+
+function normalizePaymentMode(value: string | null): RecentSale['paymentMode'] {
+  if (!value) {
+    return 'CASH';
+  }
+
+  if (validPaymentModes.includes(value as RecentSale['paymentMode'])) {
+    return value as RecentSale['paymentMode'];
+  }
+
+  return 'CASH';
+}
+
 export function DashboardTab() {
-  const [pendingFromDate, setPendingFromDate] = useState('');
-  const [pendingToDate, setPendingToDate] = useState('');
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [pendingFromDate, setPendingFromDate] = useState(today);
+  const [pendingToDate, setPendingToDate] = useState(today);
   const [pendingPaymentMode, setPendingPaymentMode] = useState<PaymentMode>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [rows, setRows] = useState<RecentSale[]>(recentSalesRows);
+  const [totals, setTotals] = useState({
+    totalSales: recentSalesRows.reduce((sum, row) => sum + row.sales, 0),
+    totalBottles: recentSalesRows.reduce((sum, row) => sum + row.bottles, 0),
+    totalBlisters: recentSalesRows.reduce((sum, row) => sum + row.blisters, 0),
+    totalTransactions: recentSalesRows.length,
+    newMembers: 0,
+  });
 
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('ALL');
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadDailySales() {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const params = new URLSearchParams({
+          dateFrom: fromDate,
+          dateTo: toDate,
+          modeOfPayment: paymentMode,
+        });
+        const response = await fetch(`/api/daily-sales/today?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as {
+          success: boolean;
+          rows?: Array<{
+            daily_sales_id: number | string | null;
+            trans_date: string | null;
+            pof_number: string | null;
+            member_name: string | null;
+            username: string | null;
+            package_type: string | null;
+            bottle_count: number;
+            blister_count: number;
+            sales: number;
+            mode_of_payment: string | null;
+          }>;
+          totals?: {
+            totalSales: number;
+            totalBottles: number;
+            totalBlisters: number;
+            totalTransactions: number;
+            newMembers: number;
+          };
+          message?: string;
+        };
+
+        if (!response.ok || !payload.success || !payload.rows) {
+          throw new Error(payload.message ?? 'Failed to load daily sales.');
+        }
+
+        const mappedRows: RecentSale[] = payload.rows.map((row, index) => ({
+          id: String(row.daily_sales_id ?? `daily-sales-${index + 1}`),
+          pofNumber: row.pof_number ?? '',
+          ggTransNo:
+            row.daily_sales_id !== null && row.daily_sales_id !== undefined
+              ? `DS-${row.daily_sales_id}`
+              : '',
+          date: row.trans_date ?? '',
+          memberName: row.member_name ?? '',
+          zeroOne: row.username ?? '',
+          packageType: row.package_type ?? '',
+          bottles: row.bottle_count ?? 0,
+          blisters: row.blister_count ?? 0,
+          sales: row.sales ?? 0,
+          paymentMode: normalizePaymentMode(row.mode_of_payment),
+          status: 'Released',
+        }));
+
+        setRows(mappedRows);
+        if (payload.totals) {
+          setTotals(payload.totals);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+
+        setRows(recentSalesRows);
+        setTotals({
+          totalSales: recentSalesRows.reduce((sum, row) => sum + row.sales, 0),
+          totalBottles: recentSalesRows.reduce((sum, row) => sum + row.bottles, 0),
+          totalBlisters: recentSalesRows.reduce((sum, row) => sum + row.blisters, 0),
+          totalTransactions: recentSalesRows.length,
+          newMembers: 0,
+        });
+        setErrorMessage('Backend error loading daily sales, showing fallback data.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void loadDailySales();
+
+    return () => {
+      controller.abort();
+    };
+  }, [fromDate, toDate, paymentMode]);
 
   const filteredRows = useMemo(() => {
     const search = searchQuery.trim().toLowerCase();
 
-    return recentSalesRows.filter((row) => {
-      if (fromDate && row.date < fromDate) {
-        return false;
-      }
-
-      if (toDate && row.date > toDate) {
-        return false;
-      }
-
-      if (paymentMode !== 'ALL' && row.paymentMode !== paymentMode) {
-        return false;
-      }
-
+    return rows.filter((row) => {
       if (
         search &&
         !row.pofNumber.toLowerCase().includes(search) &&
@@ -58,11 +176,11 @@ export function DashboardTab() {
 
       return true;
     });
-  }, [fromDate, toDate, paymentMode, searchQuery]);
+  }, [rows, searchQuery]);
 
   const totalSales = filteredRows.reduce((sum, row) => sum + row.sales, 0);
   const totalOrders = filteredRows.length;
-  const totalNewMembers = 0;
+  const totalNewMembers = totals.newMembers;
   const totalBottles = filteredRows.reduce((sum, row) => sum + row.bottles, 0);
   const totalBlisters = filteredRows.reduce((sum, row) => sum + row.blisters, 0);
 
@@ -219,6 +337,8 @@ export function DashboardTab() {
             Excel
           </Button>
         </div>
+        {isLoading ? <p className="px-4 pb-2 text-xs text-slate-500">Loading daily sales...</p> : null}
+        {errorMessage ? <p className="px-4 pb-2 text-xs text-amber-600">{errorMessage}</p> : null}
         <div className="overflow-x-auto">
           <table id="tblSalesToday" className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
