@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
@@ -29,6 +29,23 @@ type UserAccountRow = {
   region: string;
   country: string;
   dateCreated: string;
+};
+
+type UserAccountApiRow = {
+  user_account_id: number | string;
+  user_name: string | null;
+  full_name: string | null;
+  sponsor: string | null;
+  placement: string | null;
+  group: string | null;
+  account_type: string | null;
+  zero_one: string | null;
+  code_payment: string | null;
+  city: string | null;
+  province: string | null;
+  region: string | null;
+  country: string | null;
+  date_created: string | null;
 };
 
 type ModalNotice = {
@@ -170,11 +187,45 @@ const mapUplineUsername = (value: string) => {
 const matchesSearch = (values: Array<string | number>, search: string) =>
   values.join(' ').toLowerCase().includes(search);
 
+const normalizeCodePayment = (value: string | null): 'PD' | 'FS' =>
+  value?.toUpperCase() === 'PD' ? 'PD' : 'FS';
+
+const mapApiRowToUserAccount = (row: UserAccountApiRow): UserAccountRow => ({
+  id: String(row.user_account_id),
+  fullName: row.full_name ?? '',
+  username: row.user_name ?? '',
+  sponsor: row.sponsor ?? '',
+  placement: row.placement ?? '',
+  group: row.group ?? '',
+  accountType: row.account_type ?? '',
+  zeroOne: row.zero_one ?? '',
+  codePayment: normalizeCodePayment(row.code_payment),
+  barangay: '',
+  city: row.city ?? '',
+  province: row.province ?? '',
+  region: row.region ?? '',
+  country: row.country ?? '',
+  dateCreated: row.date_created?.slice(0, 10) ?? '',
+});
+
+const mapUserAccountToUsersNoZeroOne = (rows: UserAccountRow[]): UsersNoZeroOneRow[] =>
+  rows.map((row) => ({
+    id: `user-${row.id}`,
+    username: row.username,
+    fullName: row.fullName,
+    zeroOne: row.zeroOne,
+    codePayment: row.codePayment,
+  }));
+
 export function UsersTab() {
   const [usersRows, setUsersRows] = useState<UsersNoZeroOneRow[]>(initialUsersRows);
-  const [userAccountRows, setUserAccountRows] = useState<UserAccountRow[]>(initialUserAccountRows);
+  const [rows, setRows] = useState<UserAccountRow[]>(initialUserAccountRows);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [searchText, setSearchText] = useState('');
 
   const [fullName, setFullName] = useState('Ozarraga, Jevelyn');
+  const [selectedUserName, setSelectedUserName] = useState('Amazinggrace01');
   const [zeroOneOptions, setZeroOneOptions] = useState<string[]>(defaultZeroOneOptions);
   const [zeroOne, setZeroOne] = useState('HeadEagle01');
   const [codePayment, setCodePayment] = useState<'PD' | 'FS'>('PD');
@@ -197,10 +248,10 @@ export function UsersTab() {
   const filteredUserAccountRows = useMemo(() => {
     const search = userAccountSearchQuery.trim().toLowerCase();
     if (!search) {
-      return userAccountRows;
+      return rows;
     }
 
-    return userAccountRows.filter((row) =>
+    return rows.filter((row) =>
       matchesSearch(
         [
           row.fullName,
@@ -221,15 +272,56 @@ export function UsersTab() {
         search
       )
     );
-  }, [userAccountRows, userAccountSearchQuery]);
+  }, [rows, userAccountSearchQuery]);
 
-  const getUserAccountNoZeroOne = () => {
-    setUsersRows((prev) => [...prev]);
+  const setFallbackRows = () => {
+    setRows(initialUserAccountRows);
+    setUsersRows(initialUsersRows);
   };
 
-  const getAllUserAccount = () => {
-    setUserAccountRows((prev) => [...prev]);
-  };
+  const loadUserAccounts = useCallback(async (query = '') => {
+    const resolvedQuery = query.trim() || searchText.trim();
+    setIsLoading(true);
+    setErrorMessage('');
+    try {
+      const params = new URLSearchParams({ limit: '200' });
+      if (resolvedQuery) {
+        params.set('q', resolvedQuery);
+      }
+
+      const response = await fetch(`/api/user-account?${params.toString()}`);
+      const payload = (await response.json()) as {
+        success: boolean;
+        rows?: UserAccountApiRow[];
+        message?: string;
+      };
+
+      if (!response.ok || !payload.success || !payload.rows) {
+        throw new Error(payload.message ?? 'Failed to load user accounts.');
+      }
+
+      const mappedUserAccounts = payload.rows.map((row) => mapApiRowToUserAccount(row));
+      const mappedUsersNoZeroOne = mapUserAccountToUsersNoZeroOne(mappedUserAccounts);
+      const mappedZeroOnes = Array.from(
+        new Set(
+          mappedUserAccounts
+            .map((row) => row.zeroOne)
+            .filter((value) => value.trim().length > 0)
+        )
+      );
+
+      setRows(mappedUserAccounts);
+      setUsersRows(mappedUsersNoZeroOne);
+      if (mappedZeroOnes.length > 0) {
+        setZeroOneOptions(mappedZeroOnes);
+      }
+    } catch {
+      setFallbackRows();
+      setErrorMessage('Backend error... showing fallback');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchText]);
 
   const getUserCodes = (username: string) => {
     const code = userCodesByUsername[username]?.code_payment;
@@ -252,48 +344,77 @@ export function UsersTab() {
 
   const resetUsersForm = () => {
     setFullName('Ozarraga, Jevelyn');
+    setSelectedUserName('Amazinggrace01');
     setZeroOneOptions(defaultZeroOneOptions);
     setZeroOne('HeadEagle01');
     setCodePayment('PD');
   };
 
-  const modifyUserZeroOne = (name: string, nextZeroOne: string, nextCodePayment: 'PD' | 'FS') => {
+  const modifyUserZeroOne = async (username: string, name: string, nextZeroOne: string, nextCodePayment: 'PD' | 'FS') => {
+    try {
+      const response = await fetch('/api/user-account/modify-zero-one', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userName: username,
+          zeroOne: nextZeroOne,
+          codePayment: nextCodePayment,
+        }),
+      });
+      const payload = (await response.json()) as { success: boolean; message?: string };
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message ?? 'Failed to update user account.');
+      }
+    } catch {
+      setNotice({
+        title: 'Error',
+        message: 'Failed to update user account.',
+      });
+      return;
+    }
+
     setUsersRows((prev) =>
-      prev.map((row) => (row.fullName === name ? { ...row, zeroOne: nextZeroOne, codePayment: nextCodePayment } : row))
+      prev.map((row) =>
+        row.username === username || row.fullName === name
+          ? { ...row, zeroOne: nextZeroOne, codePayment: nextCodePayment }
+          : row
+      )
     );
 
-    setUserAccountRows((prev) =>
+    setRows((prev) =>
       prev.map((row) =>
-        row.fullName === name ? { ...row, zeroOne: nextZeroOne, codePayment: nextCodePayment } : row
+        row.username === username || row.fullName === name
+          ? { ...row, zeroOne: nextZeroOne, codePayment: nextCodePayment }
+          : row
       )
     );
 
     setNotice({
       title: 'Success',
-      message: 'User zero-one updated successfully (mock).',
+      message: 'User zero-one updated successfully.',
     });
   };
 
   const syncUserAccounts = () => {
-    getUserAccountNoZeroOne();
     setNotice({
-      title: 'Success',
-      message: 'User accounts synchronized successfully (mock).',
+      title: 'Info',
+      message: 'Not implemented yet.',
     });
   };
 
   const syncCodes = () => {
-    getUserAccountNoZeroOne();
     setNotice({
-      title: 'Success',
-      message: 'User codes synchronized successfully (mock).',
+      title: 'Info',
+      message: 'Not implemented yet.',
     });
   };
 
-  const onUsersFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onUsersFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!fullName || !zeroOne || !codePayment) {
+    if (!selectedUserName || !fullName || !zeroOne || !codePayment) {
       setNotice({
         title: 'Warning!',
         message: 'Please complete required user fields.',
@@ -301,9 +422,7 @@ export function UsersTab() {
       return;
     }
 
-    modifyUserZeroOne(fullName, zeroOne, codePayment);
-    getUserAccountNoZeroOne();
-    getAllUserAccount();
+    await modifyUserZeroOne(selectedUserName, fullName, zeroOne, codePayment);
   };
 
   const onUsersFormReset = (event: FormEvent<HTMLFormElement>) => {
@@ -312,9 +431,24 @@ export function UsersTab() {
   };
 
   const onEditRow = (row: UsersNoZeroOneRow) => {
+    setSelectedUserName(row.username);
     setFullName(row.fullName);
     getUnilevelUplines(row.username);
   };
+
+  const onSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>, value: string) => {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    event.preventDefault();
+    setSearchText(value);
+    void loadUserAccounts(value);
+  };
+
+  useEffect(() => {
+    void loadUserAccounts();
+  }, [loadUserAccounts]);
 
   const exportUserAccount = () => {
     const headers = [
@@ -374,6 +508,7 @@ export function UsersTab() {
   return (
     <>
       <section id="users" className="mt-4 space-y-4">
+        {errorMessage ? <p className="text-xs text-amber-700">{errorMessage}</p> : null}
         <Card className="p-3">
           <h2 className="mb-3 text-sm font-semibold text-slate-900">Users</h2>
           <form id="usersForm" className="grid gap-2 md:grid-cols-5" onSubmit={onUsersFormSubmit} onReset={onUsersFormReset}>
@@ -445,6 +580,7 @@ export function UsersTab() {
               type="text"
               value={usersSearchQuery}
               onChange={(event) => setUsersSearchQuery(event.target.value)}
+              onKeyDown={(event) => onSearchKeyDown(event, usersSearchQuery)}
               placeholder="Search table..."
               className="h-9 w-full max-w-xs rounded border border-slate-300 px-3 text-sm"
             />
@@ -496,6 +632,7 @@ export function UsersTab() {
                 type="text"
                 value={userAccountSearchQuery}
                 onChange={(event) => setUserAccountSearchQuery(event.target.value)}
+                onKeyDown={(event) => onSearchKeyDown(event, userAccountSearchQuery)}
                 placeholder="Search table..."
                 className="h-9 flex-1 rounded border border-slate-300 px-3 text-sm"
               />
@@ -525,7 +662,13 @@ export function UsersTab() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUserAccountRows.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={14} className="px-3 py-6 text-center text-slate-500">
+                      Loading user accounts...
+                    </td>
+                  </tr>
+                ) : filteredUserAccountRows.length === 0 ? (
                   <tr>
                     <td colSpan={14} className="px-3 py-6 text-center text-slate-500">
                       No user account rows found.

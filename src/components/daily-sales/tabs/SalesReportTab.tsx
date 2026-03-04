@@ -34,6 +34,47 @@ type SnapshotData = {
   upgrades: { silver: number; gold: number; platinum: number };
 };
 
+type PackageTotalsApiRow = {
+  package_type: string;
+  total_quantity: number;
+  total_bottles: number;
+  total_blisters: number;
+  total_sales: number;
+};
+
+type PaymentSummaryApiRow = {
+  mode_of_payment: string;
+  total_sales: number;
+  transactions: number;
+};
+
+type SalesReportApiPayload = {
+  success: boolean;
+  message?: string;
+  packageTotals?: PackageTotalsApiRow[];
+  paymentSummary?: PaymentSummaryApiRow[];
+};
+
+type CashOnHandApiRow = {
+  pcs_one_thousand?: number | string | null;
+  pcs_five_hundred?: number | string | null;
+  pcs_two_hundred?: number | string | null;
+  pcs_one_hundred?: number | string | null;
+  pcs_fifty?: number | string | null;
+  pcs_twenty?: number | string | null;
+  pcs_ten?: number | string | null;
+  pcs_five?: number | string | null;
+  pcs_one?: number | string | null;
+  pcs_cents?: number | string | null;
+} | null;
+
+type CashOnHandApiPayload = {
+  success: boolean;
+  message?: string;
+  row?: CashOnHandApiRow;
+  total_cash?: number;
+};
+
 type CashFieldId =
   | 'cohOneThousand'
   | 'cohFiveHundred'
@@ -127,6 +168,55 @@ const defaultCashPieces: Record<CashFieldId, number> = {
   cohFive: 0,
   cohOne: 0,
   cohCents: 0,
+};
+
+const paymentLabelToModes: Record<string, string[]> = {
+  'E-Wallet': ['EWALLET', 'E-WALLET'],
+  'Bank Transfer - Security Bank': ['BANK'],
+  'Maya (IGI)': ['MAYA(IGI)'],
+  'Maya (ATC)': ['MAYA(ATC)'],
+  'SB Collect (IGI)': ['SBCOLLECT(IGI)', 'SBCOLLECT (IGI)'],
+  'SB Collect (ATC)': ['SBCOLLECT(ATC)', 'SBCOLLECT (ATC)'],
+  'Accounts Receivable - CSA': ['AR(CSA)'],
+  'Accounts Receivable - Leaders Support': ['AR(LEADERSUPPORT)', 'AR LEADER SUPPORT'],
+  Cheque: ['CHEQUE'],
+  'E-Points': ['EPOINTS', 'E-POINTS'],
+};
+
+const paymentTitleToModes: Record<string, string[]> = {
+  EWALLET: ['EWALLET', 'E-WALLET'],
+  BANK: ['BANK'],
+  'MAYA(IGI)': ['MAYA(IGI)'],
+  'MAYA(ATC)': ['MAYA(ATC)'],
+  'SBCOLLECT(IGI)': ['SBCOLLECT(IGI)', 'SBCOLLECT (IGI)'],
+  'SBCOLLECT(ATC)': ['SBCOLLECT(ATC)', 'SBCOLLECT (ATC)'],
+  'AR(CSA)': ['AR(CSA)'],
+  'AR LEADER SUPPORT': ['AR(LEADERSUPPORT)', 'AR LEADER SUPPORT'],
+  'CREDIT CARD': ['CREDIT CARD'],
+  CHEQUE: ['CHEQUE'],
+  EPOINTS: ['EPOINTS', 'E-POINTS'],
+};
+
+const normalizeKey = (value: string) => value.trim().toUpperCase();
+
+const sumForModes = (
+  paymentTotals: Map<string, number>,
+  modes: string[],
+) => modes.reduce((sum, mode) => sum + (paymentTotals.get(normalizeKey(mode)) ?? 0), 0);
+
+const toNumber = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
 };
 
 const formatDateDMYY = (value: string) => {
@@ -237,6 +327,14 @@ export function SalesReportTab() {
   const [cashPieces, setCashPieces] = useState<Record<CashFieldId, number>>(defaultCashPieces);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const [loadedFromBackend, setLoadedFromBackend] = useState(false);
+  const [packageTotals, setPackageTotals] = useState<PackageTotalsApiRow[]>([]);
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummaryApiRow[]>([]);
+  const [cashOnHandRow, setCashOnHandRow] = useState<CashOnHandApiRow>(null);
+  const [totalCashFromBackend, setTotalCashFromBackend] = useState<number | null>(null);
 
   const dateCaption = `${formatDateDMYY(selectedDate)}`;
 
@@ -256,29 +354,148 @@ export function SalesReportTab() {
     () => Object.values(cashAmounts).reduce((sum, value) => sum + value, 0),
     [cashAmounts]
   );
+  const displayedTotalCash = totalCashFromBackend ?? (cashOnHandRow ? totalCashOnHand : totalCashOnHand);
 
   const paymentTypeRows = useMemo(
-    () =>
-      paymentTypeTableIds.map((item) => ({
+    () => {
+      const paymentTotals = new Map<string, number>();
+      for (const row of paymentSummary) {
+        const key = normalizeKey(row.mode_of_payment);
+        paymentTotals.set(key, (paymentTotals.get(key) ?? 0) + toNumber(row.total_sales));
+      }
+
+      return paymentTypeTableIds.map((item) => ({
         id: item.id,
         title: item.title,
-        rows: [{ label: item.label, amount: 0 }],
-      })),
-    []
+        rows: [
+          {
+            label: item.label,
+            amount: sumForModes(
+              paymentTotals,
+              paymentTitleToModes[normalizeKey(item.title)] ?? []
+            ),
+          },
+        ],
+      }));
+    },
+    [paymentSummary]
   );
 
-  const getDailySalesPackageRetail = (transDate: string) => {
-    setSelectedDate(transDate);
-    setSnapshot(defaultSnapshot);
-  };
-
-  const onGenerateDailySales = () => {
+  const onGenerateDailySales = async () => {
     if (!transDateDailySales) {
       setIsWarningOpen(true);
       return;
     }
 
-    getDailySalesPackageRetail(transDateDailySales);
+    setSelectedDate(transDateDailySales);
+    setErrorMessage('');
+    setIsLoading(true);
+    setHasGenerated(true);
+
+    try {
+      const params = new URLSearchParams({ transDate: transDateDailySales });
+      const [salesResponse, cashResponse] = await Promise.all([
+        fetch(`/api/daily-sales/sales-report?${params.toString()}`),
+        fetch(`/api/cash-on-hand/get?${params.toString()}`),
+      ]);
+
+      const salesPayload = (await salesResponse.json()) as SalesReportApiPayload;
+      const cashPayload = (await cashResponse.json()) as CashOnHandApiPayload;
+
+      if (!salesResponse.ok || !salesPayload.success) {
+        throw new Error(salesPayload.message ?? 'Failed to load sales report');
+      }
+
+      if (!cashResponse.ok || !cashPayload.success) {
+        throw new Error(cashPayload.message ?? 'Failed to load cash on hand');
+      }
+
+      const packageMap = new Map(
+        (salesPayload.packageTotals ?? []).map((row) => [normalizeKey(row.package_type), row]),
+      );
+
+      const packageRows: PackageRow[] = defaultSnapshot.packageRows.map((row) => {
+        if (row.label === 'Mobile Stockist') {
+          const mobile = packageMap.get('MOBILE STOCKIST');
+          return { ...row, qty: mobile?.total_quantity ?? 0 };
+        }
+
+        const totals = packageMap.get(normalizeKey(row.label));
+        return { ...row, qty: totals?.total_quantity ?? 0 };
+      });
+
+      const retailBottle = packageMap.get('RETAIL');
+      const retailBlister = packageMap.get('BLISTER');
+      const retailRows: RetailRow[] = defaultSnapshot.retailRows.map((row) => {
+        if (row.label === 'SynBIOTIC+ (Bottle)') {
+          return { ...row, qty: retailBottle?.total_bottles ?? 0 };
+        }
+
+        if (row.label === 'SynBIOTIC+ (Blister)') {
+          return { ...row, qty: retailBlister?.total_blisters ?? 0 };
+        }
+
+        return { ...row, qty: 0 };
+      });
+
+      const paymentTotals = new Map<string, number>();
+      const backendPaymentSummary = salesPayload.paymentSummary ?? [];
+      for (const row of backendPaymentSummary) {
+        const key = normalizeKey(row.mode_of_payment);
+        paymentTotals.set(key, (paymentTotals.get(key) ?? 0) + toNumber(row.total_sales));
+      }
+
+      const paymentBreakdownRows: AmountRow[] = defaultSnapshot.paymentBreakdownRows.map((row) => {
+        if (row.label === 'Cash on hand') {
+          return { ...row, amount: toNumber(cashPayload.total_cash ?? 0) };
+        }
+
+        const modes = paymentLabelToModes[row.label];
+        if (!modes) {
+          return { ...row, amount: 0 };
+        }
+
+        return { ...row, amount: sumForModes(paymentTotals, modes) };
+      });
+
+      const cashRow = cashPayload.row;
+      const mappedCashPieces: Record<CashFieldId, number> = {
+        cohOneThousand: toNumber(cashRow?.pcs_one_thousand),
+        cohFiveHundred: toNumber(cashRow?.pcs_five_hundred),
+        cohTwoHundred: toNumber(cashRow?.pcs_two_hundred),
+        cohOneHundred: toNumber(cashRow?.pcs_one_hundred),
+        cohFifty: toNumber(cashRow?.pcs_fifty),
+        cohTwenty: toNumber(cashRow?.pcs_twenty),
+        cohTen: toNumber(cashRow?.pcs_ten),
+        cohFive: toNumber(cashRow?.pcs_five),
+        cohOne: toNumber(cashRow?.pcs_one),
+        cohCents: toNumber(cashRow?.pcs_cents),
+      };
+
+      setSnapshot((prev) => ({
+        ...prev,
+        packageRows,
+        retailRows,
+        paymentBreakdownRows,
+      }));
+      setPackageTotals(salesPayload.packageTotals ?? []);
+      setPaymentSummary(backendPaymentSummary);
+      setCashOnHandRow(cashRow ?? null);
+      setCashPieces(mappedCashPieces);
+      setTotalCashFromBackend(toNumber(cashPayload.total_cash ?? 0));
+      setLoadedFromBackend(true);
+    } catch {
+      setSnapshot(defaultSnapshot);
+      setPackageTotals([]);
+      setPaymentSummary([]);
+      setCashOnHandRow(null);
+      setCashPieces(defaultCashPieces);
+      setTotalCashFromBackend(null);
+      setErrorMessage('Backend error... showing fallback');
+      setLoadedFromBackend(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onCashPieceChange = (id: CashFieldId, value: string) => {
@@ -309,8 +526,14 @@ export function SalesReportTab() {
               />
             </label>
             <div className="flex items-end">
-              <Button id="generateDailySales" variant="secondary" className="w-full md:w-auto" onClick={onGenerateDailySales}>
-                Generate Report
+              <Button
+                id="generateDailySales"
+                variant="secondary"
+                className="w-full md:w-auto"
+                onClick={onGenerateDailySales}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Generating...' : 'Generate Report'}
               </Button>
             </div>
             <div className="flex items-end">
@@ -333,6 +556,10 @@ export function SalesReportTab() {
                 {dateCaption}
               </p>
             </div>
+            {errorMessage ? <p className="text-xs text-amber-700">{errorMessage}</p> : null}
+            {!isLoading && hasGenerated && loadedFromBackend && packageTotals.length === 0 ? (
+              <p className="text-xs text-slate-500">No sales entries for selected date.</p>
+            ) : null}
 
             <div className="grid gap-3 xl:grid-cols-[1fr_1fr]">
               <div className="space-y-3">
@@ -389,7 +616,7 @@ export function SalesReportTab() {
                           TOTAL CASH ON HAND
                         </td>
                         <td className="border border-slate-300 px-2 py-1">
-                          <span id="spnTotal">{formatAmount(totalCashOnHand)}</span>
+                          <span id="spnTotal">{formatAmount(displayedTotalCash)}</span>
                         </td>
                       </tr>
                     </tbody>

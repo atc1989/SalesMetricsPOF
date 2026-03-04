@@ -1,46 +1,47 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AgentCardGrid } from '@/components/dashboard/AgentCardGrid';
 import { AgentDetailsModal } from '@/components/dashboard/AgentDetailsModal';
 import { SummaryCardGrid } from '@/components/dashboard/SummaryCardGrid';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { dashboardAgents, dashboardSummary } from '@/lib/mock/dashboard';
-import type { AgentPerformance, SummaryStat, TimeRange } from '@/types/dashboard';
+import { salesDataset as mockDataset } from '@/lib/mock/sales';
+import type { AgentPerformance, TimeRange } from '@/types/dashboard';
+import type { SalesDataset } from '@/types/sales';
 
-const rangeToScale: Record<TimeRange, number> = {
-  daily: 1,
-  weekly: 1.35,
-  monthly: 1.7,
-  custom: 1,
+type SalesPerformanceResponse = {
+  success: boolean;
+  data?: SalesDataset;
+  message?: string;
 };
 
-const parseNumericValue = (value: string) => Number(value.replace(/[^0-9.-]/g, '')) || 0;
+const toIsoDate = (date: Date) => date.toISOString().slice(0, 10);
 
-const formatSummaryValue = (template: string, numericValue: number) => {
-  if (template.includes('$')) {
-    return `$${Math.round(numericValue).toLocaleString()}`;
+const resolveDateRange = (
+  range: TimeRange,
+  customStartDate: string,
+  customEndDate: string
+) => {
+  const today = new Date();
+  const dateTo = toIsoDate(today);
+
+  if (range === 'custom' && customStartDate && customEndDate) {
+    return { dateFrom: customStartDate, dateTo: customEndDate };
   }
 
-  return Math.round(numericValue).toLocaleString();
-};
-
-const getCustomScale = (startDate: string, endDate: string) => {
-  if (!startDate || !endDate) {
-    return 1;
+  if (range === 'weekly') {
+    const start = new Date(today);
+    start.setDate(today.getDate() - 6);
+    return { dateFrom: toIsoDate(start), dateTo };
   }
 
-  const start = new Date(`${startDate}T00:00:00`);
-  const end = new Date(`${endDate}T00:00:00`);
-  const millis = end.getTime() - start.getTime();
-
-  if (Number.isNaN(millis) || millis < 0) {
-    return 1;
+  if (range === 'monthly') {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    return { dateFrom: toIsoDate(start), dateTo };
   }
 
-  const days = Math.floor(millis / (1000 * 60 * 60 * 24)) + 1;
-  return Math.min(Math.max(days / 7, 0.5), 2.5);
+  return { dateFrom: dateTo, dateTo };
 };
 
 export function SalesMetricsTab() {
@@ -50,42 +51,59 @@ export function SalesMetricsTab() {
   const [appliedCustomStartDate, setAppliedCustomStartDate] = useState('');
   const [appliedCustomEndDate, setAppliedCustomEndDate] = useState('');
   const [selectedAgent, setSelectedAgent] = useState<AgentPerformance | null>(null);
+  const [dataset, setDataset] = useState<SalesDataset>(mockDataset);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasBackendSuccess, setHasBackendSuccess] = useState(false);
 
-  const scale = useMemo(() => {
-    if (range !== 'custom') {
-      return rangeToScale[range];
+  const { dateFrom, dateTo } = useMemo(
+    () => resolveDateRange(range, appliedCustomStartDate, appliedCustomEndDate),
+    [range, appliedCustomStartDate, appliedCustomEndDate]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadSalesPerformance() {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const params = new URLSearchParams({ dateFrom, dateTo });
+        const response = await fetch(`/api/sales/performance?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as SalesPerformanceResponse;
+
+        if (!response.ok || !payload.success || !payload.data) {
+          throw new Error(payload.message ?? 'Failed to load sales performance.');
+        }
+
+        setDataset(payload.data);
+        setHasBackendSuccess(true);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+
+        setDataset(mockDataset);
+        setErrorMessage('Backend error... showing fallback');
+        setHasBackendSuccess(false);
+      } finally {
+        setIsLoading(false);
+      }
     }
 
-    return getCustomScale(appliedCustomStartDate, appliedCustomEndDate);
-  }, [range, appliedCustomStartDate, appliedCustomEndDate]);
+    void loadSalesPerformance();
 
-  const summaryStats = useMemo<SummaryStat[]>(
-    () =>
-      dashboardSummary.map((stat) => {
-        const base = parseNumericValue(stat.value);
-        const scaled = base * scale;
-
-        return {
-          ...stat,
-          value: formatSummaryValue(stat.value, scaled),
-        };
-      }),
-    [scale]
-  );
-
-  const agentStats = useMemo<AgentPerformance[]>(
-    () =>
-      dashboardAgents.map((agent) => ({
-        ...agent,
-        sales: Math.round(agent.sales * scale),
-        target: Math.round(agent.target * scale),
-      })),
-    [scale]
-  );
+    return () => {
+      controller.abort();
+    };
+  }, [dateFrom, dateTo]);
 
   const rankedAgentStats = useMemo(
-    () => [...agentStats].sort((a, b) => b.conversionRate - a.conversionRate || b.sales - a.sales),
-    [agentStats]
+    () => [...dataset.agents].sort((a, b) => b.conversionRate - a.conversionRate || b.sales - a.sales),
+    [dataset.agents]
   );
 
   const selectedAgentRank = selectedAgent
@@ -145,12 +163,18 @@ export function SalesMetricsTab() {
         </div>
       </Card>
 
+      {isLoading ? <p className="text-sm text-slate-500">Loading latest sales performance...</p> : null}
+      {errorMessage ? <p className="text-sm text-amber-600">{errorMessage}</p> : null}
+      {!isLoading && !errorMessage && hasBackendSuccess && dataset.agents.length === 0 ? (
+        <p className="text-sm text-slate-500">No metrics for selected range.</p>
+      ) : null}
+
       <div id="summary-cards">
-        <SummaryCardGrid stats={summaryStats} />
+        <SummaryCardGrid stats={dataset.summary} />
       </div>
 
       <div id="agent-cards">
-        <AgentCardGrid agents={agentStats} onAgentSelect={setSelectedAgent} />
+        <AgentCardGrid agents={dataset.agents} onAgentSelect={setSelectedAgent} />
       </div>
 
       <AgentDetailsModal agent={selectedAgent} rank={selectedAgentRank} onClose={() => setSelectedAgent(null)} />

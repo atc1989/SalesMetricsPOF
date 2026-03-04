@@ -4,14 +4,41 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import { recentSalesRows } from '@/lib/mock/dailySales';
+import { recentSalesRows, type RecentSale } from '@/lib/mock/dailySales';
 
 type ReportRangeType = 'daily' | 'weekly' | 'monthly' | 'custom';
+
+const validPaymentModes: Array<RecentSale['paymentMode']> = [
+  'CASH',
+  'BANK',
+  'MAYA(IGI)',
+  'MAYA(ATC)',
+  'SBCOLLECT(IGI)',
+  'SBCOLLECT(ATC)',
+  'EWALLET',
+  'CHEQUE',
+  'EPOINTS',
+  'CONSIGNMENT',
+  'AR(CSA)',
+  'AR(LEADERSUPPORT)',
+];
 
 const toIsoDate = (value: Date) => value.toISOString().slice(0, 10);
 const reportDateToday = recentSalesRows.map((row) => row.date).sort().at(-1) ?? toIsoDate(new Date());
 const formatPeso = (value: number) =>
-  `₱${value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+  `PHP ${value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+
+function normalizePaymentMode(value: string | null): RecentSale['paymentMode'] {
+  if (!value) {
+    return 'CASH';
+  }
+
+  if (validPaymentModes.includes(value as RecentSale['paymentMode'])) {
+    return value as RecentSale['paymentMode'];
+  }
+
+  return 'CASH';
+}
 
 const calculateRange = (
   type: ReportRangeType,
@@ -65,6 +92,10 @@ export function ReportsTab() {
   const [reportType, setReportType] = useState<ReportRangeType>('daily');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [rows, setRows] = useState<RecentSale[]>(recentSalesRows);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   const activeRange = useMemo(
     () => calculateRange(reportType, startDate, endDate, reportDateToday),
@@ -74,7 +105,7 @@ export function ReportsTab() {
   const filteredRows = useMemo(() => {
     const search = searchQuery.trim().toLowerCase();
 
-    return recentSalesRows.filter((row) => {
+    return rows.filter((row) => {
       if (activeRange.from && row.date < activeRange.from) {
         return false;
       }
@@ -101,7 +132,7 @@ export function ReportsTab() {
 
       return true;
     });
-  }, [activeRange, searchQuery]);
+  }, [activeRange, searchQuery, rows]);
 
   const totals = useMemo(
     () =>
@@ -135,7 +166,7 @@ export function ReportsTab() {
     setEndDate(nextRange.to);
   };
 
-  const onGenerateReport = () => {
+  const onGenerateReport = async () => {
     if (!pendingStartDate || !pendingEndDate) {
       setIsWarningOpen(true);
       return;
@@ -144,6 +175,59 @@ export function ReportsTab() {
     setReportType(pendingType);
     setStartDate(pendingStartDate);
     setEndDate(pendingEndDate);
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const params = new URLSearchParams({
+        dateFrom: pendingStartDate,
+        dateTo: pendingEndDate,
+      });
+      const response = await fetch(`/api/reports/sales-report?${params.toString()}`);
+      const payload = (await response.json()) as {
+        success: boolean;
+        rows?: Array<{
+          pof_number: string | null;
+          trans_date: string | null;
+          member_name: string | null;
+          username: string | null;
+          package_type: string | null;
+          bottle_count: number;
+          blister_count: number;
+          sales: number;
+          mode_of_payment: string | null;
+        }>;
+        message?: string;
+      };
+
+      if (!response.ok || !payload.success || !payload.rows) {
+        throw new Error(payload.message ?? 'Failed to load sales report.');
+      }
+
+      const mappedRows: RecentSale[] = payload.rows.map((row, index) => ({
+        id: `${row.pof_number ?? 'sales'}-${index}`,
+        pofNumber: row.pof_number ?? '',
+        ggTransNo: row.username ?? 'N/A',
+        date: row.trans_date ?? '',
+        memberName: row.member_name ?? '',
+        zeroOne: row.username ?? '',
+        packageType: row.package_type ?? '',
+        bottles: row.bottle_count ?? 0,
+        blisters: row.blister_count ?? 0,
+        sales: row.sales ?? 0,
+        paymentMode: normalizePaymentMode(row.mode_of_payment),
+        status: 'Released',
+      }));
+
+      setRows(mappedRows);
+      setHasGenerated(true);
+    } catch {
+      setRows(recentSalesRows);
+      setErrorMessage('Backend error loading sales report, showing fallback data.');
+      setHasGenerated(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onRowAction = (message: string) => {
@@ -262,6 +346,11 @@ export function ReportsTab() {
             Excel
           </Button>
         </div>
+        {isLoading ? <p className="px-4 pb-2 text-xs text-slate-500">Loading sales report...</p> : null}
+        {errorMessage ? <p className="px-4 pb-2 text-xs text-amber-600">{errorMessage}</p> : null}
+        {!isLoading && !errorMessage && hasGenerated && filteredRows.length === 0 ? (
+          <p className="px-4 pb-2 text-xs text-slate-500">No results for selected date range</p>
+        ) : null}
         <div className="overflow-x-auto">
           <table id="tblSalesReport" className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
