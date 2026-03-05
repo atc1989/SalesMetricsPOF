@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/Button';
-import type { ReportType } from '../../lib/mock/dailySales';
+import type { ReportType } from '@/types/dailySales';
 
 type ReportsFiltersProps = {
   reportType: ReportType;

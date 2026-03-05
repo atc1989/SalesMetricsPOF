@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import type { RecentSale } from '../../lib/mock/dailySales';
+import type { RecentSale } from '@/types/dailySales';
 
 type RecentSalesTableProps = {
   rows: RecentSale[];

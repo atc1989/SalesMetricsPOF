@@ -8,7 +8,6 @@ import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { salesDataset } from "@/lib/mock/sales";
 import { AgentPerformance, TimeRange } from "@/types/dashboard";
 import { SalesDataset } from "@/types/sales";
 
@@ -23,6 +22,12 @@ type SalesSyncResponse = {
   message?: string;
   ggFetched?: number;
   upsertRangeCount?: number | null;
+};
+
+const emptyDataset: SalesDataset = {
+  label: "Sales API Dataset",
+  summary: [],
+  agents: [],
 };
 
 function toIsoDate(date: Date) {
@@ -62,7 +67,7 @@ export default function SalesPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [dataset, setDataset] = useState<SalesDataset>(salesDataset);
+  const [dataset, setDataset] = useState<SalesDataset>(emptyDataset);
 
   const { dateFrom, dateTo } = useMemo(
     () => resolveDateRange(range, customStartDate, customEndDate),
@@ -93,7 +98,6 @@ export default function SalesPage() {
           return;
         }
 
-        setDataset(salesDataset);
         setErrorMessage(error instanceof Error ? error.message : "Unable to load live sales data.");
       } finally {
         setIsLoading(false);
@@ -183,7 +187,10 @@ export default function SalesPage() {
         }
       >
         {isLoading ? <p className="text-sm text-slate-500">Loading latest sales performance...</p> : null}
-        {errorMessage ? <p className="text-sm text-amber-600">{errorMessage} Showing fallback data.</p> : null}
+        {errorMessage ? <p className="text-sm text-amber-600">{errorMessage}</p> : null}
+        {!isLoading && !errorMessage && dataset.agents.length === 0 ? (
+          <p className="text-sm text-slate-500">No data for selected range.</p>
+        ) : null}
         <SummaryCardGrid key={`summary-${refreshTick}`} stats={dataset.summary} />
         <AgentCardGrid key={`agents-${refreshTick}`} agents={dataset.agents} onAgentSelect={setSelectedAgent} />
       </PageShell>

@@ -6,7 +6,6 @@ import { AgentDetailsModal } from '@/components/dashboard/AgentDetailsModal';
 import { SummaryCardGrid } from '@/components/dashboard/SummaryCardGrid';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { salesDataset as mockDataset } from '@/lib/mock/sales';
 import type { AgentPerformance, TimeRange } from '@/types/dashboard';
 import type { SalesDataset } from '@/types/sales';
 
@@ -14,6 +13,12 @@ type SalesPerformanceResponse = {
   success: boolean;
   data?: SalesDataset;
   message?: string;
+};
+
+const emptyDataset: SalesDataset = {
+  label: 'Sales API Dataset',
+  summary: [],
+  agents: [],
 };
 
 const toIsoDate = (date: Date) => date.toISOString().slice(0, 10);
@@ -51,10 +56,9 @@ export function SalesMetricsTab() {
   const [appliedCustomStartDate, setAppliedCustomStartDate] = useState('');
   const [appliedCustomEndDate, setAppliedCustomEndDate] = useState('');
   const [selectedAgent, setSelectedAgent] = useState<AgentPerformance | null>(null);
-  const [dataset, setDataset] = useState<SalesDataset>(mockDataset);
+  const [dataset, setDataset] = useState<SalesDataset>(emptyDataset);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [hasBackendSuccess, setHasBackendSuccess] = useState(false);
 
   const { dateFrom, dateTo } = useMemo(
     () => resolveDateRange(range, appliedCustomStartDate, appliedCustomEndDate),
@@ -80,15 +84,12 @@ export function SalesMetricsTab() {
         }
 
         setDataset(payload.data);
-        setHasBackendSuccess(true);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
           return;
         }
 
-        setDataset(mockDataset);
-        setErrorMessage('Backend error... showing fallback');
-        setHasBackendSuccess(false);
+        setErrorMessage('Failed to load sales performance.');
       } finally {
         setIsLoading(false);
       }
@@ -165,7 +166,7 @@ export function SalesMetricsTab() {
 
       {isLoading ? <p className="text-sm text-slate-500">Loading latest sales performance...</p> : null}
       {errorMessage ? <p className="text-sm text-amber-600">{errorMessage}</p> : null}
-      {!isLoading && !errorMessage && hasBackendSuccess && dataset.agents.length === 0 ? (
+      {!isLoading && !errorMessage && dataset.agents.length === 0 ? (
         <p className="text-sm text-slate-500">No metrics for selected range.</p>
       ) : null}
 

@@ -7,7 +7,17 @@ import { TargetRatioForm } from "@/components/encoder/TargetRatioForm";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { availableLeaders, initialExpenses, initialTargetRatio, leaders } from "@/lib/mock/encoder";
+import { Expense, Leader, TargetRatio } from "@/types/encoder";
+
+const initialTargetRatio: TargetRatio = {
+  package: 60,
+  retail: 40,
+  globalTargetRatio: 100,
+};
+
+const leaders: Leader[] = [];
+const availableLeaders: Leader[] = [];
+const initialExpenses: Expense[] = [];
 
 export default function EncoderPage() {
   const [isSyncOpen, setIsSyncOpen] = useState(false);
@@ -25,7 +35,7 @@ export default function EncoderPage() {
         <ExpensesForm initialExpenses={initialExpenses} />
       </section>
       <Modal isOpen={isSyncOpen} title="Sync Complete" onClose={() => setIsSyncOpen(false)}>
-        Sales sync completed successfully (mock).
+        Sales sync completed successfully.
       </Modal>
     </>
   );

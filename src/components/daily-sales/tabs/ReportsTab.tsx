@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import { recentSalesRows, type RecentSale } from '@/lib/mock/dailySales';
+import type { RecentSale } from '@/types/dailySales';
 
 type ReportRangeType = 'daily' | 'weekly' | 'monthly' | 'custom';
 
@@ -24,7 +24,7 @@ const validPaymentModes: Array<RecentSale['paymentMode']> = [
 ];
 
 const toIsoDate = (value: Date) => value.toISOString().slice(0, 10);
-const reportDateToday = recentSalesRows.map((row) => row.date).sort().at(-1) ?? toIsoDate(new Date());
+const reportDateToday = toIsoDate(new Date());
 const formatPeso = (value: number) =>
   `PHP ${value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
 
@@ -92,7 +92,7 @@ export function ReportsTab() {
   const [reportType, setReportType] = useState<ReportRangeType>('daily');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [rows, setRows] = useState<RecentSale[]>(recentSalesRows);
+  const [rows, setRows] = useState<RecentSale[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -222,8 +222,7 @@ export function ReportsTab() {
       setRows(mappedRows);
       setHasGenerated(true);
     } catch {
-      setRows(recentSalesRows);
-      setErrorMessage('Backend error loading sales report, showing fallback data.');
+      setErrorMessage('Failed to load sales report.');
       setHasGenerated(true);
     } finally {
       setIsLoading(false);
@@ -384,13 +383,13 @@ export function ReportsTab() {
                     <td className="px-3 py-2">{row.blisters}</td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => onRowAction(`Trans No. action for ${row.pofNumber} (mock).`)}>
+                        <Button size="sm" variant="secondary" onClick={() => onRowAction(`Trans No. action for ${row.pofNumber}.`)}>
                           Trans No.
                         </Button>
-                        <Button size="sm" variant="secondary" onClick={() => onRowAction(`Print action for ${row.pofNumber} (mock).`)}>
+                        <Button size="sm" variant="secondary" onClick={() => onRowAction(`Print action for ${row.pofNumber}.`)}>
                           Print
                         </Button>
-                        <Button size="sm" variant="danger" onClick={() => onRowAction(`Remove action for ${row.pofNumber} (mock).`)}>
+                        <Button size="sm" variant="danger" onClick={() => onRowAction(`Remove action for ${row.pofNumber}.`)}>
                           Remove
                         </Button>
                       </div>

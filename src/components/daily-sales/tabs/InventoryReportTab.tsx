@@ -1,10 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import { inventoryRows } from '@/lib/mock/dailySales';
 
 type InventoryReportRow = {
   id: string;
@@ -40,40 +39,6 @@ type DailyInventoryApiResponse = {
   success: boolean;
   message?: string;
   rows?: DailyInventoryApiRow[];
-};
-
-const mapToReportRow = (
-  row: (typeof inventoryRows)[number]
-): InventoryReportRow => {
-  const seq = row.id.replace('inv-', '');
-  const ggTransNo = `GG-24${seq}`;
-  const pofNumber = `POF-${row.date.replace(/-/g, '').slice(2)}-${seq}`;
-  const upperItem = row.item.toUpperCase();
-  const isBlister = upperItem.includes('BLISTER');
-  const isRetail = upperItem.includes('RETAIL');
-
-  return {
-    id: row.id,
-    date: row.date,
-    name: row.item,
-    ggTransNo,
-    pofNumber,
-    platinum: upperItem.includes('PLATINUM') ? row.sold : 0,
-    gold: upperItem.includes('GOLD') ? row.sold : 0,
-    silver: upperItem.includes('SILVER') ? row.sold : 0,
-    synbioticBottle: isRetail ? row.sold : 0,
-    synbioticBlister: isBlister ? row.sold : 0,
-    voucher: 0,
-    employeeDiscount: 0,
-    numberOfBottles: row.sold,
-    numberOfBlisters: isBlister ? row.sold : 0,
-    releasedBottle: row.sold,
-    releasedBlister: isBlister ? row.sold : 0,
-    toFollowBottle: 0,
-    toFollowBlister: 0,
-    amount: row.sold * (isBlister ? 400 : 3500),
-    modeOfPayment: 'CASH',
-  };
 };
 
 const mapApiRowToReportRow = (
@@ -122,53 +87,18 @@ const formatDateDMYY = (value: string) => {
 };
 
 export function InventoryReportTab() {
-  const defaultInventoryDate = inventoryRows[inventoryRows.length - 1]?.date ?? new Date().toISOString().slice(0, 10);
+  const defaultInventoryDate = new Date().toISOString().slice(0, 10);
   const [pendingFromDate, setPendingFromDate] = useState('');
   const [pendingToDate, setPendingToDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [fromDate, setFromDate] = useState(defaultInventoryDate);
-  const [toDate, setToDate] = useState(defaultInventoryDate);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [rows, setRows] = useState<InventoryReportRow[] | null>(null);
-  const [lastLoadedFromBackend, setLastLoadedFromBackend] = useState(false);
+  const [rows, setRows] = useState<InventoryReportRow[]>([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [displayDateRange, setDisplayDateRange] = useState(
     `${formatDateDMYY(defaultInventoryDate)} To ${formatDateDMYY(defaultInventoryDate)}`
   );
-
-  const getMockRowsInRange = (dateFrom: string, dateTo: string) =>
-    inventoryRows
-      .filter((row) => {
-        if (dateFrom && row.date < dateFrom) {
-          return false;
-        }
-
-        if (dateTo && row.date > dateTo) {
-          return false;
-        }
-
-        return true;
-      })
-      .map((row) => mapToReportRow(row));
-
-  const filteredMockRows = useMemo(() => {
-    return inventoryRows
-      .filter((row) => {
-        if (fromDate && row.date < fromDate) {
-          return false;
-        }
-
-        if (toDate && row.date > toDate) {
-          return false;
-        }
-
-        return true;
-      })
-      .map((row) => mapToReportRow(row));
-  }, [fromDate, toDate]);
-
-  const displayedRows = rows ?? filteredMockRows;
 
   const onGenerate = async () => {
     if (!pendingFromDate || !pendingToDate) {
@@ -176,8 +106,6 @@ export function InventoryReportTab() {
       return;
     }
 
-    setFromDate(pendingFromDate);
-    setToDate(pendingToDate);
     setDisplayDateRange(`${formatDateDMYY(pendingFromDate)} To ${formatDateDMYY(pendingToDate)}`);
     setIsLoading(true);
     setErrorMessage('');
@@ -194,11 +122,11 @@ export function InventoryReportTab() {
 
       const mappedRows = (payload.rows ?? []).map((row, index) => mapApiRowToReportRow(row, index));
       setRows(mappedRows);
-      setLastLoadedFromBackend(true);
+      setHasLoaded(true);
     } catch {
-      setRows(getMockRowsInRange(pendingFromDate, pendingToDate));
-      setErrorMessage('Backend error... showing fallback');
-      setLastLoadedFromBackend(false);
+      setRows([]);
+      setErrorMessage('Failed to load inventory report.');
+      setHasLoaded(true);
     } finally {
       setIsLoading(false);
     }
@@ -320,16 +248,16 @@ export function InventoryReportTab() {
               </tr>
             </thead>
             <tbody>
-              {displayedRows.length === 0 ? (
+              {rows.length === 0 ? (
                 <tr>
                   <td colSpan={18} className="px-3 py-6 text-center text-slate-500">
-                    {lastLoadedFromBackend
+                    {hasLoaded
                       ? 'No inventory results for selected range'
                       : 'No inventory rows found for the selected filters.'}
                   </td>
                 </tr>
               ) : (
-                displayedRows.map((row) => (
+                rows.map((row) => (
                   <tr key={row.id} className="border-t border-slate-100">
                     <td className="px-3 py-2">{row.name}</td>
                     <td className="px-3 py-2">{row.ggTransNo}</td>

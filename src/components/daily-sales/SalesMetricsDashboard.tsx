@@ -6,7 +6,6 @@ import { AgentDetailsModal } from "@/components/dashboard/AgentDetailsModal";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
 import { Card } from "@/components/ui/Card";
-import { dashboardAgents, dashboardSummary } from "@/lib/mock/dashboard";
 import { AgentPerformance, TimeRange } from "@/types/dashboard";
 
 export function SalesMetricsDashboard() {
@@ -14,6 +13,8 @@ export function SalesMetricsDashboard() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<AgentPerformance | null>(null);
+  const [summaryStats] = useState([]);
+  const [agentStats] = useState<AgentPerformance[]>([]);
 
   return (
     <>
@@ -31,8 +32,8 @@ export function SalesMetricsDashboard() {
         </div>
       </Card>
 
-      <SummaryCardGrid stats={dashboardSummary} />
-      <AgentCardGrid agents={dashboardAgents} onAgentSelect={setSelectedAgent} />
+      <SummaryCardGrid stats={summaryStats} />
+      <AgentCardGrid agents={agentStats} onAgentSelect={setSelectedAgent} />
       <AgentDetailsModal agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
     </>
   );

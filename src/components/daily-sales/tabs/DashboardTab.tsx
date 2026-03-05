@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { recentSalesRows, type PaymentMode, type RecentSale } from '@/lib/mock/dailySales';
+import type { PaymentMode, RecentSale } from '@/types/dailySales';
 
 const paymentModes: PaymentMode[] = [
   'ALL',
@@ -55,12 +55,12 @@ export function DashboardTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [rows, setRows] = useState<RecentSale[]>(recentSalesRows);
+  const [rows, setRows] = useState<RecentSale[]>([]);
   const [totals, setTotals] = useState({
-    totalSales: recentSalesRows.reduce((sum, row) => sum + row.sales, 0),
-    totalBottles: recentSalesRows.reduce((sum, row) => sum + row.bottles, 0),
-    totalBlisters: recentSalesRows.reduce((sum, row) => sum + row.blisters, 0),
-    totalTransactions: recentSalesRows.length,
+    totalSales: 0,
+    totalBottles: 0,
+    totalBlisters: 0,
+    totalTransactions: 0,
     newMembers: 0,
   });
 
@@ -139,15 +139,7 @@ export function DashboardTab() {
           return;
         }
 
-        setRows(recentSalesRows);
-        setTotals({
-          totalSales: recentSalesRows.reduce((sum, row) => sum + row.sales, 0),
-          totalBottles: recentSalesRows.reduce((sum, row) => sum + row.bottles, 0),
-          totalBlisters: recentSalesRows.reduce((sum, row) => sum + row.blisters, 0),
-          totalTransactions: recentSalesRows.length,
-          newMembers: 0,
-        });
-        setErrorMessage('Backend error loading daily sales, showing fallback data.');
+        setErrorMessage('Failed to load daily sales.');
       } finally {
         setIsLoading(false);
       }

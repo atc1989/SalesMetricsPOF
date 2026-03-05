@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/Button';
-import type { PaymentMode } from '../../lib/mock/dailySales';
+import type { PaymentMode } from '@/types/dailySales';
 
 type DashboardFiltersProps = {
   fromDate: string;
