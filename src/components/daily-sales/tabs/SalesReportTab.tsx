@@ -4,6 +4,10 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import {
+  getDailySalesNetPrice,
+  getDailySalesPackagePrice,
+} from '@/lib/dailySalesPackages';
 
 type PackageRow = {
   label: string;
@@ -119,19 +123,19 @@ const reportDateToday = new Date().toISOString().slice(0, 10);
 const defaultSnapshot: SnapshotData = {
   packageRows: [
     { label: 'Mobile Stockist', qty: 0, price: 250000 },
-    { label: 'Platinum', qty: 0, price: 35000 },
-    { label: 'Gold', qty: 0, price: 10500 },
-    { label: 'Silver', qty: 0, price: 3500 },
+    { label: 'Platinum', qty: 0, price: getDailySalesPackagePrice('PLATINUM') },
+    { label: 'Gold', qty: 0, price: getDailySalesPackagePrice('GOLD') },
+    { label: 'Silver', qty: 0, price: getDailySalesPackagePrice('SILVER') },
   ],
   msPackageRows: [
-    { label: 'Platinum', qty: 0, price: 34500 },
-    { label: 'Gold', qty: 0, price: 10350 },
-    { label: 'Silver', qty: 0, price: 3450 },
+    { label: 'Platinum', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'PLATINUM') },
+    { label: 'Gold', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'GOLD') },
+    { label: 'Silver', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'SILVER') },
   ],
   cdPackageRows: [
-    { label: 'Platinum', qty: 0, price: 34200 },
-    { label: 'Gold', qty: 0, price: 10260 },
-    { label: 'Silver', qty: 0, price: 3420 },
+    { label: 'Platinum', qty: 0, price: getDailySalesNetPrice('CENTER', 'PLATINUM') },
+    { label: 'Gold', qty: 0, price: getDailySalesNetPrice('CENTER', 'GOLD') },
+    { label: 'Silver', qty: 0, price: getDailySalesNetPrice('CENTER', 'SILVER') },
   ],
   retailRows: [
     { label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2280 },

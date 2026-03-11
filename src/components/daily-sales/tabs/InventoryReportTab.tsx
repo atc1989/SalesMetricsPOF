@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import {
+  getDailySalesPackagePrice,
+  normalizeDailySalesPackageType,
+} from '@/lib/dailySalesPackages';
 
 type InventoryReportRow = {
   id: string;
@@ -46,9 +50,12 @@ const mapApiRowToReportRow = (
   index: number,
 ): InventoryReportRow => {
   const upperPackageType = row.package_type.toUpperCase();
+  const normalizedPackageType = normalizeDailySalesPackageType(row.package_type);
   const isBlister = upperPackageType.includes('BLISTER');
   const isRetail = upperPackageType.includes('RETAIL');
-  const amountMultiplier = isBlister ? 400 : 3500;
+  const amountMultiplier = normalizedPackageType
+    ? getDailySalesPackagePrice(normalizedPackageType)
+    : 0;
 
   return {
     id: `api-${index}-${upperPackageType}`,

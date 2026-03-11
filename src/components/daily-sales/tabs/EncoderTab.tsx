@@ -4,6 +4,15 @@ import { FormEvent, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import {
+  dailySalesDiscountMatrix,
+  encoderPackageOptions,
+  getDailySalesPackageBlisterCount,
+  getDailySalesPackageBottleCount,
+  getDailySalesPackageConfig,
+  getDailySalesPackagePrice,
+  hasBundledPackageBlisters,
+} from '@/lib/dailySalesPackages';
 import type {
   EncoderBlisterOption,
   EncoderFormModel,
@@ -46,61 +55,6 @@ const paymentTypeOptionsByMode: Partial<Record<Exclude<EncoderPaymentModeOption,
 
 const defaultPaymentTypeOption: PaymentTypeOption = { label: 'N/A', value: 'N/A' };
 
-const packageBottleCounts: Record<EncoderPackageTypeOption, number> = {
-  SILVER: 1,
-  GOLD: 3,
-  PLATINUM: 10,
-  RETAIL: 1,
-  BLISTER: 1,
-};
-
-const packagePricesByType: Record<EncoderPackageTypeOption, number> = {
-  SILVER: 3500,
-  GOLD: 10500,
-  PLATINUM: 35000,
-  RETAIL: 3800,
-  BLISTER: 1299,
-};
-
-const discountMatrix: Record<EncoderMemberTypeOption, Record<EncoderPackageTypeOption, number>> = {
-  DISTRIBUTOR: {
-    SILVER: 0,
-    GOLD: 0,
-    PLATINUM: 0,
-    RETAIL: 1520,
-    BLISTER: 520,
-  },
-  STOCKIST: {
-    SILVER: 50,
-    GOLD: 150,
-    PLATINUM: 500,
-    RETAIL: 1710,
-    BLISTER: 585,
-  },
-  CENTER: {
-    SILVER: 80,
-    GOLD: 240,
-    PLATINUM: 800,
-    RETAIL: 1900,
-    BLISTER: 650,
-  },
-  'NON-MEMBER': {
-    SILVER: 0,
-    GOLD: 0,
-    PLATINUM: 0,
-    RETAIL: 0,
-    BLISTER: 0,
-  },
-};
-
-const defaultBlisterByPackageType: Record<EncoderPackageTypeOption, EncoderBlisterOption> = {
-  SILVER: '1',
-  GOLD: '0',
-  PLATINUM: '0',
-  RETAIL: '0',
-  BLISTER: '1',
-};
-
 const discountOptions: Array<{ label: string; value: number }> = [
   { label: 'No Discount', value: 0 },
   { label: '₱50', value: 50 },
@@ -134,13 +88,15 @@ function applyMemberPackageRules(
   memberType: EncoderMemberTypeOption,
   packageType: EncoderPackageTypeOption
 ): EncoderFormModel {
+  const packageConfig = getDailySalesPackageConfig(packageType);
+
   return {
     ...current,
     memberType,
     packageType,
-    originalPrice: packagePricesByType[packageType],
-    discount: discountMatrix[memberType][packageType],
-    isToBlister: defaultBlisterByPackageType[packageType],
+    originalPrice: packageConfig.originalPrice,
+    discount: dailySalesDiscountMatrix[memberType][packageType],
+    isToBlister: packageConfig.defaultIsToBlister,
   };
 }
 
@@ -154,15 +110,15 @@ const buildInitialForm = (): EncoderFormModel => {
     newMember: '1',
     memberType: 'DISTRIBUTOR',
     packageType: 'SILVER',
-    isToBlister: '1',
-    originalPrice: packagePricesByType.SILVER,
+    isToBlister: getDailySalesPackageConfig('SILVER').defaultIsToBlister,
+    originalPrice: getDailySalesPackagePrice('SILVER'),
     quantity: 1,
     blisterCount: 0,
     discount: 0,
-    price: packagePricesByType.SILVER,
+    price: getDailySalesPackagePrice('SILVER'),
     oneTimeDiscount: 0,
     noOfBottles: 1,
-    sales: packagePricesByType.SILVER,
+    sales: getDailySalesPackagePrice('SILVER'),
     paymentMode: 'CASH',
     paymentType: 'N/A',
     referenceNo: 'N/A',
@@ -210,8 +166,8 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
   const discount = Math.max(input.discount, 0);
   const oneTimeDiscount = manualOverrides.oneTimeDiscount ? input.oneTimeDiscount : Math.max(input.oneTimeDiscount, 0);
   const price = manualOverrides.price ? input.price : Math.max(input.originalPrice - discount, 0);
-  const blisterCount = input.isToBlister === '1' ? quantity * 10 : 0;
-  const noOfBottles = quantity * packageBottleCounts[input.packageType];
+  const blisterCount = getDailySalesPackageBlisterCount(input.packageType, quantity, input.isToBlister);
+  const noOfBottles = getDailySalesPackageBottleCount(input.packageType, quantity);
   const sales = manualOverrides.sales ? input.sales : Math.max(price * quantity - oneTimeDiscount, 0);
   const normalizedSalesTwo = manualOverrides.salesTwo
     ? input.salesTwo
@@ -250,6 +206,7 @@ export function EncoderTab() {
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [paymentModeTwoError, setPaymentModeTwoError] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const isBundledPackage = hasBundledPackageBlisters(form.packageType);
 
   const primaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentMode), [form.paymentMode]);
   const secondaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentModeTwo), [form.paymentModeTwo]);
@@ -495,11 +452,11 @@ export function EncoderTab() {
               <label className="flex flex-col gap-1 text-sm text-slate-700">
                 Package Type
                 <select id="packageType" value={form.packageType} onChange={(event) => onPackageTypeChange(event.target.value as EncoderPackageTypeOption)} className="h-10 rounded-md border border-slate-300 px-3">
-                  <option value="SILVER">Silver (1 bottle)</option>
-                  <option value="GOLD">Gold (3 bottles)</option>
-                  <option value="PLATINUM">Platinum (10 bottles)</option>
-                  <option value="RETAIL">Retail (1 bottle)</option>
-                  <option value="BLISTER">Blister (1 blister pack)</option>
+                  {encoderPackageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
@@ -508,11 +465,15 @@ export function EncoderTab() {
                   id="isToBlister"
                   value={form.isToBlister}
                   onChange={(event) => updateField('isToBlister', event.target.value as EncoderBlisterOption)}
+                  disabled={isBundledPackage}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 >
                   <option value="0">No</option>
                   <option value="1">Yes</option>
                 </select>
+                {isBundledPackage ? (
+                  <span className="text-xs text-slate-500">Package bundles already include blister counts.</span>
+                ) : null}
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
                 Original Price
@@ -789,7 +750,7 @@ export function EncoderTab() {
             "username":"tester01",
             "is_new_member":true,
             "package_type":"SILVER",
-            "sales":3500
+            "sales":4500
           }
       */}
 
