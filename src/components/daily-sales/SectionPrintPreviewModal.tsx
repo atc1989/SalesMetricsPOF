@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { buildPrintHtmlDocument, openPrintWindow } from "@/lib/printWindow";
 
 type SectionPrintPreviewModalProps = {
   isOpen: boolean;
@@ -17,9 +18,13 @@ export function SectionPrintPreviewModal({
   onClose,
 }: SectionPrintPreviewModalProps) {
   const onPrint = () => {
-    if (typeof window !== "undefined") {
-      window.print();
+    if (!html) {
+      return;
     }
+
+    openPrintWindow({
+      html: buildPrintHtmlDocument(html, title),
+    });
   };
 
   return (
