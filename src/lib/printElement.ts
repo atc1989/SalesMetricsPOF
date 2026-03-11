@@ -52,5 +52,10 @@ export const getPrintableHtmlById = (elementId: string) => {
 
   const clone = source.cloneNode(true) as HTMLElement;
   syncFormValues(source, clone);
+
+  clone.querySelectorAll('[data-print-exclude="true"]').forEach((node) => {
+    node.remove();
+  });
+
   return clone.outerHTML;
 };

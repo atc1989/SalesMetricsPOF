@@ -1,3 +1,5 @@
+import { openPrintWindow } from '@/lib/printWindow';
+
 export type SalesReportPrintRow = {
   label: string;
   qty?: number;
@@ -185,47 +187,5 @@ export function openSalesReportPrintWindow(input: SalesReportPrintInput) {
 </body>
 </html>`;
 
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  iframe.setAttribute('aria-hidden', 'true');
-
-  const cleanup = () => {
-    window.setTimeout(() => {
-      iframe.remove();
-    }, 1500);
-  };
-
-  iframe.onload = () => {
-    try {
-      const frameWindow = iframe.contentWindow;
-      if (!frameWindow) {
-        cleanup();
-        return;
-      }
-
-      frameWindow.focus();
-      frameWindow.print();
-      frameWindow.onafterprint = cleanup;
-      window.setTimeout(cleanup, 2500);
-    } catch {
-      cleanup();
-    }
-  };
-
-  document.body.appendChild(iframe);
-
-  const frameDocument = iframe.contentDocument;
-  if (!frameDocument) {
-    cleanup();
-    return;
-  }
-
-  frameDocument.open();
-  frameDocument.write(html);
-  frameDocument.close();
+  openPrintWindow({ html });
 }
