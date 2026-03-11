@@ -129,11 +129,11 @@ async function main() {
   }
 
   const worksheet = workbook.Sheets[firstSheetName];
-  const rawRows = XLSX.utils.sheet_to_json<(string | null)[]>(worksheet, {
+  const rawRows = XLSX.utils.sheet_to_json(worksheet, {
     header: 1,
     defval: null,
     raw: false,
-  });
+  }) as Array<Array<string | null>>;
 
   const headerRow = rawRows[0];
   if (!headerRow) {
