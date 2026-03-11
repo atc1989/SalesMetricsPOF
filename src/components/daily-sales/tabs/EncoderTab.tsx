@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
@@ -97,6 +97,22 @@ void discountOptions;
 
 const today = new Date().toISOString().slice(0, 10);
 
+type UserSearchResult = {
+  username: string;
+  memberName: string;
+};
+
+function formatPofBaseFromDate(date: string): string {
+  const parsed = /^\d{4}-(\d{2})-(\d{2})$/.exec(date);
+  if (!parsed) {
+    return '';
+  }
+
+  const [, month, day] = parsed;
+  const year = date.slice(2, 4);
+  return `${month}${day}${year} - `;
+}
+
 function getPaymentTypeOptions(mode: EncoderPaymentModeOption): PaymentTypeOption[] {
   if (mode === 'N/A') {
     return [defaultPaymentTypeOption];
@@ -126,7 +142,7 @@ const buildInitialForm = (): EncoderFormModel => {
   const base: EncoderFormModel = {
     event: 'DAVAO',
     date: today,
-    pofNumber: '',
+    pofNumber: formatPofBaseFromDate(today),
     name: '',
     username: '',
     newMember: '1',
@@ -225,6 +241,10 @@ type NumericField =
 export function EncoderTab() {
   const [form, setForm] = useState<EncoderFormModel>(() => applyComputedFields(buildInitialForm(), initialManualOverrides));
   const [manualOverrides, setManualOverrides] = useState<ManualOverrides>(initialManualOverrides);
+  const [isPofManuallyEdited, setIsPofManuallyEdited] = useState(false);
+  const [userSearchResults, setUserSearchResults] = useState<UserSearchResult[]>([]);
+  const [isUserSearchLoading, setIsUserSearchLoading] = useState(false);
+  const [userSearchError, setUserSearchError] = useState<string | null>(null);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [paymentModeTwoError, setPaymentModeTwoError] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -237,11 +257,82 @@ export function EncoderTab() {
   const resetForm = () => {
     setForm(applyComputedFields(buildInitialForm(), initialManualOverrides));
     setManualOverrides(initialManualOverrides);
+    setIsPofManuallyEdited(false);
+    setUserSearchResults([]);
+    setUserSearchError(null);
     setPaymentModeTwoError('');
   };
 
+  useEffect(() => {
+    const query = form.username.trim();
+    if (query.length < 2) {
+      setUserSearchResults([]);
+      setUserSearchError(null);
+      setIsUserSearchLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setIsUserSearchLoading(true);
+      setUserSearchError(null);
+
+      try {
+        const response = await fetch(`/api/daily-sales/users/search?q=${encodeURIComponent(query)}&limit=10`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as {
+          success?: boolean;
+          rows?: UserSearchResult[];
+          message?: string;
+        };
+
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.message ?? 'Unable to search users.');
+        }
+
+        setUserSearchResults(payload.rows ?? []);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        setUserSearchResults([]);
+        setUserSearchError(error instanceof Error ? error.message : 'Unable to search users.');
+      } finally {
+        setIsUserSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [form.username]);
+
   const updateField = <K extends keyof EncoderFormModel>(key: K, value: EncoderFormModel[K]) => {
     setForm((prev) => applyComputedFields({ ...prev, [key]: value }, manualOverrides));
+  };
+
+  const onDateChange = (value: string) => {
+    setForm((prev) => {
+      const nextPof = isPofManuallyEdited ? prev.pofNumber : formatPofBaseFromDate(value);
+      return applyComputedFields({ ...prev, date: value, pofNumber: nextPof }, manualOverrides);
+    });
+  };
+
+  const onPofChange = (value: string) => {
+    const autoPof = formatPofBaseFromDate(form.date);
+    setIsPofManuallyEdited(value.trim() !== '' && value !== autoPof);
+    updateField('pofNumber', value);
+  };
+
+  const onUsernameChange = (value: string) => {
+    updateField('username', value);
+    const match = userSearchResults.find((entry) => entry.username.toLowerCase() === value.toLowerCase());
+    if (match) {
+      updateField('name', match.memberName);
+    }
   };
 
   const updateNumericField = (key: NumericField, value: string, manualKey?: ManualOverrideKey) => {
@@ -416,7 +507,7 @@ export function EncoderTab() {
                   id="date"
                   type="date"
                   value={form.date}
-                  onChange={(event) => updateField('date', event.target.value)}
+                  onChange={(event) => onDateChange(event.target.value)}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -425,7 +516,7 @@ export function EncoderTab() {
                 <input
                   id="pofNumber"
                   value={form.pofNumber}
-                  onChange={(event) => updateField('pofNumber', event.target.value)}
+                  onChange={(event) => onPofChange(event.target.value)}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -442,10 +533,20 @@ export function EncoderTab() {
                 Username
                 <input
                   id="username"
+                  list="encoder-usernames"
                   value={form.username}
-                  onChange={(event) => updateField('username', event.target.value)}
+                  onChange={(event) => onUsernameChange(event.target.value)}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
+                <datalist id="encoder-usernames">
+                  {userSearchResults.map((entry) => (
+                    <option key={entry.username} value={entry.username}>
+                      {entry.memberName}
+                    </option>
+                  ))}
+                </datalist>
+                {isUserSearchLoading ? <span className="text-xs text-slate-500">Searching users…</span> : null}
+                {userSearchError ? <span className="text-xs text-red-600">{userSearchError}</span> : null}
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
                 New Member?
