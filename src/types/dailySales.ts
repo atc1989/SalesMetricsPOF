@@ -107,6 +107,9 @@ export type EncoderPackageTypeOption =
   | 'SILVER'
   | 'GOLD'
   | 'PLATINUM'
+  | 'USILVERGOLD'
+  | 'UGOLDPLATINUM'
+  | 'USILVERPLATINUM'
   | 'RETAIL'
   | 'BLISTER';
 

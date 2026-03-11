@@ -37,6 +37,27 @@ export const dailySalesPackageCatalog: Record<
     bundledBlisterCount: 10,
     defaultIsToBlister: '0',
   },
+  USILVERGOLD: {
+    label: 'USilverGold (2 bottles + 2 blisters)',
+    originalPrice: 9000,
+    bottleCount: 2,
+    bundledBlisterCount: 2,
+    defaultIsToBlister: '0',
+  },
+  UGOLDPLATINUM: {
+    label: 'UGoldPlatinum (7 bottles + 7 blisters)',
+    originalPrice: 31500,
+    bottleCount: 7,
+    bundledBlisterCount: 7,
+    defaultIsToBlister: '0',
+  },
+  USILVERPLATINUM: {
+    label: 'USilverPlatinum (9 bottles + 9 blisters)',
+    originalPrice: 40500,
+    bottleCount: 9,
+    bundledBlisterCount: 9,
+    defaultIsToBlister: '0',
+  },
   RETAIL: {
     label: 'Retail (1 bottle)',
     originalPrice: 3800,
@@ -70,6 +91,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 0,
     GOLD: 0,
     PLATINUM: 0,
+    USILVERGOLD: 0,
+    UGOLDPLATINUM: 0,
+    USILVERPLATINUM: 0,
     RETAIL: 1520,
     BLISTER: 520,
   },
@@ -77,6 +101,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 50,
     GOLD: 150,
     PLATINUM: 500,
+    USILVERGOLD: 0,
+    UGOLDPLATINUM: 0,
+    USILVERPLATINUM: 0,
     RETAIL: 1710,
     BLISTER: 585,
   },
@@ -84,6 +111,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 80,
     GOLD: 240,
     PLATINUM: 800,
+    USILVERGOLD: 0,
+    UGOLDPLATINUM: 0,
+    USILVERPLATINUM: 0,
     RETAIL: 1900,
     BLISTER: 650,
   },
@@ -91,6 +121,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 0,
     GOLD: 0,
     PLATINUM: 0,
+    USILVERGOLD: 0,
+    UGOLDPLATINUM: 0,
+    USILVERPLATINUM: 0,
     RETAIL: 0,
     BLISTER: 0,
   },
@@ -151,6 +184,18 @@ export function normalizeDailySalesPackageType(
   value: string,
 ): EncoderPackageTypeOption | null {
   const normalized = value.trim().toUpperCase();
+
+  if (normalized.includes('USILVERPLATINUM')) {
+    return 'USILVERPLATINUM';
+  }
+
+  if (normalized.includes('UGOLDPLATINUM')) {
+    return 'UGOLDPLATINUM';
+  }
+
+  if (normalized.includes('USILVERGOLD')) {
+    return 'USILVERGOLD';
+  }
 
   if (normalized.includes('PLATINUM')) {
     return 'PLATINUM';

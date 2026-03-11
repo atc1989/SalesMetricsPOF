@@ -73,6 +73,28 @@ const discountOptions: Array<{ label: string; value: number }> = [
   { label: '50% (₱650)', value: 650 },
 ];
 
+const encoderDiscountOptions: Array<{ label: string; value: number }> = [
+  { label: 'No Discount', value: 0 },
+  { label: '10% (P380)', value: 380 },
+  { label: '20% (P760)', value: 760 },
+  { label: 'P50', value: 50 },
+  { label: 'P150', value: 150 },
+  { label: 'P500', value: 500 },
+  { label: 'P80', value: 80 },
+  { label: 'P240', value: 240 },
+  { label: 'P800', value: 800 },
+  { label: 'P1748', value: 1748 },
+  { label: '40% (P1,520)', value: 1520 },
+  { label: '45% (P1,710)', value: 1710 },
+  { label: '50% (P1,900)', value: 1900 },
+  { label: '40% (P520)', value: 520 },
+  { label: '45% (P585)', value: 585 },
+  { label: '47.5% (P618)', value: 618 },
+  { label: '50% (P650)', value: 650 },
+];
+
+void discountOptions;
+
 const today = new Date().toISOString().slice(0, 10);
 
 function getPaymentTypeOptions(mode: EncoderPaymentModeOption): PaymentTypeOption[] {
@@ -514,7 +536,7 @@ export function EncoderTab() {
                   onChange={(event) => updateNumericField('discount', event.target.value)}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 >
-                  {discountOptions.map((option) => (
+                  {encoderDiscountOptions.map((option) => (
                     <option key={`discount-${option.value}`} value={option.value}>
                       {option.label}
                     </option>
