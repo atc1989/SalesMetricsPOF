@@ -9,8 +9,16 @@ type SalesReportRow = {
   member_name: string | null;
   username: string | null;
   package_type: string | null;
+  quantity: number | string | null;
+  original_price: number | string | null;
+  discount: number | string | null;
+  price_after_discount: number | string | null;
   bottle_count: number | string | null;
   blister_count: number | string | null;
+  released_count: number | string | null;
+  released_blpk_count: number | string | null;
+  to_follow_count: number | string | null;
+  to_follow_blpk_count: number | string | null;
   sales: number | string | null;
   mode_of_payment: string | null;
   payment_type: string | null;
@@ -46,7 +54,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("daily_sales")
     .select(
-      "pof_number, trans_date, member_name, username, package_type, bottle_count, blister_count, sales, mode_of_payment, payment_type",
+      "pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type",
     )
     .gte("trans_date", dateFrom)
     .lte("trans_date", dateTo)
@@ -75,8 +83,16 @@ export async function GET(request: NextRequest) {
       member_name: typedRow.member_name,
       username: typedRow.username,
       package_type: typedRow.package_type,
+      quantity: toNumber(typedRow.quantity),
+      original_price: toNumber(typedRow.original_price),
+      discount: toNumber(typedRow.discount),
+      price_after_discount: toNumber(typedRow.price_after_discount),
       bottle_count: toNumber(typedRow.bottle_count),
       blister_count: toNumber(typedRow.blister_count),
+      released_count: toNumber(typedRow.released_count),
+      released_blpk_count: toNumber(typedRow.released_blpk_count),
+      to_follow_count: toNumber(typedRow.to_follow_count),
+      to_follow_blpk_count: toNumber(typedRow.to_follow_blpk_count),
       sales: toNumber(typedRow.sales),
       mode_of_payment: typedRow.mode_of_payment,
       payment_type: typedRow.payment_type,

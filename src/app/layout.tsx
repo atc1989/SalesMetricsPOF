@@ -18,7 +18,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">
         <div className="flex min-h-screen">
           <Sidebar />
-          <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <div className="flex min-h-screen min-w-0 flex-1 flex-col md:pl-64">
             <header className="border-b border-slate-200 bg-white md:hidden">
               <div className="flex items-center justify-between px-4 py-4 sm:px-6">
                 <h1 className="text-xl font-semibold tracking-tight">SalesMetrics</h1>

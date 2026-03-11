@@ -27,7 +27,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white md:flex md:flex-col md:justify-between">
+    <aside className="hidden border-r border-slate-200 bg-white md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-64 md:flex-col md:justify-between">
       <div>
         <div className="border-b border-slate-200 px-6 py-5">
           <h1 className="text-lg font-semibold tracking-tight text-slate-900">SalesMetrics</h1>

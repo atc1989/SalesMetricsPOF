@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { PrintPreviewModal } from '@/components/daily-sales/PrintPreviewModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import type { RecentSale } from '@/types/dailySales';
+import type { PrintLineItem, PrintTransaction, RecentSale } from '@/types/dailySales';
 
 type ReportRangeType = 'daily' | 'weekly' | 'monthly' | 'custom';
 
@@ -27,6 +28,17 @@ const toIsoDate = (value: Date) => value.toISOString().slice(0, 10);
 const reportDateToday = toIsoDate(new Date());
 const formatPeso = (value: number) =>
   `PHP ${value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+
+type ReportsSaleRow = RecentSale & {
+  quantity: number;
+  originalPrice: number;
+  discount: number;
+  discountedPrice: number;
+  releasedBottle: number;
+  releasedBlister: number;
+  balanceBottle: number;
+  balanceBlister: number;
+};
 
 function normalizePaymentMode(value: string | null): RecentSale['paymentMode'] {
   if (!value) {
@@ -88,11 +100,14 @@ export function ReportsTab() {
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isActionNoticeOpen, setIsActionNoticeOpen] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
+  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
+  const [selectedPrintTransaction, setSelectedPrintTransaction] = useState<PrintTransaction | null>(null);
+  const [selectedPrintLineItems, setSelectedPrintLineItems] = useState<PrintLineItem[]>([]);
 
   const [reportType, setReportType] = useState<ReportRangeType>('daily');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [rows, setRows] = useState<RecentSale[]>([]);
+  const [rows, setRows] = useState<ReportsSaleRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -192,8 +207,16 @@ export function ReportsTab() {
           member_name: string | null;
           username: string | null;
           package_type: string | null;
+          quantity: number;
+          original_price: number;
+          discount: number;
+          price_after_discount: number;
           bottle_count: number;
           blister_count: number;
+          released_count: number;
+          released_blpk_count: number;
+          to_follow_count: number;
+          to_follow_blpk_count: number;
           sales: number;
           mode_of_payment: string | null;
         }>;
@@ -204,7 +227,7 @@ export function ReportsTab() {
         throw new Error(payload.message ?? 'Failed to load sales report.');
       }
 
-      const mappedRows: RecentSale[] = payload.rows.map((row, index) => ({
+      const mappedRows: ReportsSaleRow[] = payload.rows.map((row, index) => ({
         id: `${row.pof_number ?? 'sales'}-${index}`,
         pofNumber: row.pof_number ?? '',
         ggTransNo: row.username ?? 'N/A',
@@ -217,6 +240,14 @@ export function ReportsTab() {
         sales: row.sales ?? 0,
         paymentMode: normalizePaymentMode(row.mode_of_payment),
         status: 'Released',
+        quantity: row.quantity ?? 0,
+        originalPrice: row.original_price ?? 0,
+        discount: row.discount ?? 0,
+        discountedPrice: row.price_after_discount ?? 0,
+        releasedBottle: row.released_count ?? 0,
+        releasedBlister: row.released_blpk_count ?? 0,
+        balanceBottle: row.to_follow_count ?? 0,
+        balanceBlister: row.to_follow_blpk_count ?? 0,
       }));
 
       setRows(mappedRows);
@@ -232,6 +263,33 @@ export function ReportsTab() {
   const onRowAction = (message: string) => {
     setActionNotice(message);
     setIsActionNoticeOpen(true);
+  };
+
+  const onPrintRow = (row: ReportsSaleRow) => {
+    setSelectedPrintTransaction({
+      date: row.date,
+      pofNumber: row.pofNumber,
+      customer: row.memberName || 'N/A',
+      ggTransNo: row.ggTransNo,
+      modeOfPayment: row.paymentMode,
+      encoder: row.zeroOne || row.ggTransNo || 'N/A',
+    });
+    setSelectedPrintLineItems([
+      {
+        id: `print-${row.id}`,
+        productPackage: row.packageType || 'N/A',
+        srp: row.originalPrice,
+        discount: row.discount,
+        discountedPrice: row.discountedPrice,
+        quantity: row.quantity,
+        amount: row.sales,
+        releasedBottle: row.releasedBottle,
+        releasedBlister: row.releasedBlister,
+        balanceBottle: row.balanceBottle,
+        balanceBlister: row.balanceBlister,
+      },
+    ]);
+    setIsPrintPreviewOpen(true);
   };
 
   const onExportCsv = () => {
@@ -386,7 +444,7 @@ export function ReportsTab() {
                         <Button size="sm" variant="secondary" onClick={() => onRowAction(`Trans No. action for ${row.pofNumber}.`)}>
                           Trans No.
                         </Button>
-                        <Button size="sm" variant="secondary" onClick={() => onRowAction(`Print action for ${row.pofNumber}.`)}>
+                        <Button size="sm" variant="secondary" onClick={() => onPrintRow(row)}>
                           Print
                         </Button>
                         <Button size="sm" variant="danger" onClick={() => onRowAction(`Remove action for ${row.pofNumber}.`)}>
@@ -420,6 +478,14 @@ export function ReportsTab() {
       <Modal isOpen={isActionNoticeOpen} title="Info" onClose={() => setIsActionNoticeOpen(false)}>
         {actionNotice}
       </Modal>
+      {selectedPrintTransaction ? (
+        <PrintPreviewModal
+          isOpen={isPrintPreviewOpen}
+          transaction={selectedPrintTransaction}
+          lineItems={selectedPrintLineItems}
+          onClose={() => setIsPrintPreviewOpen(false)}
+        />
+      ) : null}
     </section>
   );
 }
