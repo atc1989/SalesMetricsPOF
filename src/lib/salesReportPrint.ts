@@ -84,11 +84,6 @@ function renderAmountTable(title: string, rows: Array<{ label: string; amount: n
 }
 
 export function openSalesReportPrintWindow(input: SalesReportPrintInput) {
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1200,height=900');
-  if (!printWindow) {
-    return;
-  }
-
   const cashRows = input.cashRows
     .map(
       (entry) => `<tr><td>${escapeHtml(entry.label)}</td><td class="num">${entry.pieces}</td><td class="num">${formatAmount(entry.amount)}</td></tr>`
@@ -187,13 +182,50 @@ export function openSalesReportPrintWindow(input: SalesReportPrintInput) {
       <div class="signature-box"><div>Checked By:</div><div><strong>Erica Villaester</strong></div><div>Accounting Staff</div></div>
     </div>
   </div>
-  <script>
-    window.onload = () => { window.print(); window.onafterprint = () => window.close(); };
-  </script>
 </body>
 </html>`;
 
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.setAttribute('aria-hidden', 'true');
+
+  const cleanup = () => {
+    window.setTimeout(() => {
+      iframe.remove();
+    }, 1500);
+  };
+
+  iframe.onload = () => {
+    try {
+      const frameWindow = iframe.contentWindow;
+      if (!frameWindow) {
+        cleanup();
+        return;
+      }
+
+      frameWindow.focus();
+      frameWindow.print();
+      frameWindow.onafterprint = cleanup;
+      window.setTimeout(cleanup, 2500);
+    } catch {
+      cleanup();
+    }
+  };
+
+  document.body.appendChild(iframe);
+
+  const frameDocument = iframe.contentDocument;
+  if (!frameDocument) {
+    cleanup();
+    return;
+  }
+
+  frameDocument.open();
+  frameDocument.write(html);
+  frameDocument.close();
 }
