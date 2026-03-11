@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import { printElementById } from '@/lib/printElement';
 import {
   getDailySalesNetPrice,
   getDailySalesPackagePrice,
@@ -330,7 +331,6 @@ export function SalesReportTab() {
   const [snapshot, setSnapshot] = useState<SnapshotData>(defaultSnapshot);
   const [cashPieces, setCashPieces] = useState<Record<CashFieldId, number>>(defaultCashPieces);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
-  const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -511,7 +511,7 @@ export function SalesReportTab() {
   };
 
   const onUpsertCashOnHand = () => {
-    setIsPrintOpen(true);
+    printElementById('cntnrDailySales', 'Daily Sales Report');
   };
 
   return (
@@ -707,9 +707,6 @@ export function SalesReportTab() {
 
       <Modal isOpen={isWarningOpen} title="Warning!" onClose={() => setIsWarningOpen(false)}>
         Please input valid date.
-      </Modal>
-      <Modal isOpen={isPrintOpen} title="Print" onClose={() => setIsPrintOpen(false)}>
-        upsertCashOnHand() mock action completed.
       </Modal>
     </>
   );

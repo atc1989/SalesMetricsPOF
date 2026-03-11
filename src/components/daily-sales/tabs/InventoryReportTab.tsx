@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import { printElementById } from '@/lib/printElement';
 import {
   getDailySalesPackagePrice,
   normalizeDailySalesPackageType,
@@ -139,6 +140,10 @@ export function InventoryReportTab() {
     }
   };
 
+  const onPrint = () => {
+    printElementById('cntnrDailyInventory', 'Daily Inventory Report');
+  };
+
   return (
     <section id="inventory-report" className="mt-4 space-y-4">
       <Card className="p-3">
@@ -188,12 +193,12 @@ export function InventoryReportTab() {
         </div>
       </Card>
 
-      <Card className="p-0">
+      <Card id="cntnrDailyInventory" className="p-0">
         <div className="flex items-center justify-between px-4 py-3">
           <span id="spnTransDate" className="text-sm text-slate-700">
             {displayDateRange}
           </span>
-          <Button id="printDailyInventory" size="sm" variant="secondary">
+          <Button id="printDailyInventory" size="sm" variant="secondary" onClick={onPrint}>
             Print
           </Button>
         </div>
