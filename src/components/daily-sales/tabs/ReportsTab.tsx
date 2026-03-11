@@ -31,6 +31,7 @@ const formatPeso = (value: number) =>
   `PHP ${value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
 
 type ReportsSaleRow = RecentSale & {
+  dailySalesId: number;
   quantity: number;
   originalPrice: number;
   discount: number;
@@ -101,7 +102,7 @@ export function ReportsTab() {
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isActionNoticeOpen, setIsActionNoticeOpen] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
-  const [selectedModifyRow, setSelectedModifyRow] = useState<{ id: string; pofNumber: string; ggTransNo: string } | null>(null);
+  const [selectedModifyRow, setSelectedModifyRow] = useState<{ id: string; dailySalesId: number; pofNumber: string; ggTransNo: string } | null>(null);
   const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
   const [isSavingGgTransNo, setIsSavingGgTransNo] = useState(false);
   const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
@@ -206,6 +207,7 @@ export function ReportsTab() {
       const payload = (await response.json()) as {
         success: boolean;
         rows?: Array<{
+          daily_sales_id: number;
           pof_number: string | null;
           trans_date: string | null;
           member_name: string | null;
@@ -232,7 +234,8 @@ export function ReportsTab() {
       }
 
       const mappedRows: ReportsSaleRow[] = payload.rows.map((row, index) => ({
-        id: `${row.pof_number ?? 'sales'}-${index}`,
+        id: `${row.daily_sales_id ?? row.pof_number ?? 'sales'}-${index}`,
+        dailySalesId: row.daily_sales_id ?? 0,
         pofNumber: row.pof_number ?? '',
         ggTransNo: row.username ?? 'N/A',
         date: row.trans_date ?? '',
@@ -272,6 +275,7 @@ export function ReportsTab() {
   const onOpenModifyGgTransNo = (row: ReportsSaleRow) => {
     setSelectedModifyRow({
       id: row.id,
+      dailySalesId: row.dailySalesId,
       pofNumber: row.pofNumber,
       ggTransNo: row.ggTransNo,
     });
@@ -286,17 +290,15 @@ export function ReportsTab() {
     setIsSavingGgTransNo(true);
 
     try {
-      const response = await fetch('/api/daily-sales/modify', {
+      const response = await fetch('/api/daily-sales/modify-gg-trans-no', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pofNumber: selectedModifyRow.pofNumber,
-          pof_number: selectedModifyRow.pofNumber,
+          dailySalesId: selectedModifyRow.dailySalesId,
+          daily_sales_id: selectedModifyRow.dailySalesId,
+          username: newValue,
           ggTransNo: newValue,
           gg_trans_no: newValue,
-          username: newValue,
-          newGgTransNo: newValue,
-          new_gg_trans_no: newValue,
         }),
       });
 

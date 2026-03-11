@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type SalesReportRow = {
+  daily_sales_id: number | string | null;
   pof_number: string | null;
   trans_date: string | null;
   member_name: string | null;
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("daily_sales")
     .select(
-      "pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type",
+      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type",
     )
     .gte("trans_date", dateFrom)
     .lte("trans_date", dateTo)
@@ -78,6 +79,7 @@ export async function GET(request: NextRequest) {
   const rows = (data ?? []).map((row) => {
     const typedRow = row as SalesReportRow;
     return {
+      daily_sales_id: toNumber(typedRow.daily_sales_id),
       pof_number: typedRow.pof_number,
       trans_date: typedRow.trans_date,
       member_name: typedRow.member_name,
