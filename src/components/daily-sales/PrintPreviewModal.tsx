@@ -19,8 +19,24 @@ export function PrintPreviewModal({ isOpen, transaction, lineItems, onClose }: P
       return;
     }
 
+    const printNode = preview.cloneNode(true) as HTMLElement;
+    printNode.querySelectorAll('[data-print-exclude="true"]').forEach((node) => {
+      node.remove();
+    });
+
+    printNode
+      .querySelectorAll<HTMLElement>(".overflow-auto, .overflow-x-auto, .overflow-y-auto")
+      .forEach((node) => {
+        node.classList.remove("overflow-auto", "overflow-x-auto", "overflow-y-auto");
+      });
+
+    printNode.querySelectorAll<HTMLElement>("table").forEach((table) => {
+      table.style.minWidth = "0";
+      table.style.width = "100%";
+    });
+
     openPrintWindow({
-      html: buildPrintHtmlDocument(preview.outerHTML, "Sales Report Print Preview"),
+      html: buildPrintHtmlDocument(printNode.outerHTML, "Sales Report Print Preview"),
     });
   };
 

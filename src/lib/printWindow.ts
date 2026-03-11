@@ -62,6 +62,9 @@ export const buildPrintHtmlDocument = (bodyContent: string, title = 'Print Previ
   <style>
     body { margin: 16px; }
     @page { size: auto; margin: 12mm; }
+    [data-print-exclude="true"] { display: none !important; }
+    .overflow-auto, .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }
+    table { width: 100% !important; min-width: 0 !important; }
   </style>
 </head>
 <body>

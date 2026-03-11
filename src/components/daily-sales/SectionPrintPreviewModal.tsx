@@ -22,8 +22,26 @@ export function SectionPrintPreviewModal({
       return;
     }
 
+    const printRoot = document.createElement("div");
+    printRoot.innerHTML = html;
+
+    printRoot.querySelectorAll('[data-print-exclude="true"]').forEach((node) => {
+      node.remove();
+    });
+
+    printRoot
+      .querySelectorAll<HTMLElement>(".overflow-auto, .overflow-x-auto, .overflow-y-auto")
+      .forEach((node) => {
+        node.classList.remove("overflow-auto", "overflow-x-auto", "overflow-y-auto");
+      });
+
+    printRoot.querySelectorAll<HTMLElement>("table").forEach((table) => {
+      table.style.minWidth = "0";
+      table.style.width = "100%";
+    });
+
     openPrintWindow({
-      html: buildPrintHtmlDocument(html, title),
+      html: buildPrintHtmlDocument(printRoot.innerHTML, title),
     });
   };
 
