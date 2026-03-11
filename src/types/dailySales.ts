@@ -100,6 +100,7 @@ export type EncoderNewMemberOption = '1' | '0';
 export type EncoderMemberTypeOption =
   | 'DISTRIBUTOR'
   | 'STOCKIST'
+  | 'CITY STOCKIST'
   | 'CENTER'
   | 'NON-MEMBER';
 
