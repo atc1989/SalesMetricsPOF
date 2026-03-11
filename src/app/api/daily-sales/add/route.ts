@@ -9,6 +9,17 @@ function isObject(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+
+function normalizeDailySalesPayload(payload: JsonObject): JsonObject {
+  const normalized = { ...payload };
+
+  if (normalized.member_type === "CITY STOCKIST") {
+    normalized.member_type = "STOCKIST";
+  }
+
+  return normalized;
+}
+
 export async function POST(request: NextRequest) {
   const payload = (await request.json().catch(() => null)) as unknown;
 
@@ -19,8 +30,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const normalizedPayload = normalizeDailySalesPayload(payload);
+
   const supabase = getSupabaseAdminClient();
-  const { data, error } = await supabase.rpc("rpc_add_daily_sales", { p: payload });
+  const { data, error } = await supabase.rpc("rpc_add_daily_sales", { p: normalizedPayload });
 
   if (error) {
     return NextResponse.json(

@@ -1,15 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { SectionPrintPreviewModal } from '@/components/daily-sales/SectionPrintPreviewModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import { getPrintableHtmlById } from '@/lib/printElement';
 import {
   getDailySalesNetPrice,
   getDailySalesPackagePrice,
 } from '@/lib/dailySalesPackages';
+import { openSalesReportPrintWindow } from '@/lib/salesReportPrint';
 
 type PackageRow = {
   label: string;
@@ -336,8 +335,6 @@ export function SalesReportTab() {
   const [errorMessage, setErrorMessage] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
   const [loadedFromBackend, setLoadedFromBackend] = useState(false);
-  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
-  const [printPreviewHtml, setPrintPreviewHtml] = useState('');
   const [packageTotals, setPackageTotals] = useState<PackageTotalsApiRow[]>([]);
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummaryApiRow[]>([]);
   const [cashOnHandRow, setCashOnHandRow] = useState<CashOnHandApiRow>(null);
@@ -514,13 +511,19 @@ export function SalesReportTab() {
   };
 
   const onUpsertCashOnHand = () => {
-    const html = getPrintableHtmlById('cntnrDailySales');
-    if (!html) {
-      return;
-    }
+    const cashRows = cashDenominations.map((entry) => ({
+      label: entry.label,
+      pieces: cashPieces[entry.id],
+      amount: cashAmounts[entry.id],
+    }));
 
-    setPrintPreviewHtml(html);
-    setIsPrintPreviewOpen(true);
+    openSalesReportPrintWindow({
+      dateCaption,
+      snapshot,
+      cashRows,
+      totalCash: displayedTotalCash,
+      paymentTypeRows,
+    });
   };
 
   return (
@@ -717,12 +720,6 @@ export function SalesReportTab() {
       <Modal isOpen={isWarningOpen} title="Warning!" onClose={() => setIsWarningOpen(false)}>
         Please input valid date.
       </Modal>
-      <SectionPrintPreviewModal
-        isOpen={isPrintPreviewOpen}
-        title="Print Preview"
-        html={printPreviewHtml}
-        onClose={() => setIsPrintPreviewOpen(false)}
-      />
     </>
   );
 }
