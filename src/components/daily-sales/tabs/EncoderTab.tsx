@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
@@ -78,6 +78,7 @@ const encoderDiscountOptions: Array<{ label: string; value: number }> = [
   { label: '10% (P380)', value: 380 },
   { label: '20% (P760)', value: 760 },
   { label: 'P50', value: 50 },
+  { label: 'P60', value: 60 },
   { label: 'P150', value: 150 },
   { label: 'P500', value: 500 },
   { label: 'P80', value: 80 },
@@ -96,6 +97,22 @@ const encoderDiscountOptions: Array<{ label: string; value: number }> = [
 void discountOptions;
 
 const today = new Date().toISOString().slice(0, 10);
+
+type UserSearchResult = {
+  username: string;
+  memberName: string;
+};
+
+function formatPofBaseFromDate(date: string): string {
+  const parsed = /^\d{4}-(\d{2})-(\d{2})$/.exec(date);
+  if (!parsed) {
+    return '';
+  }
+
+  const [, month, day] = parsed;
+  const year = date.slice(2, 4);
+  return `${month}${day}${year} - `;
+}
 
 function getPaymentTypeOptions(mode: EncoderPaymentModeOption): PaymentTypeOption[] {
   if (mode === 'N/A') {
@@ -126,7 +143,7 @@ const buildInitialForm = (): EncoderFormModel => {
   const base: EncoderFormModel = {
     event: 'DAVAO',
     date: today,
-    pofNumber: '',
+    pofNumber: formatPofBaseFromDate(today),
     name: '',
     username: '',
     newMember: '1',
@@ -161,6 +178,7 @@ const buildInitialForm = (): EncoderFormModel => {
 };
 
 type ManualOverrideKey =
+  | 'blisterCount'
   | 'oneTimeDiscount'
   | 'price'
   | 'sales'
@@ -173,6 +191,7 @@ type ManualOverrideKey =
 type ManualOverrides = Record<ManualOverrideKey, boolean>;
 
 const initialManualOverrides: ManualOverrides = {
+  blisterCount: false,
   oneTimeDiscount: false,
   price: false,
   sales: false,
@@ -188,9 +207,13 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
   const discount = Math.max(input.discount, 0);
   const oneTimeDiscount = manualOverrides.oneTimeDiscount ? input.oneTimeDiscount : Math.max(input.oneTimeDiscount, 0);
   const price = manualOverrides.price ? input.price : Math.max(input.originalPrice - discount, 0);
-  const blisterCount = getDailySalesPackageBlisterCount(input.packageType, quantity, input.isToBlister);
+  const blisterCount = manualOverrides.blisterCount
+    ? Math.max(input.blisterCount, 0)
+    : getDailySalesPackageBlisterCount(input.packageType, quantity, input.isToBlister);
   const noOfBottles = getDailySalesPackageBottleCount(input.packageType, quantity);
   const sales = manualOverrides.sales ? input.sales : Math.max(price * quantity - oneTimeDiscount, 0);
+  const released = manualOverrides.released ? input.released : noOfBottles;
+  const releasedBlpk = manualOverrides.releasedBlpk ? input.releasedBlpk : blisterCount;
   const normalizedSalesTwo = manualOverrides.salesTwo
     ? input.salesTwo
     : input.paymentMode === 'EPOINTS'
@@ -206,12 +229,15 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
     noOfBottles,
     price,
     sales,
+    released,
+    releasedBlpk,
     salesTwo: normalizedSalesTwo,
   };
 };
 
 type NumericField =
   | 'quantity'
+  | 'blisterCount'
   | 'discount'
   | 'price'
   | 'oneTimeDiscount'
@@ -225,6 +251,10 @@ type NumericField =
 export function EncoderTab() {
   const [form, setForm] = useState<EncoderFormModel>(() => applyComputedFields(buildInitialForm(), initialManualOverrides));
   const [manualOverrides, setManualOverrides] = useState<ManualOverrides>(initialManualOverrides);
+  const [isPofManuallyEdited, setIsPofManuallyEdited] = useState(false);
+  const [userSearchResults, setUserSearchResults] = useState<UserSearchResult[]>([]);
+  const [isUserSearchLoading, setIsUserSearchLoading] = useState(false);
+  const [userSearchError, setUserSearchError] = useState<string | null>(null);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [paymentModeTwoError, setPaymentModeTwoError] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -237,11 +267,82 @@ export function EncoderTab() {
   const resetForm = () => {
     setForm(applyComputedFields(buildInitialForm(), initialManualOverrides));
     setManualOverrides(initialManualOverrides);
+    setIsPofManuallyEdited(false);
+    setUserSearchResults([]);
+    setUserSearchError(null);
     setPaymentModeTwoError('');
   };
 
+  useEffect(() => {
+    const query = form.username.trim();
+    if (query.length < 2) {
+      setUserSearchResults([]);
+      setUserSearchError(null);
+      setIsUserSearchLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setIsUserSearchLoading(true);
+      setUserSearchError(null);
+
+      try {
+        const response = await fetch(`/api/daily-sales/users/search?q=${encodeURIComponent(query)}&limit=10`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as {
+          success?: boolean;
+          rows?: UserSearchResult[];
+          message?: string;
+        };
+
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.message ?? 'Unable to search users.');
+        }
+
+        setUserSearchResults(payload.rows ?? []);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        setUserSearchResults([]);
+        setUserSearchError(error instanceof Error ? error.message : 'Unable to search users.');
+      } finally {
+        setIsUserSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [form.username]);
+
   const updateField = <K extends keyof EncoderFormModel>(key: K, value: EncoderFormModel[K]) => {
     setForm((prev) => applyComputedFields({ ...prev, [key]: value }, manualOverrides));
+  };
+
+  const onDateChange = (value: string) => {
+    setForm((prev) => {
+      const nextPof = isPofManuallyEdited ? prev.pofNumber : formatPofBaseFromDate(value);
+      return applyComputedFields({ ...prev, date: value, pofNumber: nextPof }, manualOverrides);
+    });
+  };
+
+  const onPofChange = (value: string) => {
+    const autoPof = formatPofBaseFromDate(form.date);
+    setIsPofManuallyEdited(value.trim() !== '' && value !== autoPof);
+    updateField('pofNumber', value);
+  };
+
+  const onUsernameChange = (value: string) => {
+    updateField('username', value);
+    const match = userSearchResults.find((entry) => entry.username.toLowerCase() === value.toLowerCase());
+    if (match) {
+      updateField('name', match.memberName);
+    }
   };
 
   const updateNumericField = (key: NumericField, value: string, manualKey?: ManualOverrideKey) => {
@@ -416,7 +517,7 @@ export function EncoderTab() {
                   id="date"
                   type="date"
                   value={form.date}
-                  onChange={(event) => updateField('date', event.target.value)}
+                  onChange={(event) => onDateChange(event.target.value)}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -425,7 +526,7 @@ export function EncoderTab() {
                 <input
                   id="pofNumber"
                   value={form.pofNumber}
-                  onChange={(event) => updateField('pofNumber', event.target.value)}
+                  onChange={(event) => onPofChange(event.target.value)}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
@@ -442,10 +543,20 @@ export function EncoderTab() {
                 Username
                 <input
                   id="username"
+                  list="encoder-usernames"
                   value={form.username}
-                  onChange={(event) => updateField('username', event.target.value)}
+                  onChange={(event) => onUsernameChange(event.target.value)}
                   className="h-10 rounded-md border border-slate-300 px-3"
                 />
+                <datalist id="encoder-usernames">
+                  {userSearchResults.map((entry) => (
+                    <option key={entry.username} value={entry.username}>
+                      {entry.memberName}
+                    </option>
+                  ))}
+                </datalist>
+                {isUserSearchLoading ? <span className="text-xs text-slate-500">Searching users…</span> : null}
+                {userSearchError ? <span className="text-xs text-red-600">{userSearchError}</span> : null}
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
                 New Member?
@@ -467,6 +578,7 @@ export function EncoderTab() {
                 <select id="memberType" value={form.memberType} onChange={(event) => onMemberTypeChange(event.target.value as EncoderMemberTypeOption)} className="h-10 rounded-md border border-slate-300 px-3">
                   <option value="DISTRIBUTOR">Distributor</option>
                   <option value="STOCKIST">Mobile Stockist</option>
+                  <option value="CITY STOCKIST">City Stockist</option>
                   <option value="CENTER">Center</option>
                   <option value="NON-MEMBER">Non-member</option>
                 </select>
@@ -523,9 +635,10 @@ export function EncoderTab() {
                 <input
                   id="blisterCount"
                   type="number"
+                  min="0"
                   value={form.blisterCount}
-                  readOnly
-                  className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
+                  onChange={(event) => updateNumericField('blisterCount', event.target.value, 'blisterCount')}
+                  className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
@@ -618,9 +731,8 @@ export function EncoderTab() {
                 <input
                   id="referenceNo"
                   value={form.referenceNo}
-                  readOnly={primaryTypeIsReadOnly}
                   onChange={(event) => updateField('referenceNo', event.target.value)}
-                  className={`h-10 rounded-md border border-slate-300 px-3 ${primaryTypeIsReadOnly ? 'bg-slate-50 text-slate-500' : ''}`}
+                  className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
               <div />
@@ -657,9 +769,8 @@ export function EncoderTab() {
                 <input
                   id="referenceNoTwo"
                   value={form.referenceNoTwo}
-                  readOnly={secondaryTypeIsReadOnly}
                   onChange={(event) => updateField('referenceNoTwo', event.target.value)}
-                  className={`h-10 rounded-md border border-slate-300 px-3 ${secondaryTypeIsReadOnly ? 'bg-slate-50 text-slate-500' : ''}`}
+                  className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
