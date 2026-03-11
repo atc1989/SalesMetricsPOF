@@ -107,6 +107,16 @@ export const dailySalesDiscountMatrix: Record<
     RETAIL: 1710,
     BLISTER: 585,
   },
+  'CITY STOCKIST': {
+    SILVER: 60,
+    GOLD: 180,
+    PLATINUM: 600,
+    USILVERGOLD: 0,
+    UGOLDPLATINUM: 0,
+    USILVERPLATINUM: 0,
+    RETAIL: 1748,
+    BLISTER: 618,
+  },
   CENTER: {
     SILVER: 80,
     GOLD: 240,

@@ -207,6 +207,8 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
   const blisterCount = getDailySalesPackageBlisterCount(input.packageType, quantity, input.isToBlister);
   const noOfBottles = getDailySalesPackageBottleCount(input.packageType, quantity);
   const sales = manualOverrides.sales ? input.sales : Math.max(price * quantity - oneTimeDiscount, 0);
+  const released = manualOverrides.released ? input.released : noOfBottles;
+  const releasedBlpk = manualOverrides.releasedBlpk ? input.releasedBlpk : blisterCount;
   const normalizedSalesTwo = manualOverrides.salesTwo
     ? input.salesTwo
     : input.paymentMode === 'EPOINTS'
@@ -222,6 +224,8 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
     noOfBottles,
     price,
     sales,
+    released,
+    releasedBlpk,
     salesTwo: normalizedSalesTwo,
   };
 };
@@ -568,6 +572,7 @@ export function EncoderTab() {
                 <select id="memberType" value={form.memberType} onChange={(event) => onMemberTypeChange(event.target.value as EncoderMemberTypeOption)} className="h-10 rounded-md border border-slate-300 px-3">
                   <option value="DISTRIBUTOR">Distributor</option>
                   <option value="STOCKIST">Mobile Stockist</option>
+                  <option value="CITY STOCKIST">City Stockist</option>
                   <option value="CENTER">Center</option>
                   <option value="NON-MEMBER">Non-member</option>
                 </select>
@@ -719,9 +724,8 @@ export function EncoderTab() {
                 <input
                   id="referenceNo"
                   value={form.referenceNo}
-                  readOnly={primaryTypeIsReadOnly}
                   onChange={(event) => updateField('referenceNo', event.target.value)}
-                  className={`h-10 rounded-md border border-slate-300 px-3 ${primaryTypeIsReadOnly ? 'bg-slate-50 text-slate-500' : ''}`}
+                  className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
               <div />
@@ -758,9 +762,8 @@ export function EncoderTab() {
                 <input
                   id="referenceNoTwo"
                   value={form.referenceNoTwo}
-                  readOnly={secondaryTypeIsReadOnly}
                   onChange={(event) => updateField('referenceNoTwo', event.target.value)}
-                  className={`h-10 rounded-md border border-slate-300 px-3 ${secondaryTypeIsReadOnly ? 'bg-slate-50 text-slate-500' : ''}`}
+                  className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
