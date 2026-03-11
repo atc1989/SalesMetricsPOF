@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ModifyGgTransNoModal } from '@/components/daily-sales/ModifyGgTransNoModal';
 import { PrintPreviewModal } from '@/components/daily-sales/PrintPreviewModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -100,6 +101,9 @@ export function ReportsTab() {
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isActionNoticeOpen, setIsActionNoticeOpen] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
+  const [selectedModifyRow, setSelectedModifyRow] = useState<{ id: string; pofNumber: string; ggTransNo: string } | null>(null);
+  const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
+  const [isSavingGgTransNo, setIsSavingGgTransNo] = useState(false);
   const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
   const [selectedPrintTransaction, setSelectedPrintTransaction] = useState<PrintTransaction | null>(null);
   const [selectedPrintLineItems, setSelectedPrintLineItems] = useState<PrintLineItem[]>([]);
@@ -263,6 +267,62 @@ export function ReportsTab() {
   const onRowAction = (message: string) => {
     setActionNotice(message);
     setIsActionNoticeOpen(true);
+  };
+
+  const onOpenModifyGgTransNo = (row: ReportsSaleRow) => {
+    setSelectedModifyRow({
+      id: row.id,
+      pofNumber: row.pofNumber,
+      ggTransNo: row.ggTransNo,
+    });
+    setIsModifyModalOpen(true);
+  };
+
+  const onSaveModifyGgTransNo = async (newValue: string) => {
+    if (!selectedModifyRow) {
+      return;
+    }
+
+    setIsSavingGgTransNo(true);
+
+    try {
+      const response = await fetch('/api/daily-sales/modify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pofNumber: selectedModifyRow.pofNumber,
+          pof_number: selectedModifyRow.pofNumber,
+          ggTransNo: newValue,
+          gg_trans_no: newValue,
+          username: newValue,
+          newGgTransNo: newValue,
+          new_gg_trans_no: newValue,
+        }),
+      });
+
+      const payload = (await response.json()) as { success?: boolean; message?: string };
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message ?? 'Failed to modify GG transaction number.');
+      }
+
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === selectedModifyRow.id
+            ? { ...row, ggTransNo: newValue, zeroOne: newValue }
+            : row
+        )
+      );
+      setIsModifyModalOpen(false);
+      setSelectedModifyRow(null);
+      onRowAction(`GG Transaction Number updated for ${selectedModifyRow.pofNumber}.`);
+    } catch (error) {
+      onRowAction(
+        error instanceof Error ? error.message : 'Failed to modify GG transaction number.'
+      );
+    } finally {
+      setIsSavingGgTransNo(false);
+    }
   };
 
   const onPrintRow = (row: ReportsSaleRow) => {
@@ -441,7 +501,7 @@ export function ReportsTab() {
                     <td className="px-3 py-2">{row.blisters}</td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => onRowAction(`Trans No. action for ${row.pofNumber}.`)}>
+                        <Button size="sm" variant="secondary" onClick={() => onOpenModifyGgTransNo(row)}>
                           Trans No.
                         </Button>
                         <Button size="sm" variant="secondary" onClick={() => onPrintRow(row)}>
@@ -478,6 +538,20 @@ export function ReportsTab() {
       <Modal isOpen={isActionNoticeOpen} title="Info" onClose={() => setIsActionNoticeOpen(false)}>
         {actionNotice}
       </Modal>
+      <ModifyGgTransNoModal
+        isOpen={isModifyModalOpen}
+        row={selectedModifyRow}
+        onSave={onSaveModifyGgTransNo}
+        isSaving={isSavingGgTransNo}
+        onClose={() => {
+          if (isSavingGgTransNo) {
+            return;
+          }
+
+          setIsModifyModalOpen(false);
+          setSelectedModifyRow(null);
+        }}
+      />
       {selectedPrintTransaction ? (
         <PrintPreviewModal
           isOpen={isPrintPreviewOpen}

@@ -10,6 +10,17 @@ function isObject(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+function readString(body: JsonObject, keys: string[]) {
+  for (const key of keys) {
+    const value = body[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as unknown;
 
@@ -21,6 +32,14 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getSupabaseAdminClient();
+  const pofNumber = readString(body, ["pofNumber", "pof_number"]);
+  const ggTransNo = readString(body, [
+    "ggTransNo",
+    "gg_trans_no",
+    "username",
+    "newGgTransNo",
+    "new_gg_trans_no",
+  ]);
 
   // If this fails with signature mismatch, confirm argument names in Supabase:
   // select specific_name, parameter_name
@@ -31,6 +50,17 @@ export async function POST(request: NextRequest) {
     { p_payload: body },
     { i_payload: body },
   ];
+
+  if (pofNumber && ggTransNo) {
+    paramAttempts.push(
+      { pof_number: pofNumber, username: ggTransNo },
+      { p_pof_number: pofNumber, p_username: ggTransNo },
+      { i_pof_number: pofNumber, i_username: ggTransNo },
+      { pof_number: pofNumber, gg_trans_no: ggTransNo },
+      { p_pof_number: pofNumber, p_gg_trans_no: ggTransNo },
+      { i_pof_number: pofNumber, i_gg_trans_no: ggTransNo },
+    );
+  }
 
   let data: unknown = null;
   let rpcError: { code?: string; message: string; details?: string | null } | null = null;

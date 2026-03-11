@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { SectionPrintPreviewModal } from '@/components/daily-sales/SectionPrintPreviewModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import { printElementById } from '@/lib/printElement';
+import { getPrintableHtmlById } from '@/lib/printElement';
 import {
   getDailySalesPackagePrice,
   normalizeDailySalesPackageType,
@@ -104,6 +105,8 @@ export function InventoryReportTab() {
   const [errorMessage, setErrorMessage] = useState('');
   const [rows, setRows] = useState<InventoryReportRow[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
+  const [printPreviewHtml, setPrintPreviewHtml] = useState('');
   const [displayDateRange, setDisplayDateRange] = useState(
     `${formatDateDMYY(defaultInventoryDate)} To ${formatDateDMYY(defaultInventoryDate)}`
   );
@@ -141,7 +144,13 @@ export function InventoryReportTab() {
   };
 
   const onPrint = () => {
-    printElementById('cntnrDailyInventory', 'Daily Inventory Report');
+    const html = getPrintableHtmlById('cntnrDailyInventory');
+    if (!html) {
+      return;
+    }
+
+    setPrintPreviewHtml(html);
+    setIsPrintPreviewOpen(true);
   };
 
   return (
@@ -301,6 +310,12 @@ export function InventoryReportTab() {
       <Modal isOpen={isWarningOpen} title="Warning!" onClose={() => setIsWarningOpen(false)}>
         Please input valid date.
       </Modal>
+      <SectionPrintPreviewModal
+        isOpen={isPrintPreviewOpen}
+        title="Print Preview"
+        html={printPreviewHtml}
+        onClose={() => setIsPrintPreviewOpen(false)}
+      />
     </section>
   );
 }

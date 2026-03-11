@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { SectionPrintPreviewModal } from '@/components/daily-sales/SectionPrintPreviewModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import { printElementById } from '@/lib/printElement';
+import { getPrintableHtmlById } from '@/lib/printElement';
 import {
   getDailySalesNetPrice,
   getDailySalesPackagePrice,
@@ -335,6 +336,8 @@ export function SalesReportTab() {
   const [errorMessage, setErrorMessage] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
   const [loadedFromBackend, setLoadedFromBackend] = useState(false);
+  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
+  const [printPreviewHtml, setPrintPreviewHtml] = useState('');
   const [packageTotals, setPackageTotals] = useState<PackageTotalsApiRow[]>([]);
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummaryApiRow[]>([]);
   const [cashOnHandRow, setCashOnHandRow] = useState<CashOnHandApiRow>(null);
@@ -511,7 +514,13 @@ export function SalesReportTab() {
   };
 
   const onUpsertCashOnHand = () => {
-    printElementById('cntnrDailySales', 'Daily Sales Report');
+    const html = getPrintableHtmlById('cntnrDailySales');
+    if (!html) {
+      return;
+    }
+
+    setPrintPreviewHtml(html);
+    setIsPrintPreviewOpen(true);
   };
 
   return (
@@ -708,6 +717,12 @@ export function SalesReportTab() {
       <Modal isOpen={isWarningOpen} title="Warning!" onClose={() => setIsWarningOpen(false)}>
         Please input valid date.
       </Modal>
+      <SectionPrintPreviewModal
+        isOpen={isPrintPreviewOpen}
+        title="Print Preview"
+        html={printPreviewHtml}
+        onClose={() => setIsPrintPreviewOpen(false)}
+      />
     </>
   );
 }
