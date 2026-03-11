@@ -78,6 +78,7 @@ const encoderDiscountOptions: Array<{ label: string; value: number }> = [
   { label: '10% (P380)', value: 380 },
   { label: '20% (P760)', value: 760 },
   { label: 'P50', value: 50 },
+  { label: 'P60', value: 60 },
   { label: 'P150', value: 150 },
   { label: 'P500', value: 500 },
   { label: 'P80', value: 80 },
@@ -177,6 +178,7 @@ const buildInitialForm = (): EncoderFormModel => {
 };
 
 type ManualOverrideKey =
+  | 'blisterCount'
   | 'oneTimeDiscount'
   | 'price'
   | 'sales'
@@ -189,6 +191,7 @@ type ManualOverrideKey =
 type ManualOverrides = Record<ManualOverrideKey, boolean>;
 
 const initialManualOverrides: ManualOverrides = {
+  blisterCount: false,
   oneTimeDiscount: false,
   price: false,
   sales: false,
@@ -204,7 +207,9 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
   const discount = Math.max(input.discount, 0);
   const oneTimeDiscount = manualOverrides.oneTimeDiscount ? input.oneTimeDiscount : Math.max(input.oneTimeDiscount, 0);
   const price = manualOverrides.price ? input.price : Math.max(input.originalPrice - discount, 0);
-  const blisterCount = getDailySalesPackageBlisterCount(input.packageType, quantity, input.isToBlister);
+  const blisterCount = manualOverrides.blisterCount
+    ? Math.max(input.blisterCount, 0)
+    : getDailySalesPackageBlisterCount(input.packageType, quantity, input.isToBlister);
   const noOfBottles = getDailySalesPackageBottleCount(input.packageType, quantity);
   const sales = manualOverrides.sales ? input.sales : Math.max(price * quantity - oneTimeDiscount, 0);
   const released = manualOverrides.released ? input.released : noOfBottles;
@@ -232,6 +237,7 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
 
 type NumericField =
   | 'quantity'
+  | 'blisterCount'
   | 'discount'
   | 'price'
   | 'oneTimeDiscount'
@@ -629,9 +635,10 @@ export function EncoderTab() {
                 <input
                   id="blisterCount"
                   type="number"
+                  min="0"
                   value={form.blisterCount}
-                  readOnly
-                  className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
+                  onChange={(event) => updateNumericField('blisterCount', event.target.value, 'blisterCount')}
+                  className="h-10 rounded-md border border-slate-300 px-3"
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
