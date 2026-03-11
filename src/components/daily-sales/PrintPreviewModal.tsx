@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { buildPrintHtmlDocument, openPrintWindow } from "@/lib/printWindow";
 import type { PrintLineItem, PrintTransaction } from "@/types/dailySales";
 
 type PrintPreviewModalProps = {
@@ -13,9 +14,14 @@ type PrintPreviewModalProps = {
 
 export function PrintPreviewModal({ isOpen, transaction, lineItems, onClose }: PrintPreviewModalProps) {
   const onPrint = () => {
-    if (typeof window !== "undefined") {
-      window.print();
+    const preview = document.getElementById("print-preview-content");
+    if (!preview) {
+      return;
     }
+
+    openPrintWindow({
+      html: buildPrintHtmlDocument(preview.outerHTML, "Sales Report Print Preview"),
+    });
   };
 
   return (
