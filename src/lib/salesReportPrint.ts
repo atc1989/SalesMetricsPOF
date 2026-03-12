@@ -42,7 +42,7 @@ function renderPackageTable(title: string, rows: SalesReportPrintRow[], totalLab
   const normalizedRows = rows.map((row) => {
     const qty = row.qty ?? 0;
     const price = row.price ?? 0;
-    return { ...row, qty, price, amount: qty * price };
+    return { ...row, qty, price, amount: row.amount ?? qty * price };
   });
   const total = normalizedRows.reduce((sum, row) => sum + row.amount, 0);
 

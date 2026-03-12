@@ -14,12 +14,14 @@ type PackageRow = {
   label: string;
   qty: number;
   price: number;
+  amount?: number;
 };
 
 type RetailRow = {
   label: string;
   qty: number;
   price: number;
+  amount?: number;
 };
 
 type AmountRow = {
@@ -253,7 +255,7 @@ function PackageTable({
   totalLabel: string;
   includeGrandTotal?: boolean;
 }) {
-  const rowAmounts = rows.map((row) => row.qty * row.price);
+  const rowAmounts = rows.map((row) => row.amount ?? row.qty * row.price);
   const total = rowAmounts.reduce((sum, amount) => sum + amount, 0);
 
   return (
@@ -338,7 +340,6 @@ export function SalesReportTab() {
   const [loadedFromBackend, setLoadedFromBackend] = useState(false);
   const [packageTotals, setPackageTotals] = useState<PackageTotalsApiRow[]>([]);
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummaryApiRow[]>([]);
-  const [cashOnHandRow, setCashOnHandRow] = useState<CashOnHandApiRow>(null);
   const [totalCashFromBackend, setTotalCashFromBackend] = useState<number | null>(null);
 
   const dateCaption = `${formatDateDMYY(selectedDate)}`;
@@ -359,7 +360,20 @@ export function SalesReportTab() {
     () => Object.values(cashAmounts).reduce((sum, value) => sum + value, 0),
     [cashAmounts]
   );
-  const displayedTotalCash = totalCashFromBackend ?? (cashOnHandRow ? totalCashOnHand : totalCashOnHand);
+  const hasCashPieces = useMemo(
+    () => Object.values(cashPieces).some((value) => value > 0),
+    [cashPieces]
+  );
+  const displayedTotalCash = hasCashPieces ? totalCashOnHand : (totalCashFromBackend ?? totalCashOnHand);
+  const displayedPaymentBreakdownRows = useMemo(
+    () =>
+      snapshot.paymentBreakdownRows.map((row) =>
+        row.label === 'Cash on hand'
+          ? { ...row, amount: displayedTotalCash }
+          : row
+      ),
+    [displayedTotalCash, snapshot.paymentBreakdownRows]
+  );
 
   const paymentTypeRows = useMemo(
     () => {
@@ -433,14 +447,22 @@ export function SalesReportTab() {
       const retailBlister = packageMap.get('BLISTER');
       const retailRows: RetailRow[] = defaultSnapshot.retailRows.map((row) => {
         if (row.label === 'SynBIOTIC+ (Bottle)') {
-          return { ...row, qty: retailBottle?.total_bottles ?? 0 };
+          return {
+            ...row,
+            qty: retailBottle?.total_bottles ?? 0,
+            amount: retailBottle?.total_sales ?? 0,
+          };
         }
 
         if (row.label === 'SynBIOTIC+ (Blister)') {
-          return { ...row, qty: retailBlister?.total_blisters ?? 0 };
+          return {
+            ...row,
+            qty: retailBlister?.total_blisters ?? 0,
+            amount: retailBlister?.total_sales ?? 0,
+          };
         }
 
-        return { ...row, qty: 0 };
+        return { ...row, qty: 0, amount: 0 };
       });
 
       const paymentTotals = new Map<string, number>();
@@ -491,7 +513,6 @@ export function SalesReportTab() {
       }));
       setPackageTotals(salesPayload.packageTotals ?? []);
       setPaymentSummary(backendPaymentSummary);
-      setCashOnHandRow(cashRow ?? null);
       setCashPieces(mappedCashPieces);
       setTotalCashFromBackend(effectiveCashOnHandTotal);
       setLoadedFromBackend(true);
@@ -499,7 +520,6 @@ export function SalesReportTab() {
       setSnapshot(defaultSnapshot);
       setPackageTotals([]);
       setPaymentSummary([]);
-      setCashOnHandRow(null);
       setCashPieces(defaultCashPieces);
       setTotalCashFromBackend(null);
       setErrorMessage('Backend error... showing fallback');
@@ -526,7 +546,10 @@ export function SalesReportTab() {
 
     openSalesReportPrintWindow({
       dateCaption,
-      snapshot,
+      snapshot: {
+        ...snapshot,
+        paymentBreakdownRows: displayedPaymentBreakdownRows,
+      },
       cashRows,
       totalCash: displayedTotalCash,
       paymentTypeRows,
@@ -646,7 +669,7 @@ export function SalesReportTab() {
                   </table>
                 </Card>
 
-                <PaymentTable id="tblPaymentBreakdown" title="PAYMENT BREAKDOWN" rows={snapshot.paymentBreakdownRows} />
+                <PaymentTable id="tblPaymentBreakdown" title="PAYMENT BREAKDOWN" rows={displayedPaymentBreakdownRows} />
               </div>
             </div>
 
