@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic";
 
 type DailySalesRow = {
   package_type: string | null;
+  member_type: string | null;
+  is_new_member: boolean | null;
   quantity: number | string | null;
   bottle_count: number | string | null;
   blister_count: number | string | null;
@@ -27,6 +29,17 @@ type PaymentSummaryRow = {
   mode_of_payment: string;
   total_sales: number;
   transactions: number;
+};
+
+type AccountCounts = {
+  silver: number;
+  gold: number;
+  platinum: number;
+};
+
+type CategorySalesSummary = {
+  packageTotals: PackageTotalsRow[];
+  retailTotals: PackageTotalsRow[];
 };
 
 function toNumber(value: unknown) {
@@ -55,6 +68,111 @@ function normalizePackageType(value: string | null) {
   return normalized ?? rawValue.toUpperCase();
 }
 
+function normalizeMemberType(value: string | null) {
+  const normalized = normalizeText(value, "DISTRIBUTOR").toUpperCase();
+
+  if (normalized === "CITY STOCKIST") {
+    return "STOCKIST";
+  }
+
+  return normalized;
+}
+
+function toBoolean(value: unknown) {
+  return value === true;
+}
+
+function createAccountCounts(): AccountCounts {
+  return { silver: 0, gold: 0, platinum: 0 };
+}
+
+function addPackageCount(target: AccountCounts, packageType: string, quantity: number) {
+  switch (packageType) {
+    case "SILVER":
+      target.silver += quantity;
+      break;
+    case "GOLD":
+    case "USILVERGOLD":
+      target.gold += quantity;
+      break;
+    case "PLATINUM":
+    case "UGOLDPLATINUM":
+    case "USILVERPLATINUM":
+      target.platinum += quantity;
+      break;
+    default:
+      break;
+  }
+}
+
+function pushIntoCategoryMap(
+  categoryMap: Map<string, PackageTotalsRow>,
+  packageType: string,
+  quantity: number,
+  bottles: number,
+  blisters: number,
+  sales: number,
+) {
+  const current = categoryMap.get(packageType) ?? {
+    package_type: packageType,
+    total_quantity: 0,
+    total_bottles: 0,
+    total_blisters: 0,
+    total_sales: 0,
+  };
+
+  current.total_quantity += quantity;
+  current.total_bottles += bottles;
+  current.total_blisters += blisters;
+  current.total_sales += sales;
+  categoryMap.set(packageType, current);
+}
+
+function summarizeCategory(
+  records: Array<{
+    packageType: string;
+    quantity: number;
+    bottles: number;
+    blisters: number;
+    sales: number;
+  }>,
+): CategorySalesSummary {
+  const packageMap = new Map<string, PackageTotalsRow>();
+  const retailMap = new Map<string, PackageTotalsRow>();
+
+  for (const record of records) {
+    if (record.packageType === "RETAIL" || record.packageType === "BLISTER") {
+      pushIntoCategoryMap(
+        retailMap,
+        record.packageType,
+        record.quantity,
+        record.bottles,
+        record.blisters,
+        record.sales,
+      );
+      continue;
+    }
+
+    pushIntoCategoryMap(
+      packageMap,
+      record.packageType,
+      record.quantity,
+      record.bottles,
+      record.blisters,
+      record.sales,
+    );
+  }
+
+  return {
+    packageTotals: Array.from(packageMap.values()).sort((a, b) =>
+      a.package_type.localeCompare(b.package_type),
+    ),
+    retailTotals: Array.from(retailMap.values()).sort((a, b) =>
+      a.package_type.localeCompare(b.package_type),
+    ),
+  };
+}
+
 export async function GET(request: NextRequest) {
   const transDate = request.nextUrl.searchParams.get("transDate");
 
@@ -70,7 +188,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("daily_sales")
       .select(
-        "package_type, quantity, bottle_count, blister_count, released_count, released_blpk_count, sales, mode_of_payment",
+        "package_type, member_type, is_new_member, quantity, bottle_count, blister_count, released_count, released_blpk_count, sales, mode_of_payment",
       )
       .eq("trans_date", transDate);
 
@@ -91,10 +209,16 @@ export async function GET(request: NextRequest) {
 
     const packageMap = new Map<string, PackageTotalsRow>();
     const paymentMap = new Map<string, PaymentSummaryRow>();
+    const stockistRecords: Array<{ packageType: string; quantity: number; bottles: number; blisters: number; sales: number }> = [];
+    const centerRecords: Array<{ packageType: string; quantity: number; bottles: number; blisters: number; sales: number }> = [];
+    const newAccounts = createAccountCounts();
+    const upgrades = createAccountCounts();
 
     for (const record of data ?? []) {
       const row = record as DailySalesRow;
       const packageType = normalizePackageType(row.package_type);
+      const memberType = normalizeMemberType(row.member_type);
+      const isNewMember = toBoolean(row.is_new_member);
       const modeOfPayment = normalizeText(row.mode_of_payment, "UNKNOWN");
       const quantity = toNumber(row.quantity);
       const fallbackBottles = row.bottle_count == null ? quantity : toNumber(row.bottle_count);
@@ -118,6 +242,18 @@ export async function GET(request: NextRequest) {
       packageTotals.total_sales += sales;
       packageMap.set(packageType, packageTotals);
 
+      if (memberType === "STOCKIST") {
+        stockistRecords.push({ packageType, quantity, bottles, blisters, sales });
+      } else if (memberType === "CENTER") {
+        centerRecords.push({ packageType, quantity, bottles, blisters, sales });
+      }
+
+      if (isNewMember) {
+        addPackageCount(newAccounts, packageType, quantity);
+      } else {
+        addPackageCount(upgrades, packageType, quantity);
+      }
+
       const paymentSummary = paymentMap.get(modeOfPayment) ?? {
         mode_of_payment: modeOfPayment,
         total_sales: 0,
@@ -134,6 +270,8 @@ export async function GET(request: NextRequest) {
     const paymentSummary = Array.from(paymentMap.values()).sort((a, b) =>
       a.mode_of_payment.localeCompare(b.mode_of_payment),
     );
+    const stockistSummary = summarizeCategory(stockistRecords);
+    const centerSummary = summarizeCategory(centerRecords);
 
     const totals = packageTotals.reduce(
       (acc, row) => {
@@ -155,6 +293,12 @@ export async function GET(request: NextRequest) {
       transDate,
       packageTotals,
       paymentSummary,
+      stockistPackageTotals: stockistSummary.packageTotals,
+      stockistRetailTotals: stockistSummary.retailTotals,
+      centerPackageTotals: centerSummary.packageTotals,
+      centerRetailTotals: centerSummary.retailTotals,
+      newAccounts,
+      upgrades,
       totals,
     });
   } catch (error) {

@@ -60,6 +60,12 @@ type SalesReportApiPayload = {
   message?: string;
   packageTotals?: PackageTotalsApiRow[];
   paymentSummary?: PaymentSummaryApiRow[];
+  stockistPackageTotals?: PackageTotalsApiRow[];
+  stockistRetailTotals?: PackageTotalsApiRow[];
+  centerPackageTotals?: PackageTotalsApiRow[];
+  centerRetailTotals?: PackageTotalsApiRow[];
+  newAccounts?: { silver: number; gold: number; platinum: number };
+  upgrades?: { silver: number; gold: number; platinum: number };
 };
 
 type CashOnHandApiRow = {
@@ -334,7 +340,10 @@ export function SalesReportTab() {
   const [snapshot, setSnapshot] = useState<SnapshotData>(defaultSnapshot);
   const [cashPieces, setCashPieces] = useState<Record<CashFieldId, number>>(defaultCashPieces);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const [isActionNoticeOpen, setIsActionNoticeOpen] = useState(false);
+  const [actionNotice, setActionNotice] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingCashOnHand, setIsSavingCashOnHand] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
   const [loadedFromBackend, setLoadedFromBackend] = useState(false);
@@ -432,37 +441,113 @@ export function SalesReportTab() {
       const packageMap = new Map(
         (salesPayload.packageTotals ?? []).map((row) => [normalizeKey(row.package_type), row]),
       );
+      const stockistPackageMap = new Map(
+        (salesPayload.stockistPackageTotals ?? []).map((row) => [normalizeKey(row.package_type), row]),
+      );
+      const stockistRetailMap = new Map(
+        (salesPayload.stockistRetailTotals ?? []).map((row) => [normalizeKey(row.package_type), row]),
+      );
+      const centerPackageMap = new Map(
+        (salesPayload.centerPackageTotals ?? []).map((row) => [normalizeKey(row.package_type), row]),
+      );
+      const centerRetailMap = new Map(
+        (salesPayload.centerRetailTotals ?? []).map((row) => [normalizeKey(row.package_type), row]),
+      );
 
       const packageRows: PackageRow[] = defaultSnapshot.packageRows.map((row) => {
         if (row.label === 'Mobile Stockist') {
           const mobile = packageMap.get('MOBILE STOCKIST');
-          return { ...row, qty: mobile?.total_quantity ?? 0 };
+          const qty = mobile?.total_quantity ?? 0;
+          const amount = mobile?.total_sales ?? 0;
+          return {
+            ...row,
+            qty,
+            price: qty > 0 ? amount / qty : row.price,
+            amount,
+          };
         }
 
         const totals = packageMap.get(normalizeKey(row.label));
-        return { ...row, qty: totals?.total_quantity ?? 0 };
+        const qty = totals?.total_quantity ?? 0;
+        const amount = totals?.total_sales ?? 0;
+        return {
+          ...row,
+          qty,
+          price: qty > 0 ? amount / qty : row.price,
+          amount,
+        };
+      });
+      const msPackageRows: PackageRow[] = defaultSnapshot.msPackageRows.map((row) => {
+        const totals = stockistPackageMap.get(normalizeKey(row.label));
+        const qty = totals?.total_quantity ?? 0;
+        const amount = totals?.total_sales ?? 0;
+        return {
+          ...row,
+          qty,
+          price: qty > 0 ? amount / qty : row.price,
+          amount,
+        };
+      });
+      const cdPackageRows: PackageRow[] = defaultSnapshot.cdPackageRows.map((row) => {
+        const totals = centerPackageMap.get(normalizeKey(row.label));
+        const qty = totals?.total_quantity ?? 0;
+        const amount = totals?.total_sales ?? 0;
+        return {
+          ...row,
+          qty,
+          price: qty > 0 ? amount / qty : row.price,
+          amount,
+        };
       });
 
       const retailBottle = packageMap.get('RETAIL');
       const retailBlister = packageMap.get('BLISTER');
       const retailRows: RetailRow[] = defaultSnapshot.retailRows.map((row) => {
         if (row.label === 'SynBIOTIC+ (Bottle)') {
+          const qty = retailBottle?.total_bottles ?? 0;
+          const amount = retailBottle?.total_sales ?? 0;
           return {
             ...row,
-            qty: retailBottle?.total_bottles ?? 0,
-            amount: retailBottle?.total_sales ?? 0,
+            qty,
+            price: qty > 0 ? amount / qty : row.price,
+            amount,
           };
         }
 
         if (row.label === 'SynBIOTIC+ (Blister)') {
+          const qty = retailBlister?.total_blisters ?? 0;
+          const amount = retailBlister?.total_sales ?? 0;
           return {
             ...row,
-            qty: retailBlister?.total_blisters ?? 0,
-            amount: retailBlister?.total_sales ?? 0,
+            qty,
+            price: qty > 0 ? amount / qty : row.price,
+            amount,
           };
         }
 
         return { ...row, qty: 0, amount: 0 };
+      });
+      const msRetailRows: RetailRow[] = defaultSnapshot.msRetailRows.map((row) => {
+        const totals = stockistRetailMap.get('RETAIL');
+        const qty = totals?.total_bottles ?? 0;
+        const amount = totals?.total_sales ?? 0;
+        return {
+          ...row,
+          qty,
+          price: qty > 0 ? amount / qty : row.price,
+          amount,
+        };
+      });
+      const cdRetailRows: RetailRow[] = defaultSnapshot.cdRetailRows.map((row) => {
+        const totals = centerRetailMap.get('RETAIL');
+        const qty = totals?.total_bottles ?? 0;
+        const amount = totals?.total_sales ?? 0;
+        return {
+          ...row,
+          qty,
+          price: qty > 0 ? amount / qty : row.price,
+          amount,
+        };
       });
 
       const paymentTotals = new Map<string, number>();
@@ -508,8 +593,14 @@ export function SalesReportTab() {
       setSnapshot((prev) => ({
         ...prev,
         packageRows,
+        msPackageRows,
+        cdPackageRows,
         retailRows,
+        msRetailRows,
+        cdRetailRows,
         paymentBreakdownRows,
+        newAccounts: salesPayload.newAccounts ?? defaultSnapshot.newAccounts,
+        upgrades: salesPayload.upgrades ?? defaultSnapshot.upgrades,
       }));
       setPackageTotals(salesPayload.packageTotals ?? []);
       setPaymentSummary(backendPaymentSummary);
@@ -537,6 +628,51 @@ export function SalesReportTab() {
     }));
   };
 
+  const onSaveCashOnHand = async () => {
+    if (!selectedDate) {
+      setIsWarningOpen(true);
+      return;
+    }
+
+    setIsSavingCashOnHand(true);
+
+    try {
+      const response = await fetch('/api/cash-on-hand/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transDate: selectedDate,
+          trans_date: selectedDate,
+          pcs_one_thousand: cashPieces.cohOneThousand,
+          pcs_five_hundred: cashPieces.cohFiveHundred,
+          pcs_two_hundred: cashPieces.cohTwoHundred,
+          pcs_one_hundred: cashPieces.cohOneHundred,
+          pcs_fifty: cashPieces.cohFifty,
+          pcs_twenty: cashPieces.cohTwenty,
+          pcs_ten: cashPieces.cohTen,
+          pcs_five: cashPieces.cohFive,
+          pcs_one: cashPieces.cohOne,
+          pcs_cents: cashPieces.cohCents,
+        }),
+      });
+
+      const payload = (await response.json()) as { success?: boolean; message?: string };
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message ?? 'Failed to save cash on hand.');
+      }
+
+      setTotalCashFromBackend(totalCashOnHand);
+      setActionNotice(`Cash on hand saved for ${selectedDate}.`);
+      setIsActionNoticeOpen(true);
+    } catch (error) {
+      setActionNotice(error instanceof Error ? error.message : 'Failed to save cash on hand.');
+      setIsActionNoticeOpen(true);
+    } finally {
+      setIsSavingCashOnHand(false);
+    }
+  };
+
   const onUpsertCashOnHand = () => {
     const cashRows = cashDenominations.map((entry) => ({
       label: entry.label,
@@ -560,7 +696,7 @@ export function SalesReportTab() {
     <>
       <section id="daily-sales" className="mt-4 space-y-4">
         <Card className="p-3">
-          <div className="grid gap-2 md:grid-cols-4">
+          <div className="grid gap-2 md:grid-cols-5">
             <label className="flex flex-col text-xs font-medium text-slate-700">
               DATE
               <input
@@ -580,6 +716,17 @@ export function SalesReportTab() {
                 disabled={isLoading}
               >
                 {isLoading ? 'Generating...' : 'Generate Report'}
+              </Button>
+            </div>
+            <div className="flex items-end">
+              <Button
+                id="saveCashOnHand"
+                variant="secondary"
+                className="w-full md:w-auto"
+                onClick={onSaveCashOnHand}
+                disabled={isSavingCashOnHand || isLoading}
+              >
+                {isSavingCashOnHand ? 'Saving...' : 'Save Cash on Hand'}
               </Button>
             </div>
             <div className="flex items-end">
@@ -749,6 +896,9 @@ export function SalesReportTab() {
 
       <Modal isOpen={isWarningOpen} title="Warning!" onClose={() => setIsWarningOpen(false)}>
         Please input valid date.
+      </Modal>
+      <Modal isOpen={isActionNoticeOpen} title="Info" onClose={() => setIsActionNoticeOpen(false)}>
+        {actionNotice}
       </Modal>
     </>
   );
