@@ -5,6 +5,7 @@ import { ModifyGgTransNoModal } from '@/components/daily-sales/ModifyGgTransNoMo
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import { buildPofPrintHtml } from '@/lib/print/buildPofPrintHtml';
 import { openPrintWindow } from '@/lib/print/openPrintWindow';
 import type { RecentSale } from '@/types/dailySales';
@@ -237,11 +238,11 @@ export function ReportsTab() {
       const mappedRows: ReportsSaleRow[] = payload.rows.map((row, index) => ({
         id: `${row.daily_sales_id ?? row.pof_number ?? 'sales'}-${index}`,
         dailySalesId: row.daily_sales_id ?? 0,
-        pofNumber: row.pof_number ?? '',
-        ggTransNo: row.username ?? 'N/A',
+        pofNumber: formatPofNumber(row.pof_number),
+        ggTransNo: formatZeroOne(row.username) || 'N/A',
         date: row.trans_date ?? '',
-        memberName: row.member_name ?? '',
-        zeroOne: row.username ?? '',
+        memberName: formatMemberName(row.member_name),
+        zeroOne: formatZeroOne(row.username),
         packageType: row.package_type ?? '',
         bottles: row.bottle_count ?? 0,
         blisters: row.blister_count ?? 0,

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import {
   getDailySalesPackagePrice,
   normalizeDailySalesPackageType,
@@ -180,9 +181,9 @@ const mapApiRowToReportRow = (
   return {
     id: `api-${index}-${upperPackageType}`,
     date: row.trans_date ?? '',
-    name: row.member_name || 'N/A',
-    ggTransNo: row.username || '-',
-    pofNumber: row.pof_number || '-',
+    name: formatMemberName(row.member_name) || 'N/A',
+    ggTransNo: formatZeroOne(row.username) || '-',
+    pofNumber: formatPofNumber(row.pof_number) || '-',
     platinum: upperPackageType.includes('PLATINUM') ? totalQuantity : 0,
     gold: upperPackageType.includes('GOLD') ? totalQuantity : 0,
     silver: upperPackageType.includes('SILVER') ? totalQuantity : 0,

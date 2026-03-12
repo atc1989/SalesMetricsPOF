@@ -9,6 +9,8 @@ type DailySalesRow = {
   quantity: number | string | null;
   bottle_count: number | string | null;
   blister_count: number | string | null;
+  released_count: number | string | null;
+  released_blpk_count: number | string | null;
   sales: number | string | null;
   mode_of_payment: string | null;
 };
@@ -68,7 +70,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("daily_sales")
       .select(
-        "package_type, quantity, bottle_count, blister_count, sales, mode_of_payment",
+        "package_type, quantity, bottle_count, blister_count, released_count, released_blpk_count, sales, mode_of_payment",
       )
       .eq("trans_date", transDate);
 
@@ -95,8 +97,11 @@ export async function GET(request: NextRequest) {
       const packageType = normalizePackageType(row.package_type);
       const modeOfPayment = normalizeText(row.mode_of_payment, "UNKNOWN");
       const quantity = toNumber(row.quantity);
-      const bottles = row.bottle_count == null ? quantity : toNumber(row.bottle_count);
-      const blisters = row.blister_count == null ? 0 : toNumber(row.blister_count);
+      const fallbackBottles = row.bottle_count == null ? quantity : toNumber(row.bottle_count);
+      const fallbackBlisters = row.blister_count == null ? 0 : toNumber(row.blister_count);
+      const bottles = row.released_count == null ? fallbackBottles : toNumber(row.released_count);
+      const blisters =
+        row.released_blpk_count == null ? fallbackBlisters : toNumber(row.released_blpk_count);
       const sales = toNumber(row.sales);
 
       const packageTotals = packageMap.get(packageType) ?? {

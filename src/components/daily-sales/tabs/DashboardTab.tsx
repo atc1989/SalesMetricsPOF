@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import type { PaymentMode, RecentSale } from '@/types/dailySales';
 
 const paymentModes: PaymentMode[] = [
@@ -114,14 +115,11 @@ export function DashboardTab() {
 
         const mappedRows: RecentSale[] = payload.rows.map((row, index) => ({
           id: String(row.daily_sales_id ?? `daily-sales-${index + 1}`),
-          pofNumber: row.pof_number ?? '',
-          ggTransNo:
-            row.daily_sales_id !== null && row.daily_sales_id !== undefined
-              ? `DS-${row.daily_sales_id}`
-              : '',
+          pofNumber: formatPofNumber(row.pof_number),
+          ggTransNo: formatZeroOne(row.username),
           date: row.trans_date ?? '',
-          memberName: row.member_name ?? '',
-          zeroOne: row.username ?? '',
+          memberName: formatMemberName(row.member_name),
+          zeroOne: formatZeroOne(row.username),
           packageType: row.package_type ?? '',
           bottles: row.bottle_count ?? 0,
           blisters: row.blister_count ?? 0,
