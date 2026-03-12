@@ -1,0 +1,131 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+type DailySalesDetailRow = {
+  daily_sales_id: number | string | null;
+  pof_number: string | null;
+  trans_date: string | null;
+  member_name: string | null;
+  username: string | null;
+  package_type: string | null;
+  quantity: number | string | null;
+  original_price: number | string | null;
+  discount: number | string | null;
+  price_after_discount: number | string | null;
+  bottle_count: number | string | null;
+  blister_count: number | string | null;
+  is_to_blister: boolean | null;
+  one_time_discount: number | string | null;
+  released_count: number | string | null;
+  released_blpk_count: number | string | null;
+  to_follow_count: number | string | null;
+  to_follow_blpk_count: number | string | null;
+  sales: number | string | null;
+  mode_of_payment: string | null;
+  payment_type: string | null;
+  reference_number: string | null;
+  sales_two: number | string | null;
+  mode_of_payment_two: string | null;
+  payment_type_two: string | null;
+  reference_number_two: string | null;
+  remarks: string | null;
+  received_by: string | null;
+  collected_by: string | null;
+};
+
+function toNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
+}
+
+function toBoolean(value: unknown) {
+  return value === true;
+}
+
+export async function GET(request: NextRequest) {
+  const pofNumber = request.nextUrl.searchParams.get("pofNumber")?.trim();
+
+  if (!pofNumber) {
+    return NextResponse.json(
+      { success: false, message: "Missing pofNumber." },
+      { status: 400 },
+    );
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("daily_sales")
+    .select(
+      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, is_to_blister, one_time_discount, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, reference_number, sales_two, mode_of_payment_two, payment_type_two, reference_number_two, remarks, received_by, collected_by",
+    )
+    .eq("pof_number", pofNumber)
+    .order("daily_sales_id", { ascending: true });
+
+  if (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to load daily sales print details",
+        error: {
+          code: error.code,
+          details: error.details,
+          message: error.message,
+        },
+      },
+      { status: 500 },
+    );
+  }
+
+  const rows = (data ?? []).map((row) => {
+    const typedRow = row as DailySalesDetailRow;
+
+    return {
+      daily_sales_id: toNumber(typedRow.daily_sales_id),
+      pof_number: typedRow.pof_number ?? "",
+      trans_date: typedRow.trans_date ?? "",
+      member_name: typedRow.member_name ?? "",
+      username: typedRow.username ?? "",
+      package_type: typedRow.package_type ?? "",
+      quantity: toNumber(typedRow.quantity),
+      original_price: toNumber(typedRow.original_price),
+      discount: toNumber(typedRow.discount),
+      price_after_discount: toNumber(typedRow.price_after_discount),
+      bottle_count: toNumber(typedRow.bottle_count),
+      blister_count: toNumber(typedRow.blister_count),
+      is_to_blister: toBoolean(typedRow.is_to_blister),
+      one_time_discount: toNumber(typedRow.one_time_discount),
+      released_count: toNumber(typedRow.released_count),
+      released_blpk_count: toNumber(typedRow.released_blpk_count),
+      to_follow_count: toNumber(typedRow.to_follow_count),
+      to_follow_blpk_count: toNumber(typedRow.to_follow_blpk_count),
+      sales: toNumber(typedRow.sales),
+      mode_of_payment: typedRow.mode_of_payment ?? "",
+      payment_type: typedRow.payment_type ?? "",
+      reference_number: typedRow.reference_number ?? "",
+      sales_two: toNumber(typedRow.sales_two),
+      mode_of_payment_two: typedRow.mode_of_payment_two ?? "",
+      payment_type_two: typedRow.payment_type_two ?? "",
+      reference_number_two: typedRow.reference_number_two ?? "",
+      remarks: typedRow.remarks ?? "",
+      received_by: typedRow.received_by ?? "",
+      collected_by: typedRow.collected_by ?? "",
+    };
+  });
+
+  return NextResponse.json({
+    success: true,
+    data: rows,
+  });
+}

@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { ModifyGgTransNoModal } from '@/components/daily-sales/ModifyGgTransNoModal';
-import { PrintPreviewModal } from '@/components/daily-sales/PrintPreviewModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import type { PrintLineItem, PrintTransaction, RecentSale } from '@/types/dailySales';
+import { buildPofPrintHtml } from '@/lib/print/buildPofPrintHtml';
+import { openPrintWindow } from '@/lib/print/openPrintWindow';
+import type { RecentSale } from '@/types/dailySales';
 
 type ReportRangeType = 'daily' | 'weekly' | 'monthly' | 'custom';
 
@@ -105,9 +106,6 @@ export function ReportsTab() {
   const [selectedModifyRow, setSelectedModifyRow] = useState<{ id: string; dailySalesId: number; pofNumber: string; ggTransNo: string } | null>(null);
   const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
   const [isSavingGgTransNo, setIsSavingGgTransNo] = useState(false);
-  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
-  const [selectedPrintTransaction, setSelectedPrintTransaction] = useState<PrintTransaction | null>(null);
-  const [selectedPrintLineItems, setSelectedPrintLineItems] = useState<PrintLineItem[]>([]);
 
   const [reportType, setReportType] = useState<ReportRangeType>('daily');
   const [startDate, setStartDate] = useState('');
@@ -327,31 +325,51 @@ export function ReportsTab() {
     }
   };
 
-  const onPrintRow = (row: ReportsSaleRow) => {
-    setSelectedPrintTransaction({
-      date: row.date,
-      pofNumber: row.pofNumber,
-      customer: row.memberName || 'N/A',
-      ggTransNo: row.ggTransNo,
-      modeOfPayment: row.paymentMode,
-      encoder: row.zeroOne || row.ggTransNo || 'N/A',
-    });
-    setSelectedPrintLineItems([
-      {
-        id: `print-${row.id}`,
-        productPackage: row.packageType || 'N/A',
-        srp: row.originalPrice,
-        discount: row.discount,
-        discountedPrice: row.discountedPrice,
-        quantity: row.quantity,
-        amount: row.sales,
-        releasedBottle: row.releasedBottle,
-        releasedBlister: row.releasedBlister,
-        balanceBottle: row.balanceBottle,
-        balanceBlister: row.balanceBlister,
-      },
-    ]);
-    setIsPrintPreviewOpen(true);
+  const onPrintRow = async (row: ReportsSaleRow) => {
+    try {
+      const response = await fetch(`/api/daily-sales/get?pofNumber=${encodeURIComponent(row.pofNumber)}`);
+      const payload = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        data?: Array<{
+          pof_number: string;
+          member_name: string;
+          username: string;
+          package_type: string;
+          quantity: number;
+          original_price: number;
+          discount: number;
+          price_after_discount: number;
+          bottle_count: number;
+          blister_count: number;
+          one_time_discount: number;
+          released_count: number;
+          released_blpk_count: number;
+          to_follow_count: number;
+          to_follow_blpk_count: number;
+          sales: number;
+          mode_of_payment: string;
+          payment_type: string;
+          reference_number: string;
+          sales_two: number;
+          mode_of_payment_two: string;
+          payment_type_two: string;
+          reference_number_two: string;
+          remarks: string;
+          received_by: string;
+          collected_by: string;
+        }>;
+      };
+
+      if (!response.ok || !payload.success || !payload.data?.length) {
+        throw new Error(payload.message ?? 'Failed to load print details.');
+      }
+
+      const printHtml = buildPofPrintHtml(payload.data);
+      openPrintWindow('Package / Retail Order Form', printHtml);
+    } catch (error) {
+      onRowAction(error instanceof Error ? error.message : `Failed to print ${row.pofNumber}.`);
+    }
   };
 
   const onExportCsv = () => {
@@ -554,14 +572,6 @@ export function ReportsTab() {
           setSelectedModifyRow(null);
         }}
       />
-      {selectedPrintTransaction ? (
-        <PrintPreviewModal
-          isOpen={isPrintPreviewOpen}
-          transaction={selectedPrintTransaction}
-          lineItems={selectedPrintLineItems}
-          onClose={() => setIsPrintPreviewOpen(false)}
-        />
-      ) : null}
     </section>
   );
 }
