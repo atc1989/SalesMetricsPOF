@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { normalizeDailySalesPackageType } from "@/lib/dailySalesPackages";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,12 @@ function normalizeText(value: string | null, fallback: string) {
   return trimmed && trimmed.length > 0 ? trimmed : fallback;
 }
 
+function normalizePackageType(value: string | null) {
+  const rawValue = normalizeText(value, "UNKNOWN");
+  const normalized = normalizeDailySalesPackageType(rawValue);
+  return normalized ?? rawValue.toUpperCase();
+}
+
 export async function GET(request: NextRequest) {
   const transDate = request.nextUrl.searchParams.get("transDate");
 
@@ -85,7 +92,7 @@ export async function GET(request: NextRequest) {
 
     for (const record of data ?? []) {
       const row = record as DailySalesRow;
-      const packageType = normalizeText(row.package_type, "UNKNOWN");
+      const packageType = normalizePackageType(row.package_type);
       const modeOfPayment = normalizeText(row.mode_of_payment, "UNKNOWN");
       const quantity = toNumber(row.quantity);
       const bottles = row.bottle_count == null ? quantity : toNumber(row.bottle_count);
