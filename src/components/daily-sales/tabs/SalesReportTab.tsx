@@ -239,6 +239,18 @@ const toNumber = (value: unknown) => {
   return 0;
 };
 
+const sumCashRowPieces = (row: CashOnHandApiRow) =>
+  toNumber(row?.pcs_one_thousand) +
+  toNumber(row?.pcs_five_hundred) +
+  toNumber(row?.pcs_two_hundred) +
+  toNumber(row?.pcs_one_hundred) +
+  toNumber(row?.pcs_fifty) +
+  toNumber(row?.pcs_twenty) +
+  toNumber(row?.pcs_ten) +
+  toNumber(row?.pcs_five) +
+  toNumber(row?.pcs_one) +
+  toNumber(row?.pcs_cents);
+
 const formatDateDMYY = (value: string) => {
   const parsed = new Date(`${value}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) {
@@ -568,7 +580,8 @@ export function SalesReportTab() {
         toNumber(salesPayload.totals?.total_sales) ||
         (salesPayload.packageTotals ?? []).reduce((sum, row) => sum + toNumber(row.total_sales), 0);
       const fallbackCashAmount = cashSalesAmount > 0 ? cashSalesAmount : overallSalesAmount;
-      const hasCashOnHandRow = Boolean(cashPayload.row);
+      const savedCashPiecesCount = sumCashRowPieces(cashPayload.row ?? null);
+      const hasCashOnHandRow = Boolean(cashPayload.row) && savedCashPiecesCount > 0;
       const effectiveCashOnHandTotal = hasCashOnHandRow
         ? toNumber(cashPayload.total_cash ?? 0)
         : fallbackCashAmount;
