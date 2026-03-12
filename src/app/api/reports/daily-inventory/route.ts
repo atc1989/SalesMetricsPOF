@@ -5,18 +5,36 @@ export const dynamic = "force-dynamic";
 
 type InventorySourceRow = {
   trans_date: string | null;
+  member_name: string | null;
+  username: string | null;
+  pof_number: string | null;
   package_type: string | null;
   quantity: number | string | null;
   bottle_count: number | string | null;
   blister_count: number | string | null;
-  is_to_blister: boolean | null;
+  released_count: number | string | null;
+  released_blpk_count: number | string | null;
+  to_follow_count: number | string | null;
+  to_follow_blpk_count: number | string | null;
+  sales: number | string | null;
+  mode_of_payment: string | null;
 };
 
-type AggregatedInventoryRow = {
+type InventoryReportRow = {
+  trans_date: string | null;
+  member_name: string;
+  username: string;
+  pof_number: string;
   package_type: string;
-  total_quantity: number;
-  total_bottles: number;
-  total_blisters: number;
+  quantity: number;
+  bottle_count: number;
+  blister_count: number;
+  released_count: number;
+  released_blpk_count: number;
+  to_follow_count: number;
+  to_follow_blpk_count: number;
+  sales: number;
+  mode_of_payment: string;
 };
 
 function toNumber(value: unknown) {
@@ -34,9 +52,9 @@ function toNumber(value: unknown) {
   return 0;
 }
 
-function normalizePackageType(value: string | null) {
+function normalizeText(value: string | null, fallback = "") {
   const trimmed = value?.trim();
-  return trimmed && trimmed.length > 0 ? trimmed : "UNKNOWN";
+  return trimmed && trimmed.length > 0 ? trimmed : fallback;
 }
 
 export async function GET(request: NextRequest) {
@@ -55,10 +73,12 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("daily_sales")
       .select(
-        "trans_date, package_type, quantity, bottle_count, blister_count, is_to_blister",
+        "trans_date, member_name, username, pof_number, package_type, quantity, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment",
       )
       .gte("trans_date", dateFrom)
-      .lte("trans_date", dateTo);
+      .lte("trans_date", dateTo)
+      .order("trans_date", { ascending: false })
+      .order("daily_sales_id", { ascending: false });
 
     if (error) {
       return NextResponse.json(
@@ -75,44 +95,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const grouped = new Map<string, AggregatedInventoryRow>();
-
-    for (const record of data ?? []) {
+    const rows: InventoryReportRow[] = (data ?? []).map((record) => {
       const row = record as InventorySourceRow;
-      const packageType = normalizePackageType(row.package_type);
-      const quantity = toNumber(row.quantity);
-      const bottles = row.bottle_count == null ? quantity : toNumber(row.bottle_count);
-      const blisters = row.blister_count == null ? 0 : toNumber(row.blister_count);
-      const current = grouped.get(packageType) ?? {
-        package_type: packageType,
-        total_quantity: 0,
-        total_bottles: 0,
-        total_blisters: 0,
+
+      return {
+        trans_date: row.trans_date,
+        member_name: normalizeText(row.member_name, "N/A"),
+        username: normalizeText(row.username, "-"),
+        pof_number: normalizeText(row.pof_number, "-"),
+        package_type: normalizeText(row.package_type, "UNKNOWN"),
+        quantity: toNumber(row.quantity),
+        bottle_count: toNumber(row.bottle_count),
+        blister_count: toNumber(row.blister_count),
+        released_count: toNumber(row.released_count),
+        released_blpk_count: toNumber(row.released_blpk_count),
+        to_follow_count: toNumber(row.to_follow_count),
+        to_follow_blpk_count: toNumber(row.to_follow_blpk_count),
+        sales: toNumber(row.sales),
+        mode_of_payment: normalizeText(row.mode_of_payment, "N/A"),
       };
-
-      current.total_quantity += quantity;
-      current.total_bottles += bottles;
-      current.total_blisters += blisters;
-
-      grouped.set(packageType, current);
-    }
-
-    const rows = Array.from(grouped.values()).sort((a, b) =>
-      a.package_type.localeCompare(b.package_type),
-    );
+    });
 
     const totals = rows.reduce(
       (acc, row) => {
-        acc.total_quantity += row.total_quantity;
-        acc.total_bottles += row.total_bottles;
-        acc.total_blisters += row.total_blisters;
+        acc.total_quantity += row.quantity;
+        acc.total_bottles += row.bottle_count;
+        acc.total_blisters += row.blister_count;
         return acc;
       },
       {
         total_quantity: 0,
         total_bottles: 0,
         total_blisters: 0,
-        distinct_packages: rows.length,
+        total_transactions: rows.length,
       },
     );
 

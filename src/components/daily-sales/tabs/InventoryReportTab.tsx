@@ -34,10 +34,20 @@ type InventoryReportRow = {
 };
 
 type DailyInventoryApiRow = {
+  trans_date: string | null;
+  member_name: string;
+  username: string;
+  pof_number: string;
   package_type: string;
-  total_quantity: number;
-  total_bottles: number;
-  total_blisters: number;
+  quantity: number;
+  bottle_count: number;
+  blister_count: number;
+  released_count: number;
+  released_blpk_count: number;
+  to_follow_count: number;
+  to_follow_blpk_count: number;
+  sales: number;
+  mode_of_payment: string;
 };
 
 type DailyInventoryApiResponse = {
@@ -157,31 +167,37 @@ const mapApiRowToReportRow = (
   const normalizedPackageType = normalizeDailySalesPackageType(row.package_type);
   const isBlister = upperPackageType.includes('BLISTER');
   const isRetail = upperPackageType.includes('RETAIL');
-  const amountMultiplier = normalizedPackageType
-    ? getDailySalesPackagePrice(normalizedPackageType)
-    : 0;
+  const amountMultiplier =
+    row.sales > 0
+      ? 0
+      : normalizedPackageType
+        ? getDailySalesPackagePrice(normalizedPackageType)
+        : 0;
+  const totalQuantity = row.quantity ?? 0;
+  const totalBottles = row.bottle_count ?? 0;
+  const totalBlisters = row.blister_count ?? 0;
 
   return {
     id: `api-${index}-${upperPackageType}`,
-    date: '',
-    name: row.package_type,
-    ggTransNo: '-',
-    pofNumber: '-',
-    platinum: upperPackageType.includes('PLATINUM') ? row.total_quantity : 0,
-    gold: upperPackageType.includes('GOLD') ? row.total_quantity : 0,
-    silver: upperPackageType.includes('SILVER') ? row.total_quantity : 0,
-    synbioticBottle: isRetail ? row.total_bottles : 0,
-    synbioticBlister: isBlister ? row.total_blisters : 0,
+    date: row.trans_date ?? '',
+    name: row.member_name || 'N/A',
+    ggTransNo: row.username || '-',
+    pofNumber: row.pof_number || '-',
+    platinum: upperPackageType.includes('PLATINUM') ? totalQuantity : 0,
+    gold: upperPackageType.includes('GOLD') ? totalQuantity : 0,
+    silver: upperPackageType.includes('SILVER') ? totalQuantity : 0,
+    synbioticBottle: isRetail ? totalBottles : 0,
+    synbioticBlister: isBlister ? totalBlisters : 0,
     voucher: 0,
     employeeDiscount: 0,
-    numberOfBottles: row.total_bottles,
-    numberOfBlisters: row.total_blisters,
-    releasedBottle: row.total_bottles,
-    releasedBlister: row.total_blisters,
-    toFollowBottle: 0,
-    toFollowBlister: 0,
-    amount: row.total_quantity * amountMultiplier,
-    modeOfPayment: 'N/A',
+    numberOfBottles: totalBottles,
+    numberOfBlisters: totalBlisters,
+    releasedBottle: row.released_count ?? 0,
+    releasedBlister: row.released_blpk_count ?? 0,
+    toFollowBottle: row.to_follow_count ?? 0,
+    toFollowBlister: row.to_follow_blpk_count ?? 0,
+    amount: row.sales > 0 ? row.sales : totalQuantity * amountMultiplier,
+    modeOfPayment: row.mode_of_payment || 'N/A',
   };
 };
 
