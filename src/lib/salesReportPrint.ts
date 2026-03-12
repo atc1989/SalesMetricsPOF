@@ -1,4 +1,4 @@
-import { openPrintWindow } from '@/lib/printWindow';
+import { openPrintWindow } from '@/lib/print/openPrintWindow';
 
 export type SalesReportPrintRow = {
   label: string;
@@ -57,7 +57,7 @@ function renderPackageTable(title: string, rows: SalesReportPrintRow[], totalLab
     : '';
 
   return `
-    <table class="print-table">
+    <table id="${escapeHtml(tableIdForTitle(title))}">
       <thead><tr><th>${escapeHtml(title)}</th><th>QTY</th><th>PRICE</th><th>AMOUNT TOTAL</th></tr></thead>
       <tbody>
         ${bodyRows}
@@ -75,7 +75,7 @@ function renderAmountTable(title: string, rows: Array<{ label: string; amount: n
     .join('');
 
   return `
-    <table class="print-table">
+    <table id="${escapeHtml(tableIdForTitle(title))}">
       <thead><tr><th colspan="2">${escapeHtml(title)}</th></tr></thead>
       <tbody>
         ${bodyRows}
@@ -85,10 +85,78 @@ function renderAmountTable(title: string, rows: Array<{ label: string; amount: n
   `;
 }
 
+function tableIdForTitle(title: string) {
+  switch (title) {
+    case 'PACKAGE':
+      return 'tblPackage';
+    case 'MOBILE STOCKIST PACKAGE':
+      return 'tblMsPackage';
+    case 'DEPOT PACKAGE':
+      return 'tblCdPackage';
+    case 'RETAIL':
+      return 'tblRetail';
+    case 'MOBILE STOCKIST RETAIL':
+      return 'tblMsRetail';
+    case 'DEPOT RETAIL':
+      return 'tblCdRetail';
+    case 'PAYMENT BREAKDOWN':
+      return 'tblPaymentBreakdown';
+    case 'New Accounts':
+      return 'tblNewAccounts';
+    case 'Upgrades':
+      return 'tblUpgrades';
+    case 'Ewallet':
+      return 'tblEwallet';
+    case 'Bank':
+      return 'tblBank';
+    case 'Maya(IGI)':
+      return 'tblMayaIgi';
+    case 'Maya(ATC)':
+      return 'tblMayaAtc';
+    case 'SbCollect(IGI)':
+      return 'tblSbCollectIgi';
+    case 'SbCollect(ATC)':
+      return 'tblSbCollectAtc';
+    case 'AR(CSA)':
+      return 'tblArCsa';
+    case 'AR Leader Support':
+      return 'tblArLeaderSupport';
+    case 'Credit Card':
+      return 'tblCreditCard';
+    case 'Cheque':
+      return 'tblCheque';
+    case 'Epoints':
+      return 'tblEpoints';
+    default:
+      return 'tblPrint';
+  }
+}
+
+const SALES_REPORT_PRINT_STYLES = `
+  body { font-family: Arial, sans-serif; padding: 20px !important; }
+  table { border-collapse: collapse !important; width: 100% !important; }
+  th, td { padding: 4px !important; border: 1px solid #000 !important; text-align: center !important; }
+  .form-row { display: flex !important; justify-content: space-around !important; margin-bottom: 1px !important; line-height: 1 !important; }
+  .form-header { justify-content: center !important; }
+  #tblPackage, #tblRetail, #tblCdPackage, #tblCdRetail, #tblMsPackage, #tblMsRetail, #tblCashOnHand, #tblPaymentBreakdown, #tblNewAccounts, #tblUpgrades, #tblEwallet, #tblBank, #tblMayaIgi, #tblMayaAtc, #tblSbCollectIgi, #tblSbCollectAtc, #tblArCsa, #tblArLeaderSupport, #tblCreditCard, #tblCheque, #tblEpoints { border-collapse: collapse !important; width: 100% !important; font-size: 12px !important; margin-bottom: 10px !important; }
+  #tblPackage th, #tblRetail th, #tblCdPackage th, #tblCdRetail th, #tblMsPackage th, #tblMsRetail th, #tblCashOnHand th, #tblPaymentBreakdown th, #tblNewAccounts th, #tblUpgrades th, #tblEwallet th, #tblBank th, #tblMayaIgi th, #tblMayaAtc th, #tblSbCollectIgi th, #tblSbCollectAtc th, #tblArCsa th, #tblArLeaderSupport th, #tblCreditCard th, #tblCheque th, #tblEpoints th,
+  #tblPackage td, #tblRetail td, #tblCdPackage td, #tblCdRetail td, #tblMsPackage td, #tblMsRetail td, #tblCashOnHand td, #tblPaymentBreakdown td, #tblNewAccounts td, #tblUpgrades td, #tblEwallet td, #tblBank td, #tblMayaIgi td, #tblMayaAtc td, #tblSbCollectIgi td, #tblSbCollectAtc td, #tblArCsa td, #tblArLeaderSupport td, #tblCreditCard td, #tblCheque td, #tblEpoints td { border: 1px solid #000 !important; padding: 6px 10px !important; text-align: left !important; }
+  #tblPackage th, #tblRetail th, #tblCdPackage th, #tblCdRetail th, #tblMsPackage th, #tblMsRetail th, #tblCashOnHand th, #tblPaymentBreakdown th, #tblNewAccounts th, #tblUpgrades th, #tblEwallet th, #tblBank th, #tblMayaIgi th, #tblMayaAtc th, #tblSbCollectIgi th, #tblSbCollectAtc th, #tblArCsa th, #tblArLeaderSupport th, #tblCreditCard th, #tblCheque th, #tblEpoints th { background-color: #f2f2f2 !important; }
+  .center { text-align: center !important; }
+  .left { text-align: left !important; }
+  .bold, .strong td { font-weight: bold !important; }
+  .total { background-color: #e0e0e0 !important; }
+  .row { display: flex !important; justify-content: space-around !important; margin-bottom: 0 !important; gap: 20px !important; }
+  .col { width: 48% !important; }
+  .col-third { width: 45% !important; }
+  .cont { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 20px !important; }
+  .num { text-align: right !important; }
+`;
+
 export function openSalesReportPrintWindow(input: SalesReportPrintInput) {
   const cashRows = input.cashRows
     .map(
-      (entry) => `<tr><td>${escapeHtml(entry.label)}</td><td class="num">${entry.pieces}</td><td class="num">${formatAmount(entry.amount)}</td></tr>`
+      (entry) => `<tr><td class="left">${escapeHtml(entry.label)}</td><td>${entry.pieces}</td><td class="num">${formatAmount(entry.amount)}</td></tr>`
     )
     .join('');
 
@@ -96,54 +164,39 @@ export function openSalesReportPrintWindow(input: SalesReportPrintInput) {
     .map((entry) => renderAmountTable(entry.title, entry.rows))
     .join('');
 
-  const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Daily Sales Report</title>
-  <style>
-    @page { size: A4 portrait; margin: 8mm; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; color: #111; }
-    .page { width: 194mm; margin: 0 auto; padding: 2mm; font-size: 9px; line-height: 1.15; }
-    .header { text-align: center; margin-bottom: 6px; font-weight: 700; }
-    .sub { font-weight: 400; }
-    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: start; }
-    .stack { display: grid; gap: 6px; }
-    .print-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .print-table th, .print-table td { border: 1px solid #000; padding: 2px 3px; vertical-align: middle; }
-    .print-table thead th { text-align: left; font-size: 8px; }
-    .num { text-align: right; white-space: nowrap; }
-    .center { text-align: center; }
-    .strong td { font-weight: 700; }
-    .triplet { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
-    .payments-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
-    .signatories { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-    .signature-box { text-align: center; }
-    @media print {
-      .page { margin: 0; }
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <div class="header">
-      <div>Innovision Grand International</div>
-      <div>Daily Sales Report</div>
-      <div class="sub">${escapeHtml(input.dateCaption)}</div>
-    </div>
+  const bodyHtml = `
+    <div class="section" id="cntnrDailySales">
+      <div class="form-row form-header">
+        <p></p>
+        <span style="font-weight: bold;">Innovision Grand International</span>
+        <p></p>
+      </div>
 
-    <div class="layout">
-      <div class="stack">
+      <div class="form-row form-header">
+        <p></p>
+        <span style="font-weight: bold;">Daily Sales Report</span>
+        <p></p>
+      </div>
+
+      <div class="form-row form-header">
+        <p></p>
+        <span id="spnTransDateDailySales" style="font-weight: bold;">${escapeHtml(input.dateCaption)}</span>
+        <p></p>
+      </div>
+
+      <br />
+      <div class="row">
+        <div class="col">
         ${renderPackageTable('PACKAGE', input.snapshot.packageRows, 'Total Package Sales')}
         ${renderPackageTable('MOBILE STOCKIST PACKAGE', input.snapshot.msPackageRows, 'Total Mobile Stockist Package Sales')}
         ${renderPackageTable('DEPOT PACKAGE', input.snapshot.cdPackageRows, 'Total Depot Package Sales')}
         ${renderPackageTable('RETAIL', input.snapshot.retailRows, 'Total Retail Sales', true)}
         ${renderPackageTable('MOBILE STOCKIST RETAIL', input.snapshot.msRetailRows, 'Total Mobile Stockist Retail Sales', true)}
         ${renderPackageTable('DEPOT RETAIL', input.snapshot.cdRetailRows, 'Total Depot Retail Sales')}
-      </div>
-      <div class="stack">
-        <table class="print-table">
+        </div>
+
+        <div class="col">
+        <table id="tblCashOnHand">
           <thead><tr><th>Cash on Hand</th><th>Pieces</th><th>Amount</th></tr></thead>
           <tbody>
             ${cashRows}
@@ -151,11 +204,11 @@ export function openSalesReportPrintWindow(input: SalesReportPrintInput) {
           </tbody>
         </table>
         ${renderAmountTable('PAYMENT BREAKDOWN', input.snapshot.paymentBreakdownRows)}
+        </div>
       </div>
-    </div>
 
-    <div class="triplet">
-      <table class="print-table">
+      <div class="cont">
+      <table id="tblNewAccounts">
         <thead>
           <tr><th colspan="3">New Accounts</th></tr>
           <tr><th>Silver</th><th>Gold</th><th>Platinum</th></tr>
@@ -164,7 +217,7 @@ export function openSalesReportPrintWindow(input: SalesReportPrintInput) {
           <tr><td class="center">${input.snapshot.newAccounts.silver}</td><td class="center">${input.snapshot.newAccounts.gold}</td><td class="center">${input.snapshot.newAccounts.platinum}</td></tr>
         </tbody>
       </table>
-      <table class="print-table">
+      <table id="tblUpgrades">
         <thead>
           <tr><th colspan="3">Upgrades</th></tr>
           <tr><th>Silver</th><th>Gold</th><th>Platinum</th></tr>
@@ -173,19 +226,16 @@ export function openSalesReportPrintWindow(input: SalesReportPrintInput) {
           <tr><td class="center">${input.snapshot.upgrades.silver}</td><td class="center">${input.snapshot.upgrades.gold}</td><td class="center">${input.snapshot.upgrades.platinum}</td></tr>
         </tbody>
       </table>
-    </div>
-
-    <div class="payments-grid">
       ${paymentTypeTables}
-    </div>
+      </div>
 
-    <div class="signatories">
-      <div class="signature-box"><div>Prepared By:</div><div><strong>Alaiza Jane Emoylan</strong></div><div>Cashier</div></div>
-      <div class="signature-box"><div>Checked By:</div><div><strong>Erica Villaester</strong></div><div>Accounting Staff</div></div>
+      <br />
+      <div class="form-row" style="justify-content: space-around;">
+        <p>Prepared By:<br /><span id="txtPreparedBy" style="font-weight: bold;">Alaiza Jane Emoylan</span><br />Cashier</p>
+        <p>Checked By:<br /><span id="txtCheckedBy" style="font-weight: bold;">Erica Villaester</span><br />Accounting Staff</p>
+      </div>
     </div>
-  </div>
-</body>
-</html>`;
+  `;
 
-  openPrintWindow({ html });
+  openPrintWindow('Daily Sales Report', bodyHtml, SALES_REPORT_PRINT_STYLES);
 }
