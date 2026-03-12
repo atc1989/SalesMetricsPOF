@@ -87,12 +87,26 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
           .join('');
 
   return `
-    <div class="print-header">
-      <h1>Innovision Grand International</h1>
-      <h2>Inventory Report</h2>
-      <p>${escapeHtml(dateRange)}</p>
-    </div>
-    <div class="tbl-di-container">
+    <div class="card table-container tbl-di-container" id="cntnrDailyInventory">
+      <div class="form-row form-header" style="justify-content: center;">
+        <p></p>
+        <span style="font-weight: bold;">Innovision Grand International</span>
+        <p></p>
+      </div>
+
+      <div class="form-row form-header" style="justify-content: center;">
+        <p></p>
+        <span style="font-weight: bold;">Inventory Report</span>
+        <p></p>
+      </div>
+
+      <div class="form-row form-header" style="justify-content: center;">
+        <p></p>
+        <span id="spnTransDate" style="font-weight: bold;">${escapeHtml(dateRange)}</span>
+        <p></p>
+      </div>
+
+      <br />
       <table class="tbl-daily-inventory">
         <thead>
           <tr>
@@ -125,15 +139,11 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
         </tbody>
         <tfoot></tfoot>
       </table>
-    </div>
-    <div class="print-signoff">
-      <div class="form-row">
-        <span>PREPARED BY:</span>
-        <span>CHECKED BY:</span>
-      </div>
-      <div class="form-row">
-        <span>____________________________</span>
-        <span>____________________________</span>
+
+      <br />
+      <div class="form-row" style="justify-content: space-around;">
+        <p>Prepared By:<br /><span id="txtPreparedBy" style="font-weight: bold;">Alaiza Jane Emoylan</span><br />Cashier</p>
+        <p>Checked By:<br /><span id="txtCheckedBy" style="font-weight: bold;">Erica Villaester</span><br />Accounting Staff</p>
       </div>
     </div>
   `;
