@@ -218,9 +218,9 @@ const mapUserAccountToUsersNoZeroOne = (rows: UserAccountRow[]): UsersNoZeroOneR
   }));
 
 export function UsersTab() {
-  const [usersRows, setUsersRows] = useState<UsersNoZeroOneRow[]>(initialUsersRows);
-  const [rows, setRows] = useState<UserAccountRow[]>(initialUserAccountRows);
-  const [isLoading, setIsLoading] = useState(false);
+  const [usersRows, setUsersRows] = useState<UsersNoZeroOneRow[]>([]);
+  const [rows, setRows] = useState<UserAccountRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [searchText, setSearchText] = useState('');
 

@@ -1,7 +1,8 @@
 "use client";
 
 const PRINT_STYLES = `
-  body { font-family: Arial, sans-serif; padding: 20px; }
+  @page { size: portrait; margin: 12mm; }
+  body { font-family: Arial, sans-serif; padding: 0; margin: 0; }
   table { border-collapse: collapse; width: 100%; }
   th, td { padding: 4px; border: 1px solid #000; text-align: center; }
   .form-row { display: flex; justify-content: space-around; margin-bottom: 1px; line-height: 1; }
@@ -13,6 +14,12 @@ const PRINT_STYLES = `
   .print-header h1, .print-header h2, .print-header p { margin: 0 0 4px; }
   .print-signoff { margin-top: 24px; }
   .print-signoff > div { width: 100%; max-width: 720px; margin: 0 auto; }
+  .pof-print-sheet { display: flex; flex-direction: column; gap: 10mm; }
+  .pof-print-copy { min-height: calc((297mm - 24mm - 10mm) / 2); font-size: 9px; page-break-inside: avoid; }
+  .pof-print-copy p { margin: 0 0 2px; }
+  .pof-print-copy table { table-layout: fixed; font-size: 8px; }
+  .pof-print-copy th, .pof-print-copy td { padding: 2px 3px; }
+  .pof-print-copy br { line-height: 0.5; }
 `;
 
 export function openPrintWindow(title: string, bodyHtml: string, extraStyles = "") {
