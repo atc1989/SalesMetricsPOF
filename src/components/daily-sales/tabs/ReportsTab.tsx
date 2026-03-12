@@ -106,6 +106,9 @@ export function ReportsTab() {
   const [selectedModifyRow, setSelectedModifyRow] = useState<{ id: string; dailySalesId: number; pofNumber: string; ggTransNo: string } | null>(null);
   const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
   const [isSavingGgTransNo, setIsSavingGgTransNo] = useState(false);
+  const [selectedRemoveRow, setSelectedRemoveRow] = useState<ReportsSaleRow | null>(null);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [isRemovingRow, setIsRemovingRow] = useState(false);
 
   const [reportType, setReportType] = useState<ReportRangeType>('daily');
   const [startDate, setStartDate] = useState('');
@@ -372,6 +375,54 @@ export function ReportsTab() {
     }
   };
 
+  const onOpenRemoveRow = (row: ReportsSaleRow) => {
+    setSelectedRemoveRow(row);
+    setIsRemoveModalOpen(true);
+  };
+
+  const onCloseRemoveModal = () => {
+    if (isRemovingRow) {
+      return;
+    }
+
+    setIsRemoveModalOpen(false);
+    setSelectedRemoveRow(null);
+  };
+
+  const onConfirmRemoveRow = async () => {
+    if (!selectedRemoveRow) {
+      return;
+    }
+
+    setIsRemovingRow(true);
+
+    try {
+      const response = await fetch('/api/daily-sales/remove-pof', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pofNumber: selectedRemoveRow.pofNumber,
+          pof_number: selectedRemoveRow.pofNumber,
+        }),
+      });
+
+      const payload = (await response.json()) as { success?: boolean; message?: string };
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message ?? 'Failed to remove POF.');
+      }
+
+      setRows((prev) => prev.filter((row) => row.pofNumber !== selectedRemoveRow.pofNumber));
+      setIsRemoveModalOpen(false);
+      onRowAction(`Removed ${selectedRemoveRow.pofNumber} from reports and Supabase.`);
+      setSelectedRemoveRow(null);
+    } catch (error) {
+      onRowAction(error instanceof Error ? error.message : 'Failed to remove POF.');
+    } finally {
+      setIsRemovingRow(false);
+    }
+  };
+
   const onExportCsv = () => {
     const headers = [
       'Date',
@@ -527,7 +578,7 @@ export function ReportsTab() {
                         <Button size="sm" variant="secondary" onClick={() => onPrintRow(row)}>
                           Print
                         </Button>
-                        <Button size="sm" variant="danger" onClick={() => onRowAction(`Remove action for ${row.pofNumber}.`)}>
+                        <Button size="sm" variant="danger" onClick={() => onOpenRemoveRow(row)}>
                           Remove
                         </Button>
                       </div>
@@ -572,6 +623,30 @@ export function ReportsTab() {
           setSelectedModifyRow(null);
         }}
       />
+      <Modal
+        isOpen={isRemoveModalOpen}
+        title="Remove Report Row"
+        onClose={onCloseRemoveModal}
+        footer={
+          <>
+            <Button variant="secondary" onClick={onCloseRemoveModal} disabled={isRemovingRow}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={onConfirmRemoveRow} disabled={isRemovingRow}>
+              {isRemovingRow ? 'Removing...' : 'Remove'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-slate-900">
+            Delete POF <span className="text-red-600">{selectedRemoveRow?.pofNumber}</span>?
+          </p>
+          <p>
+            This will remove the report row from the table and delete the matching record(s) in Supabase.
+          </p>
+        </div>
+      </Modal>
     </section>
   );
 }
