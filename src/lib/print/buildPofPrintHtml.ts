@@ -200,9 +200,7 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
         <p><span id="txtCollectedBy" style="font-weight: bold;">${escapeHtml(firstRow.collected_by)}</span></p>
         <p></p>
       </div>
-    </section>
 
-    <section class="pof-print-copy">
       <div class="form-row" style="justify-content: space-between;">
         <div style="height: 25px; width: 120px;"></div>
         <p>PACKAGE / RETAIL ORDER FORM</p>
