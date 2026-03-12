@@ -1,15 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { SectionPrintPreviewModal } from '@/components/daily-sales/SectionPrintPreviewModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
-import { getPrintableHtmlById } from '@/lib/printElement';
 import {
   getDailySalesPackagePrice,
   normalizeDailySalesPackageType,
 } from '@/lib/dailySalesPackages';
+import { openPrintWindow } from '@/lib/print/openPrintWindow';
 
 type InventoryReportRow = {
   id: string;
@@ -45,6 +44,99 @@ type DailyInventoryApiResponse = {
   success: boolean;
   message?: string;
   rows?: DailyInventoryApiRow[];
+};
+
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+const formatAmount = (value: number) => `PHP ${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+
+const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string) => {
+  const bodyRows =
+    rows.length === 0
+      ? `<tr><td colspan="18">No inventory results for selected range</td></tr>`
+      : rows
+          .map(
+            (row) => `
+              <tr>
+                <td>${escapeHtml(row.name)}</td>
+                <td>${escapeHtml(row.ggTransNo)}</td>
+                <td>${escapeHtml(row.pofNumber)}</td>
+                <td>${row.platinum}</td>
+                <td>${row.gold}</td>
+                <td>${row.silver}</td>
+                <td>${row.synbioticBottle}</td>
+                <td>${row.synbioticBlister}</td>
+                <td>${row.voucher}</td>
+                <td>${row.employeeDiscount}</td>
+                <td>${row.numberOfBottles}</td>
+                <td>${row.numberOfBlisters}</td>
+                <td>${row.releasedBottle}</td>
+                <td>${row.releasedBlister}</td>
+                <td>${row.toFollowBottle}</td>
+                <td>${row.toFollowBlister}</td>
+                <td>${escapeHtml(formatAmount(row.amount))}</td>
+                <td>${escapeHtml(row.modeOfPayment)}</td>
+              </tr>`,
+          )
+          .join('');
+
+  return `
+    <div class="print-header">
+      <h1>Innovision Grand International</h1>
+      <h2>Inventory Report</h2>
+      <p>${escapeHtml(dateRange)}</p>
+    </div>
+    <div class="tbl-di-container">
+      <table class="tbl-daily-inventory">
+        <thead>
+          <tr>
+            <th rowspan="2">NAME</th>
+            <th rowspan="2">GG TRANS NO.</th>
+            <th rowspan="2">POF NUMBER</th>
+            <th colspan="3">PACKAGE TYPE</th>
+            <th colspan="4">RETAIL</th>
+            <th rowspan="2">NUMBER OF BOTTLES</th>
+            <th rowspan="2">NUMBER OF BLISTERS</th>
+            <th rowspan="2">RELEASED (BOTTLE)</th>
+            <th rowspan="2">RELEASED (BLISTER)</th>
+            <th rowspan="2">TO FOLLOW (BOTTLE)</th>
+            <th rowspan="2">TO FOLLOW (BLISTER)</th>
+            <th rowspan="2">AMOUNT</th>
+            <th rowspan="2">MODE OF PAYMENT</th>
+          </tr>
+          <tr>
+            <th>PLATINUM</th>
+            <th>GOLD</th>
+            <th>SILVER</th>
+            <th>SYNBIOTIC+ BOTTLE</th>
+            <th>SYNBIOTIC+ BLISTER</th>
+            <th>VOUCHER</th>
+            <th>EMPLOYEE DISCOUNT</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bodyRows}
+        </tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+    <div class="print-signoff">
+      <div class="form-row">
+        <span>PREPARED BY:</span>
+        <span>CHECKED BY:</span>
+      </div>
+      <div class="form-row">
+        <span>____________________________</span>
+        <span>____________________________</span>
+      </div>
+    </div>
+  `;
 };
 
 const mapApiRowToReportRow = (
@@ -105,8 +197,6 @@ export function InventoryReportTab() {
   const [errorMessage, setErrorMessage] = useState('');
   const [rows, setRows] = useState<InventoryReportRow[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
-  const [printPreviewHtml, setPrintPreviewHtml] = useState('');
   const [displayDateRange, setDisplayDateRange] = useState(
     `${formatDateDMYY(defaultInventoryDate)} To ${formatDateDMYY(defaultInventoryDate)}`
   );
@@ -144,13 +234,8 @@ export function InventoryReportTab() {
   };
 
   const onPrint = () => {
-    const html = getPrintableHtmlById('cntnrDailyInventory');
-    if (!html) {
-      return;
-    }
-
-    setPrintPreviewHtml(html);
-    setIsPrintPreviewOpen(true);
+    const printHtml = renderInventoryPrintHtml(rows, displayDateRange);
+    openPrintWindow('Inventory Report', printHtml);
   };
 
   return (
@@ -310,12 +395,6 @@ export function InventoryReportTab() {
       <Modal isOpen={isWarningOpen} title="Warning!" onClose={() => setIsWarningOpen(false)}>
         Please input valid date.
       </Modal>
-      <SectionPrintPreviewModal
-        isOpen={isPrintPreviewOpen}
-        title="Print Preview"
-        html={printPreviewHtml}
-        onClose={() => setIsPrintPreviewOpen(false)}
-      />
     </section>
   );
 }
