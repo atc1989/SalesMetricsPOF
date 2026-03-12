@@ -201,6 +201,72 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
         <p></p>
       </div>
     </section>
+
+    <section class="pof-print-copy">
+      <div class="form-row" style="justify-content: space-between;">
+        <div style="height: 25px; width: 120px;"></div>
+        <p>PACKAGE / RETAIL ORDER FORM</p>
+      </div>
+      <div class="form-row" style="justify-content: space-between;">
+        <p>2nd Floor, Unit 3, CVA Building, J.P. Laurel Avenue, Davao City</p>
+        <p class="spn-pof-number">PROF No: <span id="txtPofNumber" style="font-weight: bold;">${escapeHtml(firstRow.pof_number)}</span></p>
+      </div>
+      <p>www.onegrindersguild.com</p>
+      <br />
+      <div class="form-row" style="justify-content: space-between;">
+        <p>Name: <span id="txtName" style="font-weight: bold;">${escapeHtml(firstRow.member_name)}</span></p>
+        <p>Username: <span id="txtUsername" style="font-weight: bold;">${escapeHtml(firstRow.username)}</span></p>
+        <p></p>
+      </div>
+      <table border="1" width="100%" id="tblPrintOut">
+        <thead>
+          <tr>
+            <th>PRODUCT/PACKAGE</th>
+            <th>SRP</th>
+            <th>DISCOUNT</th>
+            <th>DISCOUNTED PRICE</th>
+            <th>QUANTITY</th>
+            <th>AMOUNT</th>
+            <th>RELEASED (BOTTLE)</th>
+            <th>RELEASED (BLISTER)</th>
+            <th>BALANCE (BOTTLE)</th>
+            <th>BALANCE (BLISTER)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bodyRows}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="5" style="text-align: center;">Grand Total:</th>
+            <th colspan="5" style="text-align: center;">${escapeHtml(formatPeso(totalAmount))}</th>
+          </tr>
+          <tr>
+            <th colspan="5" style="text-align: center;">One-time Discount:</th>
+            <th colspan="5" style="text-align: center;">${escapeHtml(formatPeso(totalOneTimeDiscount))}</th>
+          </tr>
+          <tr>
+            <th colspan="5" style="text-align: center;">Net Payable:</th>
+            <th colspan="5" style="text-align: center;">${escapeHtml(formatPeso(totalSales))}</th>
+          </tr>
+          ${renderPaymentRows(firstRow)}
+        </tfoot>
+      </table>
+      <br />
+      <div class="form-row" style="justify-content: space-between;">
+        <p>Remarks: <span id="txtRemarks" style="font-weight: bold;">${escapeHtml(firstRow.remarks)}</span></p>
+      </div>
+      <div class="form-row" style="justify-content: space-between;">
+        <p>Checked and Verified:</p>
+        <p>Received product in good order condition:</p>
+        <p></p>
+      </div>
+      <div class="form-row" style="justify-content: space-between;">
+        <p><span id="txtReceivedBy" style="font-weight: bold;">${escapeHtml(firstRow.received_by)}</span></p>
+        <p><span id="txtCollectedBy" style="font-weight: bold;">${escapeHtml(firstRow.collected_by)}</span></p>
+        <p></p>
+      </div>
+    </section>
   `;
 
   return `
