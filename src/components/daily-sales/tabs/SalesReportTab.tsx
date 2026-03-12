@@ -60,6 +60,12 @@ type SalesReportApiPayload = {
   message?: string;
   packageTotals?: PackageTotalsApiRow[];
   paymentSummary?: PaymentSummaryApiRow[];
+  totals?: {
+    total_sales: number;
+    total_bottles: number;
+    total_blisters: number;
+    total_transactions: number;
+  };
   stockistPackageTotals?: PackageTotalsApiRow[];
   stockistRetailTotals?: PackageTotalsApiRow[];
   centerPackageTotals?: PackageTotalsApiRow[];
@@ -558,10 +564,14 @@ export function SalesReportTab() {
       }
 
       const cashSalesAmount = sumForModes(paymentTotals, CASH_MODES);
+      const overallSalesAmount =
+        toNumber(salesPayload.totals?.total_sales) ||
+        (salesPayload.packageTotals ?? []).reduce((sum, row) => sum + toNumber(row.total_sales), 0);
+      const fallbackCashAmount = cashSalesAmount > 0 ? cashSalesAmount : overallSalesAmount;
       const hasCashOnHandRow = Boolean(cashPayload.row);
       const effectiveCashOnHandTotal = hasCashOnHandRow
         ? toNumber(cashPayload.total_cash ?? 0)
-        : cashSalesAmount;
+        : fallbackCashAmount;
 
       const paymentBreakdownRows: AmountRow[] = defaultSnapshot.paymentBreakdownRows.map((row) => {
         if (row.label === 'Cash on hand') {
