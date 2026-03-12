@@ -203,6 +203,7 @@ const paymentTitleToModes: Record<string, string[]> = {
 };
 
 const normalizeKey = (value: string) => value.trim().toUpperCase();
+const CASH_MODES = ['CASH'];
 
 const sumForModes = (
   paymentTotals: Map<string, number>,
@@ -449,9 +450,15 @@ export function SalesReportTab() {
         paymentTotals.set(key, (paymentTotals.get(key) ?? 0) + toNumber(row.total_sales));
       }
 
+      const cashSalesAmount = sumForModes(paymentTotals, CASH_MODES);
+      const hasCashOnHandRow = Boolean(cashPayload.row);
+      const effectiveCashOnHandTotal = hasCashOnHandRow
+        ? toNumber(cashPayload.total_cash ?? 0)
+        : cashSalesAmount;
+
       const paymentBreakdownRows: AmountRow[] = defaultSnapshot.paymentBreakdownRows.map((row) => {
         if (row.label === 'Cash on hand') {
-          return { ...row, amount: toNumber(cashPayload.total_cash ?? 0) };
+          return { ...row, amount: effectiveCashOnHandTotal };
         }
 
         const modes = paymentLabelToModes[row.label];
@@ -486,7 +493,7 @@ export function SalesReportTab() {
       setPaymentSummary(backendPaymentSummary);
       setCashOnHandRow(cashRow ?? null);
       setCashPieces(mappedCashPieces);
-      setTotalCashFromBackend(toNumber(cashPayload.total_cash ?? 0));
+      setTotalCashFromBackend(effectiveCashOnHandTotal);
       setLoadedFromBackend(true);
     } catch {
       setSnapshot(defaultSnapshot);
