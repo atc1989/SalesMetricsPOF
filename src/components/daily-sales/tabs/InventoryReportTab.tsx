@@ -292,7 +292,7 @@ export function InventoryReportTab() {
           <span id="spnTransDate" className="text-sm text-slate-700">
             {displayDateRange}
           </span>
-          <Button id="printDailyInventory" size="sm" variant="secondary" onClick={onPrint}>
+          <Button id="printDailyInventory" data-print-exclude="true" size="sm" variant="secondary" onClick={onPrint}>
             Print
           </Button>
         </div>

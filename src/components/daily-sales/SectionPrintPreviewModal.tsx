@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { buildPrintHtmlDocument, openPrintWindow } from "@/lib/printWindow";
 
 type SectionPrintPreviewModalProps = {
   isOpen: boolean;
@@ -17,9 +18,31 @@ export function SectionPrintPreviewModal({
   onClose,
 }: SectionPrintPreviewModalProps) {
   const onPrint = () => {
-    if (typeof window !== "undefined") {
-      window.print();
+    if (!html) {
+      return;
     }
+
+    const printRoot = document.createElement("div");
+    printRoot.innerHTML = html;
+
+    printRoot.querySelectorAll('[data-print-exclude="true"]').forEach((node) => {
+      node.remove();
+    });
+
+    printRoot
+      .querySelectorAll<HTMLElement>(".overflow-auto, .overflow-x-auto, .overflow-y-auto")
+      .forEach((node) => {
+        node.classList.remove("overflow-auto", "overflow-x-auto", "overflow-y-auto");
+      });
+
+    printRoot.querySelectorAll<HTMLElement>("table").forEach((table) => {
+      table.style.minWidth = "0";
+      table.style.width = "100%";
+    });
+
+    openPrintWindow({
+      html: buildPrintHtmlDocument(printRoot.innerHTML, title),
+    });
   };
 
   return (
