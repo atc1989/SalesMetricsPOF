@@ -55,23 +55,32 @@ function toBoolean(value: unknown) {
 }
 
 export async function GET(request: NextRequest) {
+  const dailySalesIdValue = request.nextUrl.searchParams.get("dailySalesId")?.trim();
   const pofNumber = request.nextUrl.searchParams.get("pofNumber")?.trim();
+  const dailySalesId = dailySalesIdValue ? Number(dailySalesIdValue) : null;
 
-  if (!pofNumber) {
+  if ((!dailySalesIdValue || !Number.isFinite(dailySalesId)) && !pofNumber) {
     return NextResponse.json(
-      { success: false, message: "Missing pofNumber." },
+      { success: false, message: "Missing dailySalesId/pofNumber." },
       { status: 400 },
     );
   }
 
   const supabase = getSupabaseAdminClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("daily_sales")
     .select(
       "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, is_to_blister, one_time_discount, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, reference_number, sales_two, mode_of_payment_two, payment_type_two, reference_number_two, remarks, received_by, collected_by",
     )
-    .eq("pof_number", pofNumber)
     .order("daily_sales_id", { ascending: true });
+
+  if (dailySalesIdValue && Number.isFinite(dailySalesId)) {
+    query = query.eq("daily_sales_id", dailySalesId);
+  } else if (pofNumber) {
+    query = query.eq("pof_number", pofNumber);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json(

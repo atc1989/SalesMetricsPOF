@@ -331,7 +331,17 @@ export function ReportsTab() {
 
   const onPrintRow = async (row: ReportsSaleRow) => {
     try {
-      const response = await fetch(`/api/daily-sales/get?pofNumber=${encodeURIComponent(row.pofNumber)}`);
+      const params = new URLSearchParams();
+
+      if (row.dailySalesId > 0) {
+        params.set('dailySalesId', String(row.dailySalesId));
+      }
+
+      if (row.pofNumber) {
+        params.set('pofNumber', row.pofNumber);
+      }
+
+      const response = await fetch(`/api/daily-sales/get?${params.toString()}`);
       const payload = (await response.json()) as {
         success?: boolean;
         message?: string;
