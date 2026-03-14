@@ -576,15 +576,12 @@ export function SalesReportTab() {
       }
 
       const cashSalesAmount = sumForModes(paymentTotals, CASH_MODES);
-      const overallSalesAmount =
-        toNumber(salesPayload.totals?.total_sales) ||
-        (salesPayload.packageTotals ?? []).reduce((sum, row) => sum + toNumber(row.total_sales), 0);
-      const fallbackCashAmount = cashSalesAmount > 0 ? cashSalesAmount : overallSalesAmount;
+      const hasCashSales = cashSalesAmount > 0;
       const savedCashPiecesCount = sumCashRowPieces(cashPayload.row ?? null);
       const hasCashOnHandRow = Boolean(cashPayload.row) && savedCashPiecesCount > 0;
-      const effectiveCashOnHandTotal = hasCashOnHandRow
-        ? toNumber(cashPayload.total_cash ?? 0)
-        : fallbackCashAmount;
+      const effectiveCashOnHandTotal = hasCashSales
+        ? (hasCashOnHandRow ? toNumber(cashPayload.total_cash ?? 0) : cashSalesAmount)
+        : 0;
 
       const paymentBreakdownRows: AmountRow[] = defaultSnapshot.paymentBreakdownRows.map((row) => {
         if (row.label === 'Cash on hand') {
@@ -600,18 +597,20 @@ export function SalesReportTab() {
       });
 
       const cashRow = cashPayload.row;
-      const mappedCashPieces: Record<CashFieldId, number> = {
-        cohOneThousand: toNumber(cashRow?.pcs_one_thousand),
-        cohFiveHundred: toNumber(cashRow?.pcs_five_hundred),
-        cohTwoHundred: toNumber(cashRow?.pcs_two_hundred),
-        cohOneHundred: toNumber(cashRow?.pcs_one_hundred),
-        cohFifty: toNumber(cashRow?.pcs_fifty),
-        cohTwenty: toNumber(cashRow?.pcs_twenty),
-        cohTen: toNumber(cashRow?.pcs_ten),
-        cohFive: toNumber(cashRow?.pcs_five),
-        cohOne: toNumber(cashRow?.pcs_one),
-        cohCents: toNumber(cashRow?.pcs_cents),
-      };
+      const mappedCashPieces: Record<CashFieldId, number> = hasCashSales
+        ? {
+            cohOneThousand: toNumber(cashRow?.pcs_one_thousand),
+            cohFiveHundred: toNumber(cashRow?.pcs_five_hundred),
+            cohTwoHundred: toNumber(cashRow?.pcs_two_hundred),
+            cohOneHundred: toNumber(cashRow?.pcs_one_hundred),
+            cohFifty: toNumber(cashRow?.pcs_fifty),
+            cohTwenty: toNumber(cashRow?.pcs_twenty),
+            cohTen: toNumber(cashRow?.pcs_ten),
+            cohFive: toNumber(cashRow?.pcs_five),
+            cohOne: toNumber(cashRow?.pcs_one),
+            cohCents: toNumber(cashRow?.pcs_cents),
+          }
+        : defaultCashPieces;
 
       setSnapshot((prev) => ({
         ...prev,
