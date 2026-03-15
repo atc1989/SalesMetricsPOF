@@ -90,7 +90,7 @@ export const dailySalesPackageCatalog: Record<
     label: 'Blister (1 blister pack)',
     originalPrice: 780,
     bottleCount: 0,
-    bundledBlisterCount: 0,
+    bundledBlisterCount: 1,
     defaultIsToBlister: '1',
   },
   SILVER_RETAIL_BOTTLE: {
