@@ -220,6 +220,7 @@ export function ReportsTab() {
   const [pendingStartDate, setPendingStartDate] = useState(reportDateToday);
   const [pendingEndDate, setPendingEndDate] = useState(reportDateToday);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([]);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isActionNoticeOpen, setIsActionNoticeOpen] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
@@ -360,9 +361,34 @@ export function ReportsTab() {
         return false;
       }
 
+      if (
+        selectedPaymentMethods.length > 0 &&
+        !row.paymentModes.some((mode) => selectedPaymentMethods.includes(mode))
+      ) {
+        return false;
+      }
+
       return true;
     });
-  }, [activeRange, searchQuery, rows]);
+  }, [activeRange, searchQuery, selectedPaymentMethods, rows]);
+
+  const paymentMethodOptions = useMemo(() => {
+    const options = new Set<string>();
+    for (const row of rows) {
+      for (const mode of row.paymentModes) {
+        if (mode) {
+          options.add(mode);
+        }
+      }
+    }
+    return Array.from(options).sort((a, b) => a.localeCompare(b));
+  }, [rows]);
+
+  const onTogglePaymentMethod = (method: string) => {
+    setSelectedPaymentMethods((prev) =>
+      prev.includes(method) ? prev.filter((value) => value !== method) : [...prev, method]
+    );
+  };
 
   const totals = useMemo(
     () =>
@@ -642,7 +668,7 @@ export function ReportsTab() {
         prev.filter(
           (row) =>
             !(
-              selectedRemoveRow.pofNumbers.includes(row.pofNumber) &&
+              selectedRemoveRow.pofNumbers.includes(row.rawPofNumber) &&
               row.ggTransNo === selectedRemoveRow.ggTransNo
             )
         )
@@ -687,11 +713,11 @@ export function ReportsTab() {
       ),
     ];
 
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF', lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'pof.xlsx';
+    link.download = 'pof.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -701,7 +727,7 @@ export function ReportsTab() {
   return (
     <section id="reports" className="mt-4 space-y-4">
       <Card className="p-3">
-        <div className="grid gap-2 md:grid-cols-5">
+        <div className="grid gap-2 md:grid-cols-6">
           <label className="flex flex-col text-xs font-medium text-slate-700">
             Report Type
             <select
@@ -759,6 +785,43 @@ export function ReportsTab() {
               className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
             />
           </label>
+          <div className="flex flex-col text-xs font-medium text-slate-700">
+            <div className="flex items-center justify-between">
+              <span>Payment Methods</span>
+              <div className="flex items-center gap-2 text-[11px]">
+                <button
+                  type="button"
+                  className="text-blue-600 hover:underline"
+                  onClick={() => setSelectedPaymentMethods(paymentMethodOptions)}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  className="text-slate-600 hover:underline"
+                  onClick={() => setSelectedPaymentMethods([])}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div className="mt-1 max-h-24 space-y-1 overflow-y-auto rounded border border-slate-300 px-2 py-1">
+              {paymentMethodOptions.length === 0 ? (
+                <p className="text-[11px] text-slate-500">No methods yet</p>
+              ) : (
+                paymentMethodOptions.map((method) => (
+                  <label key={method} className="flex items-center gap-2 text-xs font-normal text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={selectedPaymentMethods.includes(method)}
+                      onChange={() => onTogglePaymentMethod(method)}
+                    />
+                    <span>{method}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </Card>
 
