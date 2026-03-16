@@ -11,6 +11,11 @@ function readPofNumber(body: JsonObject) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function readUsername(body: JsonObject) {
+  const value = body.username ?? body.ggTransNo ?? body.gg_trans_no;
+  return typeof value === "string" ? value.trim() : "";
+}
+
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as JsonObject | null;
 
@@ -22,6 +27,7 @@ export async function POST(request: NextRequest) {
   }
 
   const pofNumber = readPofNumber(body);
+  const username = readUsername(body);
 
   if (!pofNumber) {
     return NextResponse.json(
@@ -31,6 +37,31 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getSupabaseAdminClient();
+
+  if (username) {
+    const { data, error } = await supabase
+      .from("daily_sales")
+      .delete()
+      .eq("pof_number", pofNumber)
+      .eq("username", username)
+      .select("daily_sales_id");
+
+    if (error) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Failed to remove POF",
+          error: {
+            code: error.code,
+            details: error.message,
+          },
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ success: true, data });
+  }
 
   // If this fails with signature mismatch, confirm argument names in Supabase:
   // select specific_name, parameter_name

@@ -219,7 +219,8 @@ export function ReportsTab() {
 
     for (const row of rawRows) {
       const normalizedUsername = row.ggTransNo.trim().toLowerCase();
-      const groupKey = normalizedUsername || `pof:${row.pofNumber}`;
+      const normalizedPofNumber = row.pofNumber.trim().toLowerCase();
+      const groupKey = `${normalizedPofNumber || 'no-pof'}::${normalizedUsername || 'no-username'}`;
       const paymentModes = [row.paymentMode, row.paymentModeTwo]
         .map((value) => value.trim())
         .filter((value) => value.length > 0 && value !== 'N/A');
@@ -487,9 +488,8 @@ export function ReportsTab() {
   const onPrintRow = async (row: ReportsSaleRow) => {
     try {
       const params = new URLSearchParams({
+        pofNumber: row.pofNumber,
         username: row.ggTransNo,
-        dateFrom: activeRange.from,
-        dateTo: activeRange.to,
       });
 
       const response = await fetch(`/api/daily-sales/get?${params.toString()}`);
@@ -565,6 +565,8 @@ export function ReportsTab() {
         body: JSON.stringify({
           pofNumber: selectedRemoveRow.pofNumbers[0],
           pof_number: selectedRemoveRow.pofNumbers[0],
+          username: selectedRemoveRow.ggTransNo,
+          ggTransNo: selectedRemoveRow.ggTransNo,
         }),
       });
 
@@ -581,6 +583,8 @@ export function ReportsTab() {
           body: JSON.stringify({
             pofNumber,
             pof_number: pofNumber,
+            username: selectedRemoveRow.ggTransNo,
+            ggTransNo: selectedRemoveRow.ggTransNo,
           }),
         });
 
@@ -591,7 +595,13 @@ export function ReportsTab() {
       }
 
       setRawRows((prev) =>
-        prev.filter((row) => !selectedRemoveRow.pofNumbers.includes(row.pofNumber))
+        prev.filter(
+          (row) =>
+            !(
+              selectedRemoveRow.pofNumbers.includes(row.pofNumber) &&
+              row.ggTransNo === selectedRemoveRow.ggTransNo
+            )
+        )
       );
       setIsRemoveModalOpen(false);
       onRowAction(`Removed ${selectedRemoveRow.pofNumber} from reports and Supabase.`);
@@ -823,7 +833,7 @@ export function ReportsTab() {
             Delete POF <span className="text-red-600">{selectedRemoveRow?.pofNumber}</span>?
           </p>
           <p>
-            This will remove all POF entries grouped in this username row from the table and delete the matching record(s) in Supabase.
+            This will remove the entries for this POF and username row from the table and delete the matching record(s) in Supabase.
           </p>
         </div>
       </Modal>

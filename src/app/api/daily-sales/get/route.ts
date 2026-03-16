@@ -79,17 +79,21 @@ export async function GET(request: NextRequest) {
 
   if (dailySalesIdValue && Number.isFinite(dailySalesId)) {
     query = query.eq("daily_sales_id", dailySalesId);
-  } else if (pofNumber) {
-    query = query.eq("pof_number", pofNumber);
-  } else if (username) {
-    query = query.eq("username", username);
-
-    if (dateFrom) {
-      query = query.gte("trans_date", dateFrom);
+  } else {
+    if (pofNumber) {
+      query = query.eq("pof_number", pofNumber);
     }
 
-    if (dateTo) {
-      query = query.lte("trans_date", dateTo);
+    if (username) {
+      query = query.eq("username", username);
+
+      if (dateFrom) {
+        query = query.gte("trans_date", dateFrom);
+      }
+
+      if (dateTo) {
+        query = query.lte("trans_date", dateTo);
+      }
     }
   }
 

@@ -20,6 +20,11 @@ function normalizeDailySalesPayload(payload: JsonObject): JsonObject {
   return normalized;
 }
 
+function canFallbackToDirectInsert(error: { code?: string | null; message?: string; details?: string | null }) {
+  const message = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  return error.code === "23505" || (message.includes("duplicate") && message.includes("pof"));
+}
+
 export async function POST(request: NextRequest) {
   const payload = (await request.json().catch(() => null)) as unknown;
 
@@ -36,6 +41,31 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase.rpc("rpc_add_daily_sales", { p: normalizedPayload });
 
   if (error) {
+    if (canFallbackToDirectInsert(error)) {
+      const { data: insertedRow, error: insertError } = await supabase
+        .from("daily_sales")
+        .insert(normalizedPayload)
+        .select("daily_sales_id")
+        .single();
+
+      if (!insertError) {
+        return NextResponse.json({ success: true, data: insertedRow, fallback: "direct-insert" });
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Failed to add daily sales entry",
+          error: {
+            code: insertError.code,
+            details: insertError.details,
+            message: insertError.message,
+          },
+        },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json(
       {
         success: false,
