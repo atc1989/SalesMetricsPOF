@@ -103,6 +103,25 @@ type UserSearchResult = {
   memberName: string;
 };
 
+type NextPofResponse = {
+  success?: boolean;
+  data?: {
+    pofNumber?: string;
+  };
+  message?: string;
+};
+
+async function fetchNextPofNumber(date: string) {
+  const response = await fetch(`/api/daily-sales/next-pof?date=${encodeURIComponent(date)}`);
+  const payload = (await response.json()) as NextPofResponse;
+
+  if (!response.ok || !payload.success || !payload.data?.pofNumber) {
+    throw new Error(payload.message ?? 'Unable to generate next POF number.');
+  }
+
+  return payload.data.pofNumber;
+}
+
 function formatPofBaseFromDate(date: string): string {
   const parsed = /^\d{4}-(\d{2})-(\d{2})$/.exec(date);
   if (!parsed) {
@@ -264,6 +283,7 @@ export function EncoderTab() {
   const secondaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentModeTwo), [form.paymentModeTwo]);
   const primaryTypeIsReadOnly = primaryPaymentTypeOptions.length === 1 && primaryPaymentTypeOptions[0].value === 'N/A';
   const secondaryTypeIsReadOnly = secondaryPaymentTypeOptions.length === 1 && secondaryPaymentTypeOptions[0].value === 'N/A';
+
   const resetForm = () => {
     setForm(applyComputedFields(buildInitialForm(), initialManualOverrides));
     setManualOverrides(initialManualOverrides);
@@ -272,6 +292,28 @@ export function EncoderTab() {
     setUserSearchError(null);
     setPaymentModeTwoError('');
   };
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const syncInitialPof = async () => {
+      try {
+        const nextPofNumber = await fetchNextPofNumber(today);
+
+        if (!isCancelled) {
+          setForm((prev) => applyComputedFields({ ...prev, pofNumber: nextPofNumber }, initialManualOverrides));
+        }
+      } catch {
+        // Keep the date-based fallback if next POF lookup fails.
+      }
+    };
+
+    void syncInitialPof();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const query = form.username.trim();
@@ -329,6 +371,24 @@ export function EncoderTab() {
       const nextPof = isPofManuallyEdited ? prev.pofNumber : formatPofBaseFromDate(value);
       return applyComputedFields({ ...prev, date: value, pofNumber: nextPof }, manualOverrides);
     });
+
+    if (!isPofManuallyEdited) {
+      const pendingAutoPof = formatPofBaseFromDate(value);
+
+      void fetchNextPofNumber(value)
+        .then((nextPofNumber) => {
+          setForm((prev) => {
+            if (prev.date !== value || prev.pofNumber !== pendingAutoPof) {
+              return prev;
+            }
+
+            return applyComputedFields({ ...prev, pofNumber: nextPofNumber }, manualOverrides);
+          });
+        })
+        .catch(() => {
+          // Leave the date-based fallback in place if lookup fails.
+        });
+    }
   };
 
   const onPofChange = (value: string) => {
@@ -410,8 +470,12 @@ export function EncoderTab() {
         throw new Error(data.message ?? 'Failed to save daily sales entry.');
       }
 
+      const nextPofNumber = await fetchNextPofNumber(form.date).catch(() => null);
       setIsSavedOpen(true);
       resetForm();
+      if (nextPofNumber) {
+        setForm((prev) => applyComputedFields({ ...prev, pofNumber: nextPofNumber }, initialManualOverrides));
+      }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Failed to save daily sales entry.');
     }
