@@ -15,6 +15,10 @@ type DailySalesRow = {
   released_blpk_count: number | string | null;
   sales: number | string | null;
   mode_of_payment: string | null;
+  sales_two: number | string | null;
+  mode_of_payment_two: string | null;
+  sales_three: number | string | null;
+  mode_of_payment_three: string | null;
 };
 
 type PackageTotalsRow = {
@@ -173,6 +177,27 @@ function summarizeCategory(
   };
 }
 
+function addPaymentSummary(
+  paymentMap: Map<string, PaymentSummaryRow>,
+  modeOfPayment: string | null,
+  amount: number,
+) {
+  const mode = normalizeText(modeOfPayment, "UNKNOWN");
+  if (!mode || mode === "N/A" || amount <= 0) {
+    return;
+  }
+
+  const paymentSummary = paymentMap.get(mode) ?? {
+    mode_of_payment: mode,
+    total_sales: 0,
+    transactions: 0,
+  };
+
+  paymentSummary.total_sales += amount;
+  paymentSummary.transactions += 1;
+  paymentMap.set(mode, paymentSummary);
+}
+
 export async function GET(request: NextRequest) {
   const transDate = request.nextUrl.searchParams.get("transDate");
 
@@ -188,7 +213,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("daily_sales")
       .select(
-        "package_type, member_type, is_new_member, quantity, bottle_count, blister_count, released_count, released_blpk_count, sales, mode_of_payment",
+        "package_type, member_type, is_new_member, quantity, bottle_count, blister_count, released_count, released_blpk_count, sales, mode_of_payment, sales_two, mode_of_payment_two, sales_three, mode_of_payment_three",
       )
       .eq("trans_date", transDate);
 
@@ -227,6 +252,9 @@ export async function GET(request: NextRequest) {
       const blisters =
         row.released_blpk_count == null ? fallbackBlisters : toNumber(row.released_blpk_count);
       const sales = toNumber(row.sales);
+      const salesTwo = toNumber(row.sales_two);
+      const salesThree = toNumber(row.sales_three);
+      const primarySales = Math.max(sales - salesTwo - salesThree, 0);
 
       const packageTotals = packageMap.get(packageType) ?? {
         package_type: packageType,
@@ -254,14 +282,9 @@ export async function GET(request: NextRequest) {
         addPackageCount(upgrades, packageType, quantity);
       }
 
-      const paymentSummary = paymentMap.get(modeOfPayment) ?? {
-        mode_of_payment: modeOfPayment,
-        total_sales: 0,
-        transactions: 0,
-      };
-      paymentSummary.total_sales += sales;
-      paymentSummary.transactions += 1;
-      paymentMap.set(modeOfPayment, paymentSummary);
+      addPaymentSummary(paymentMap, modeOfPayment, primarySales);
+      addPaymentSummary(paymentMap, row.mode_of_payment_two, salesTwo);
+      addPaymentSummary(paymentMap, row.mode_of_payment_three, salesThree);
     }
 
     const packageTotals = Array.from(packageMap.values()).sort((a, b) =>
