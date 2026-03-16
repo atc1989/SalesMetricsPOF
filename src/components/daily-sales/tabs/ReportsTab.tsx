@@ -130,6 +130,28 @@ const calculateRange = (
   };
 };
 
+function comparePofNumbers(left: string, right: string) {
+  const normalize = (value: string) => value.trim();
+  const leftValue = normalize(left);
+  const rightValue = normalize(right);
+
+  const leftMatch = leftValue.match(/^(\d{6})\s*-\s*(\d+)$/);
+  const rightMatch = rightValue.match(/^(\d{6})\s*-\s*(\d+)$/);
+
+  if (leftMatch && rightMatch) {
+    const [, leftBase, leftSuffix] = leftMatch;
+    const [, rightBase, rightSuffix] = rightMatch;
+
+    if (leftBase !== rightBase) {
+      return leftBase.localeCompare(rightBase);
+    }
+
+    return Number(leftSuffix) - Number(rightSuffix);
+  }
+
+  return leftValue.localeCompare(rightValue, undefined, { numeric: true, sensitivity: 'base' });
+}
+
 async function fetchSalesReportRows(dateFrom: string, dateTo: string) {
   const params = new URLSearchParams({
     dateFrom,
@@ -299,7 +321,14 @@ export function ReportsTab() {
       existing.pofNumber = existing.pofNumbers.map((value) => formatPofNumber(value)).join(', ');
     }
 
-    return Array.from(grouped.values()).sort((left, right) => right.date.localeCompare(left.date));
+    return Array.from(grouped.values()).sort((left, right) => {
+      const dateCompare = right.date.localeCompare(left.date);
+      if (dateCompare !== 0) {
+        return dateCompare;
+      }
+
+      return comparePofNumbers(left.pofNumbers[0] ?? left.pofNumber, right.pofNumbers[0] ?? right.pofNumber);
+    });
   }, [rawRows]);
 
   const filteredRows = useMemo(() => {
