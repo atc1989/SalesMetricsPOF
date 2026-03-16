@@ -57,11 +57,14 @@ function toBoolean(value: unknown) {
 export async function GET(request: NextRequest) {
   const dailySalesIdValue = request.nextUrl.searchParams.get("dailySalesId")?.trim();
   const pofNumber = request.nextUrl.searchParams.get("pofNumber")?.trim();
+  const username = request.nextUrl.searchParams.get("username")?.trim();
+  const dateFrom = request.nextUrl.searchParams.get("dateFrom")?.trim();
+  const dateTo = request.nextUrl.searchParams.get("dateTo")?.trim();
   const dailySalesId = dailySalesIdValue ? Number(dailySalesIdValue) : null;
 
-  if ((!dailySalesIdValue || !Number.isFinite(dailySalesId)) && !pofNumber) {
+  if ((!dailySalesIdValue || !Number.isFinite(dailySalesId)) && !pofNumber && !username) {
     return NextResponse.json(
-      { success: false, message: "Missing dailySalesId/pofNumber." },
+      { success: false, message: "Missing dailySalesId/pofNumber/username." },
       { status: 400 },
     );
   }
@@ -78,6 +81,16 @@ export async function GET(request: NextRequest) {
     query = query.eq("daily_sales_id", dailySalesId);
   } else if (pofNumber) {
     query = query.eq("pof_number", pofNumber);
+  } else if (username) {
+    query = query.eq("username", username);
+
+    if (dateFrom) {
+      query = query.gte("trans_date", dateFrom);
+    }
+
+    if (dateTo) {
+      query = query.lte("trans_date", dateTo);
+    }
   }
 
   const { data, error } = await query;

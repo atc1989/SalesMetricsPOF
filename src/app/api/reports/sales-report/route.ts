@@ -23,6 +23,9 @@ type SalesReportRow = {
   sales: number | string | null;
   mode_of_payment: string | null;
   payment_type: string | null;
+  sales_two: number | string | null;
+  mode_of_payment_two: string | null;
+  payment_type_two: string | null;
 };
 
 function toNumber(value: unknown) {
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("daily_sales")
     .select(
-      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type",
+      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, sales_two, mode_of_payment_two, payment_type_two",
     )
     .gte("trans_date", dateFrom)
     .lte("trans_date", dateTo)
@@ -98,6 +101,9 @@ export async function GET(request: NextRequest) {
       sales: toNumber(typedRow.sales),
       mode_of_payment: typedRow.mode_of_payment,
       payment_type: typedRow.payment_type,
+      sales_two: toNumber(typedRow.sales_two),
+      mode_of_payment_two: typedRow.mode_of_payment_two,
+      payment_type_two: typedRow.payment_type_two,
     };
   });
 

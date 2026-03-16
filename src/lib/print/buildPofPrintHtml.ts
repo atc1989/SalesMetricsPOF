@@ -65,19 +65,21 @@ function getPackageBottleLabel(packageType: string) {
   }
 }
 
-function renderPaymentRows(row: DailySalesPrintDetail) {
-  const payments = [
-    {
-      mode: row.mode_of_payment,
-      amount: row.sales - row.sales_two,
-      referenceNumber: row.reference_number,
-    },
-    {
-      mode: row.mode_of_payment_two,
-      amount: row.sales_two,
-      referenceNumber: row.reference_number_two,
-    },
-  ].filter((entry) => entry.mode && entry.amount > 0);
+function renderPaymentRows(rows: DailySalesPrintDetail[]) {
+  const payments = rows.flatMap((row) =>
+    [
+      {
+        mode: row.mode_of_payment,
+        amount: row.sales - row.sales_two,
+        referenceNumber: row.reference_number,
+      },
+      {
+        mode: row.mode_of_payment_two,
+        amount: row.sales_two,
+        referenceNumber: row.reference_number_two,
+      },
+    ].filter((entry) => entry.mode && entry.amount > 0),
+  );
 
   return payments
     .map((entry) => {
@@ -110,6 +112,9 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
   let totalAmount = 0;
   let totalOneTimeDiscount = 0;
   let totalSales = 0;
+  const uniquePofNumbers = Array.from(
+    new Set(rows.map((row) => row.pof_number.trim()).filter((value) => value.length > 0)),
+  );
 
   const bodyRows = rows
     .map((row) => {
@@ -143,7 +148,7 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
       </div>
       <div class="form-row" style="justify-content: space-between;">
         <p>2nd Floor, Unit 3, CVA Building, J.P. Laurel Avenue, Davao City</p>
-        <p class="spn-pof-number">PROF No: <span id="txtPofNumber" style="font-weight: bold;">${escapeHtml(firstRow.pof_number)}</span></p>
+        <p class="spn-pof-number">PROF No: <span id="txtPofNumber" style="font-weight: bold;">${escapeHtml(uniquePofNumbers.join(", "))}</span></p>
       </div>
       <p>www.onegrindersguild.com</p>
       <br />
@@ -183,7 +188,7 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
             <th colspan="5" style="text-align: center;">Net Payable:</th>
             <th colspan="5" style="text-align: center;">${escapeHtml(formatPeso(totalSales))}</th>
           </tr>
-          ${renderPaymentRows(firstRow)}
+          ${renderPaymentRows(rows)}
         </tfoot>
       </table>
       <br />

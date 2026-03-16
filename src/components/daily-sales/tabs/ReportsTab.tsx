@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ModifyGgTransNoModal } from '@/components/daily-sales/ModifyGgTransNoModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -33,7 +33,35 @@ const formatPeso = (value: number) =>
   `PHP ${value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
 
 type ReportsSaleRow = RecentSale & {
+  dailySalesIds: number[];
+  usernames: string[];
+  pofNumbers: string[];
+  quantity: number;
+  originalPrice: number;
+  discount: number;
+  discountedPrice: number;
+  releasedBottle: number;
+  releasedBlister: number;
+  balanceBottle: number;
+  balanceBlister: number;
+  paymentModes: string[];
+};
+
+type ReportsRawSaleRow = {
+  id: string;
   dailySalesId: number;
+  pofNumber: string;
+  ggTransNo: string;
+  date: string;
+  memberName: string;
+  zeroOne: string;
+  packageType: string;
+  bottles: number;
+  blisters: number;
+  sales: number;
+  paymentMode: RecentSale['paymentMode'];
+  paymentModeTwo: string;
+  status: 'Released';
   quantity: number;
   originalPrice: number;
   discount: number;
@@ -96,15 +124,77 @@ const calculateRange = (
   };
 };
 
+async function fetchSalesReportRows(dateFrom: string, dateTo: string) {
+  const params = new URLSearchParams({
+    dateFrom,
+    dateTo,
+  });
+  const response = await fetch(`/api/reports/sales-report?${params.toString()}`);
+  const payload = (await response.json()) as {
+    success: boolean;
+    rows?: Array<{
+      daily_sales_id: number;
+      pof_number: string | null;
+      trans_date: string | null;
+      member_name: string | null;
+      username: string | null;
+      package_type: string | null;
+      quantity: number;
+      original_price: number;
+      discount: number;
+      price_after_discount: number;
+      bottle_count: number;
+      blister_count: number;
+      released_count: number;
+      released_blpk_count: number;
+      to_follow_count: number;
+      to_follow_blpk_count: number;
+      sales: number;
+      mode_of_payment: string | null;
+      mode_of_payment_two: string | null;
+    }>;
+    message?: string;
+  };
+
+  if (!response.ok || !payload.success || !payload.rows) {
+    throw new Error(payload.message ?? 'Failed to load sales report.');
+  }
+
+  return payload.rows.map((row, index) => ({
+    id: `${row.daily_sales_id ?? row.pof_number ?? 'sales'}-${index}`,
+    dailySalesId: row.daily_sales_id ?? 0,
+    pofNumber: formatPofNumber(row.pof_number),
+    ggTransNo: formatZeroOne(row.username) || 'N/A',
+    date: row.trans_date ?? '',
+    memberName: formatMemberName(row.member_name),
+    zeroOne: formatZeroOne(row.username),
+    packageType: row.package_type ?? '',
+    bottles: row.bottle_count ?? 0,
+    blisters: row.blister_count ?? 0,
+    sales: row.sales ?? 0,
+    paymentMode: normalizePaymentMode(row.mode_of_payment),
+    paymentModeTwo: row.mode_of_payment_two ?? '',
+    status: 'Released' as const,
+    quantity: row.quantity ?? 0,
+    originalPrice: row.original_price ?? 0,
+    discount: row.discount ?? 0,
+    discountedPrice: row.price_after_discount ?? 0,
+    releasedBottle: row.released_count ?? 0,
+    releasedBlister: row.released_blpk_count ?? 0,
+    balanceBottle: row.to_follow_count ?? 0,
+    balanceBlister: row.to_follow_blpk_count ?? 0,
+  }));
+}
+
 export function ReportsTab() {
   const [pendingType, setPendingType] = useState<ReportRangeType>('daily');
-  const [pendingStartDate, setPendingStartDate] = useState('');
-  const [pendingEndDate, setPendingEndDate] = useState('');
+  const [pendingStartDate, setPendingStartDate] = useState(reportDateToday);
+  const [pendingEndDate, setPendingEndDate] = useState(reportDateToday);
   const [searchQuery, setSearchQuery] = useState('');
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isActionNoticeOpen, setIsActionNoticeOpen] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
-  const [selectedModifyRow, setSelectedModifyRow] = useState<{ id: string; dailySalesId: number; pofNumber: string; ggTransNo: string } | null>(null);
+  const [selectedModifyRow, setSelectedModifyRow] = useState<{ id: string; dailySalesIds: number[]; pofNumber: string; ggTransNo: string } | null>(null);
   const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
   const [isSavingGgTransNo, setIsSavingGgTransNo] = useState(false);
   const [selectedRemoveRow, setSelectedRemoveRow] = useState<ReportsSaleRow | null>(null);
@@ -112,9 +202,9 @@ export function ReportsTab() {
   const [isRemovingRow, setIsRemovingRow] = useState(false);
 
   const [reportType, setReportType] = useState<ReportRangeType>('daily');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [rows, setRows] = useState<ReportsSaleRow[]>([]);
+  const [startDate, setStartDate] = useState(reportDateToday);
+  const [endDate, setEndDate] = useState(reportDateToday);
+  const [rawRows, setRawRows] = useState<ReportsRawSaleRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -123,6 +213,86 @@ export function ReportsTab() {
     () => calculateRange(reportType, startDate, endDate, reportDateToday),
     [reportType, startDate, endDate]
   );
+
+  const rows = useMemo<ReportsSaleRow[]>(() => {
+    const grouped = new Map<string, ReportsSaleRow>();
+
+    for (const row of rawRows) {
+      const normalizedUsername = row.ggTransNo.trim().toLowerCase();
+      const groupKey = normalizedUsername || `pof:${row.pofNumber}`;
+      const paymentModes = [row.paymentMode, row.paymentModeTwo]
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0 && value !== 'N/A');
+
+      const existing = grouped.get(groupKey);
+      if (!existing) {
+        grouped.set(groupKey, {
+          id: groupKey,
+          dailySalesIds: [row.dailySalesId],
+          usernames: row.ggTransNo ? [row.ggTransNo] : [],
+          pofNumbers: row.pofNumber ? [row.pofNumber] : [],
+          pofNumber: row.pofNumber,
+          ggTransNo: row.ggTransNo || 'N/A',
+          date: row.date,
+          memberName: row.memberName,
+          zeroOne: row.zeroOne,
+          packageType: row.packageType,
+          bottles: row.bottles,
+          blisters: row.blisters,
+          sales: row.sales,
+          paymentMode: (paymentModes.join(', ') || 'CASH') as RecentSale['paymentMode'],
+          paymentModes,
+          status: 'Released',
+          quantity: row.quantity,
+          originalPrice: row.originalPrice,
+          discount: row.discount,
+          discountedPrice: row.discountedPrice,
+          releasedBottle: row.releasedBottle,
+          releasedBlister: row.releasedBlister,
+          balanceBottle: row.balanceBottle,
+          balanceBlister: row.balanceBlister,
+        });
+        continue;
+      }
+
+      existing.dailySalesIds.push(row.dailySalesId);
+      if (row.ggTransNo && !existing.usernames.includes(row.ggTransNo)) {
+        existing.usernames.push(row.ggTransNo);
+      }
+      if (row.pofNumber && !existing.pofNumbers.includes(row.pofNumber)) {
+        existing.pofNumbers.push(row.pofNumber);
+      }
+      if (row.date > existing.date) {
+        existing.date = row.date;
+      }
+      if (!existing.memberName && row.memberName) {
+        existing.memberName = row.memberName;
+      }
+
+      existing.bottles += row.bottles;
+      existing.blisters += row.blisters;
+      existing.sales += row.sales;
+      existing.quantity += row.quantity;
+      existing.originalPrice += row.originalPrice;
+      existing.discount += row.discount;
+      existing.discountedPrice += row.discountedPrice;
+      existing.releasedBottle += row.releasedBottle;
+      existing.releasedBlister += row.releasedBlister;
+      existing.balanceBottle += row.balanceBottle;
+      existing.balanceBlister += row.balanceBlister;
+
+      for (const mode of paymentModes) {
+        if (!existing.paymentModes.includes(mode)) {
+          existing.paymentModes.push(mode);
+        }
+      }
+
+      existing.paymentMode = (existing.paymentModes.join(', ') || 'CASH') as RecentSale['paymentMode'];
+      existing.pofNumber = existing.pofNumbers.join(', ');
+    }
+
+    return Array.from(grouped.values()).sort((left, right) => right.date.localeCompare(left.date));
+  }, [rawRows]);
 
   const filteredRows = useMemo(() => {
     const search = searchQuery.trim().toLowerCase();
@@ -140,6 +310,7 @@ export function ReportsTab() {
         row.date,
         row.pofNumber,
         row.ggTransNo,
+        row.memberName,
         row.sales.toString(),
         row.paymentMode,
         row.bottles.toString(),
@@ -171,6 +342,27 @@ export function ReportsTab() {
 
   const dateInputsReadOnly = pendingType !== 'custom';
 
+  useEffect(() => {
+    const loadCurrentDateReport = async () => {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const mappedRows = await fetchSalesReportRows(reportDateToday, reportDateToday);
+        setRawRows(mappedRows);
+        setHasGenerated(true);
+      } catch {
+        setErrorMessage('Failed to load sales report.');
+        setRawRows([]);
+        setHasGenerated(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadCurrentDateReport();
+  }, []);
+
   const onReportTypeChange = (nextType: ReportRangeType) => {
     setPendingType(nextType);
 
@@ -201,68 +393,12 @@ export function ReportsTab() {
     setErrorMessage(null);
 
     try {
-      const params = new URLSearchParams({
-        dateFrom: pendingStartDate,
-        dateTo: pendingEndDate,
-      });
-      const response = await fetch(`/api/reports/sales-report?${params.toString()}`);
-      const payload = (await response.json()) as {
-        success: boolean;
-        rows?: Array<{
-          daily_sales_id: number;
-          pof_number: string | null;
-          trans_date: string | null;
-          member_name: string | null;
-          username: string | null;
-          package_type: string | null;
-          quantity: number;
-          original_price: number;
-          discount: number;
-          price_after_discount: number;
-          bottle_count: number;
-          blister_count: number;
-          released_count: number;
-          released_blpk_count: number;
-          to_follow_count: number;
-          to_follow_blpk_count: number;
-          sales: number;
-          mode_of_payment: string | null;
-        }>;
-        message?: string;
-      };
-
-      if (!response.ok || !payload.success || !payload.rows) {
-        throw new Error(payload.message ?? 'Failed to load sales report.');
-      }
-
-      const mappedRows: ReportsSaleRow[] = payload.rows.map((row, index) => ({
-        id: `${row.daily_sales_id ?? row.pof_number ?? 'sales'}-${index}`,
-        dailySalesId: row.daily_sales_id ?? 0,
-        pofNumber: formatPofNumber(row.pof_number),
-        ggTransNo: formatZeroOne(row.username) || 'N/A',
-        date: row.trans_date ?? '',
-        memberName: formatMemberName(row.member_name),
-        zeroOne: formatZeroOne(row.username),
-        packageType: row.package_type ?? '',
-        bottles: row.bottle_count ?? 0,
-        blisters: row.blister_count ?? 0,
-        sales: row.sales ?? 0,
-        paymentMode: normalizePaymentMode(row.mode_of_payment),
-        status: 'Released',
-        quantity: row.quantity ?? 0,
-        originalPrice: row.original_price ?? 0,
-        discount: row.discount ?? 0,
-        discountedPrice: row.price_after_discount ?? 0,
-        releasedBottle: row.released_count ?? 0,
-        releasedBlister: row.released_blpk_count ?? 0,
-        balanceBottle: row.to_follow_count ?? 0,
-        balanceBlister: row.to_follow_blpk_count ?? 0,
-      }));
-
-      setRows(mappedRows);
+      const mappedRows = await fetchSalesReportRows(pendingStartDate, pendingEndDate);
+      setRawRows(mappedRows);
       setHasGenerated(true);
     } catch {
       setErrorMessage('Failed to load sales report.');
+      setRawRows([]);
       setHasGenerated(true);
     } finally {
       setIsLoading(false);
@@ -277,7 +413,7 @@ export function ReportsTab() {
   const onOpenModifyGgTransNo = (row: ReportsSaleRow) => {
     setSelectedModifyRow({
       id: row.id,
-      dailySalesId: row.dailySalesId,
+      dailySalesIds: row.dailySalesIds,
       pofNumber: row.pofNumber,
       ggTransNo: row.ggTransNo,
     });
@@ -296,23 +432,42 @@ export function ReportsTab() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          dailySalesId: selectedModifyRow.dailySalesId,
-          daily_sales_id: selectedModifyRow.dailySalesId,
+          dailySalesId: selectedModifyRow.dailySalesIds[0],
+          daily_sales_id: selectedModifyRow.dailySalesIds[0],
           username: newValue,
           ggTransNo: newValue,
           gg_trans_no: newValue,
         }),
       });
 
-      const payload = (await response.json()) as { success?: boolean; message?: string };
+      const firstPayload = (await response.json()) as { success?: boolean; message?: string };
 
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.message ?? 'Failed to modify GG transaction number.');
+      if (!response.ok || !firstPayload.success) {
+        throw new Error(firstPayload.message ?? 'Failed to modify GG transaction number.');
       }
 
-      setRows((prev) =>
+      for (const dailySalesId of selectedModifyRow.dailySalesIds.slice(1)) {
+        const batchResponse = await fetch('/api/daily-sales/modify-gg-trans-no', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dailySalesId,
+            daily_sales_id: dailySalesId,
+            username: newValue,
+            ggTransNo: newValue,
+            gg_trans_no: newValue,
+          }),
+        });
+
+        const batchPayload = (await batchResponse.json()) as { success?: boolean; message?: string };
+        if (!batchResponse.ok || !batchPayload.success) {
+          throw new Error(batchPayload.message ?? 'Failed to modify GG transaction number.');
+        }
+      }
+
+      setRawRows((prev) =>
         prev.map((row) =>
-          row.id === selectedModifyRow.id
+          selectedModifyRow.dailySalesIds.includes(row.dailySalesId)
             ? { ...row, ggTransNo: newValue, zeroOne: newValue }
             : row
         )
@@ -331,15 +486,11 @@ export function ReportsTab() {
 
   const onPrintRow = async (row: ReportsSaleRow) => {
     try {
-      const params = new URLSearchParams();
-
-      if (row.dailySalesId > 0) {
-        params.set('dailySalesId', String(row.dailySalesId));
-      }
-
-      if (row.pofNumber) {
-        params.set('pofNumber', row.pofNumber);
-      }
+      const params = new URLSearchParams({
+        username: row.ggTransNo,
+        dateFrom: activeRange.from,
+        dateTo: activeRange.to,
+      });
 
       const response = await fetch(`/api/daily-sales/get?${params.toString()}`);
       const payload = (await response.json()) as {
@@ -412,18 +563,36 @@ export function ReportsTab() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pofNumber: selectedRemoveRow.pofNumber,
-          pof_number: selectedRemoveRow.pofNumber,
+          pofNumber: selectedRemoveRow.pofNumbers[0],
+          pof_number: selectedRemoveRow.pofNumbers[0],
         }),
       });
 
-      const payload = (await response.json()) as { success?: boolean; message?: string };
+      const firstPayload = (await response.json()) as { success?: boolean; message?: string };
 
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.message ?? 'Failed to remove POF.');
+      if (!response.ok || !firstPayload.success) {
+        throw new Error(firstPayload.message ?? 'Failed to remove POF.');
       }
 
-      setRows((prev) => prev.filter((row) => row.pofNumber !== selectedRemoveRow.pofNumber));
+      for (const pofNumber of selectedRemoveRow.pofNumbers.slice(1)) {
+        const batchResponse = await fetch('/api/daily-sales/remove-pof', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pofNumber,
+            pof_number: pofNumber,
+          }),
+        });
+
+        const batchPayload = (await batchResponse.json()) as { success?: boolean; message?: string };
+        if (!batchResponse.ok || !batchPayload.success) {
+          throw new Error(batchPayload.message ?? 'Failed to remove POF.');
+        }
+      }
+
+      setRawRows((prev) =>
+        prev.filter((row) => !selectedRemoveRow.pofNumbers.includes(row.pofNumber))
+      );
       setIsRemoveModalOpen(false);
       onRowAction(`Removed ${selectedRemoveRow.pofNumber} from reports and Supabase.`);
       setSelectedRemoveRow(null);
@@ -654,7 +823,7 @@ export function ReportsTab() {
             Delete POF <span className="text-red-600">{selectedRemoveRow?.pofNumber}</span>?
           </p>
           <p>
-            This will remove the report row from the table and delete the matching record(s) in Supabase.
+            This will remove all POF entries grouped in this username row from the table and delete the matching record(s) in Supabase.
           </p>
         </div>
       </Modal>
