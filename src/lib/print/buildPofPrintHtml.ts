@@ -70,8 +70,10 @@ function getPackageBottleLabel(packageType: string) {
 }
 
 function renderPaymentRows(rows: DailySalesPrintDetail[]) {
-  const payments = rows.flatMap((row) =>
-    [
+  const paymentMap = new Map<string, { mode: string; reference: string; amount: number }>();
+
+  for (const row of rows) {
+    const entries = [
       {
         mode: row.mode_of_payment,
         amount: row.sales - row.sales_two - row.sales_three,
@@ -87,23 +89,32 @@ function renderPaymentRows(rows: DailySalesPrintDetail[]) {
         amount: row.sales_three,
         referenceNumber: row.reference_number_three,
       },
-    ].filter((entry) => {
-      const mode = entry.mode.trim();
-      return mode.length > 0 && mode !== "N/A";
-    }),
-  );
+    ];
 
-  return payments
-    .map((entry) => {
-      const type = entry.mode.trim();
-      const reference = REFERENCE_PAYMENT_MODES.has(type)
+    for (const entry of entries) {
+      const mode = entry.mode.trim();
+      if (!mode || mode === "N/A") {
+        continue;
+      }
+
+      const reference = REFERENCE_PAYMENT_MODES.has(mode)
         ? entry.referenceNumber.trim() || "N/A"
         : "N/A";
+      const key = `${mode}::${reference}`;
+      const current = paymentMap.get(key) ?? { mode, reference, amount: 0 };
+      current.amount += entry.amount;
+      paymentMap.set(key, current);
+    }
+  }
+
+  return Array.from(paymentMap.values())
+    .map((entry) => {
+      const type = entry.mode;
 
       return `
         <tr>
           <th colspan="5" style="text-align: center;">${escapeHtml(type)}</th>
-          <th colspan="3" style="text-align: center;">${escapeHtml(reference)}</th>
+          <th colspan="3" style="text-align: center;">${escapeHtml(entry.reference)}</th>
           <th colspan="2" style="text-align: center;">${escapeHtml(formatPeso(entry.amount))}</th>
         </tr>
       `;
