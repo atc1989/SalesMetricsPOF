@@ -27,7 +27,12 @@ const validPaymentModes: Array<RecentSale['paymentMode']> = [
   'AR(LEADERSUPPORT)',
 ];
 
-const toIsoDate = (value: Date) => value.toISOString().slice(0, 10);
+const toIsoDate = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 const reportDateToday = toIsoDate(new Date());
 const formatPeso = (value: number) =>
   `PHP ${value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
@@ -50,6 +55,7 @@ type ReportsSaleRow = RecentSale & {
 type ReportsRawSaleRow = {
   id: string;
   dailySalesId: number;
+  rawPofNumber: string;
   pofNumber: string;
   ggTransNo: string;
   date: string;
@@ -163,6 +169,7 @@ async function fetchSalesReportRows(dateFrom: string, dateTo: string) {
   return payload.rows.map((row, index) => ({
     id: `${row.daily_sales_id ?? row.pof_number ?? 'sales'}-${index}`,
     dailySalesId: row.daily_sales_id ?? 0,
+    rawPofNumber: row.pof_number ?? '',
     pofNumber: formatPofNumber(row.pof_number),
     ggTransNo: formatZeroOne(row.username) || 'N/A',
     date: row.trans_date ?? '',
@@ -219,7 +226,7 @@ export function ReportsTab() {
 
     for (const row of rawRows) {
       const normalizedUsername = row.ggTransNo.trim().toLowerCase();
-      const normalizedPofNumber = row.pofNumber.trim().toLowerCase();
+      const normalizedPofNumber = row.rawPofNumber.trim().toLowerCase();
       const groupKey = `${normalizedPofNumber || 'no-pof'}::${normalizedUsername || 'no-username'}`;
       const paymentModes = [row.paymentMode, row.paymentModeTwo]
         .map((value) => value.trim())
@@ -231,8 +238,8 @@ export function ReportsTab() {
           id: groupKey,
           dailySalesIds: [row.dailySalesId],
           usernames: row.ggTransNo ? [row.ggTransNo] : [],
-          pofNumbers: row.pofNumber ? [row.pofNumber] : [],
-          pofNumber: row.pofNumber,
+          pofNumbers: row.rawPofNumber ? [row.rawPofNumber] : [],
+          pofNumber: formatPofNumber(row.rawPofNumber),
           ggTransNo: row.ggTransNo || 'N/A',
           date: row.date,
           memberName: row.memberName,
@@ -260,8 +267,8 @@ export function ReportsTab() {
       if (row.ggTransNo && !existing.usernames.includes(row.ggTransNo)) {
         existing.usernames.push(row.ggTransNo);
       }
-      if (row.pofNumber && !existing.pofNumbers.includes(row.pofNumber)) {
-        existing.pofNumbers.push(row.pofNumber);
+      if (row.rawPofNumber && !existing.pofNumbers.includes(row.rawPofNumber)) {
+        existing.pofNumbers.push(row.rawPofNumber);
       }
       if (row.date > existing.date) {
         existing.date = row.date;
@@ -289,7 +296,7 @@ export function ReportsTab() {
       }
 
       existing.paymentMode = (existing.paymentModes.join(', ') || 'CASH') as RecentSale['paymentMode'];
-      existing.pofNumber = existing.pofNumbers.join(', ');
+      existing.pofNumber = existing.pofNumbers.map((value) => formatPofNumber(value)).join(', ');
     }
 
     return Array.from(grouped.values()).sort((left, right) => right.date.localeCompare(left.date));
@@ -488,7 +495,7 @@ export function ReportsTab() {
   const onPrintRow = async (row: ReportsSaleRow) => {
     try {
       const params = new URLSearchParams({
-        pofNumber: row.pofNumber,
+        pofNumber: row.pofNumbers[0] ?? '',
         username: row.ggTransNo,
       });
 
