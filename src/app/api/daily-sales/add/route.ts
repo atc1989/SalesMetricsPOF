@@ -51,6 +51,10 @@ function normalizeDailySalesPayload(payload: JsonObject): JsonObject {
     normalized.member_type = "STOCKIST";
   }
 
+  if (typeof normalized.pof_number === "string") {
+    normalized.pof_number = normalized.pof_number.trim().replace(/\s*-\s*/g, " - ");
+  }
+
   return normalized;
 }
 
