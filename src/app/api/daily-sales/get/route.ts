@@ -9,6 +9,7 @@ type DailySalesDetailRow = {
   trans_date: string | null;
   member_name: string | null;
   username: string | null;
+  member_type: string | null;
   package_type: string | null;
   quantity: number | string | null;
   original_price: number | string | null;
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("daily_sales")
     .select(
-      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, is_to_blister, one_time_discount, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, reference_number, sales_two, mode_of_payment_two, payment_type_two, reference_number_two, sales_three, mode_of_payment_three, payment_type_three, reference_number_three, remarks, received_by, collected_by",
+      "daily_sales_id, pof_number, trans_date, member_name, username, member_type, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, is_to_blister, one_time_discount, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, reference_number, sales_two, mode_of_payment_two, payment_type_two, reference_number_two, sales_three, mode_of_payment_three, payment_type_three, reference_number_three, remarks, received_by, collected_by",
     )
     .order("daily_sales_id", { ascending: true });
 
@@ -127,6 +128,7 @@ export async function GET(request: NextRequest) {
       trans_date: typedRow.trans_date ?? "",
       member_name: typedRow.member_name ?? "",
       username: typedRow.username ?? "",
+      member_type: typedRow.member_type ?? "",
       package_type: typedRow.package_type ?? "",
       quantity: toNumber(typedRow.quantity),
       original_price: toNumber(typedRow.original_price),
