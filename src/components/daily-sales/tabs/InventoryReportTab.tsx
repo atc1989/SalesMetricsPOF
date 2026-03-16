@@ -16,6 +16,7 @@ type InventoryReportRow = {
   date: string;
   name: string;
   ggTransNo: string;
+  memberType: string;
   pofNumber: string;
   platinum: number;
   gold: number;
@@ -38,6 +39,7 @@ type DailyInventoryApiRow = {
   trans_date: string | null;
   member_name: string;
   username: string;
+  member_type: string;
   pof_number: string;
   package_type: string;
   quantity: number;
@@ -67,10 +69,37 @@ const escapeHtml = (value: string) =>
 
 const formatAmount = (value: number) => `PHP ${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 
+const abbreviateMemberType = (value: string) => {
+  const normalized = value.trim().toUpperCase();
+
+  switch (normalized) {
+    case 'MOBILE STOCKIST':
+      return 'MS';
+    case 'CITY STOCKIST':
+      return 'CS';
+    case 'STOCKIST':
+      return 'ST';
+    case 'DISTRIBUTOR':
+      return 'D';
+    case 'CENTER':
+      return 'C';
+    case 'NON-MEMBER':
+      return 'NM';
+    default: {
+      const initials = normalized
+        .split(/[\s-]+/)
+        .filter((part) => part.length > 0)
+        .map((part) => part[0])
+        .join('');
+      return initials || 'N/A';
+    }
+  }
+};
+
 const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string) => {
   const bodyRows =
     rows.length === 0
-      ? `<tr><td colspan="18">No inventory results for selected range</td></tr>`
+      ? `<tr><td colspan="19">No inventory results for selected range</td></tr>`
       : rows
           .map(
             (row) => `
@@ -93,6 +122,7 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
                 <td>${row.toFollowBlister}</td>
                 <td>${escapeHtml(formatAmount(row.amount))}</td>
                 <td>${escapeHtml(row.modeOfPayment)}</td>
+                <td>${escapeHtml(row.memberType)}</td>
               </tr>`,
           )
           .join('');
@@ -134,6 +164,7 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
             <th rowspan="2">TO FOLLOW (BLISTER)</th>
             <th rowspan="2">AMOUNT</th>
             <th rowspan="2">MODE OF PAYMENT</th>
+            <th rowspan="2">MEMBER TYPE</th>
           </tr>
           <tr>
             <th>PLATINUM</th>
@@ -183,6 +214,7 @@ const mapApiRowToReportRow = (
     date: row.trans_date ?? '',
     name: formatMemberName(row.member_name) || 'N/A',
     ggTransNo: formatZeroOne(row.username) || '-',
+    memberType: abbreviateMemberType(row.member_type) || 'N/A',
     pofNumber: formatPofNumber(row.pof_number) || '-',
     platinum: upperPackageType.includes('PLATINUM') ? totalQuantity : 0,
     gold: upperPackageType.includes('GOLD') ? totalQuantity : 0,
@@ -369,6 +401,9 @@ export function InventoryReportTab() {
                 <th rowSpan={2} className="px-3 py-2">
                   MODE OF PAYMENT
                 </th>
+                <th rowSpan={2} className="px-3 py-2">
+                  MEMBER TYPE
+                </th>
               </tr>
               <tr>
                 <th className="px-3 py-2">PLATINUM</th>
@@ -383,7 +418,7 @@ export function InventoryReportTab() {
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={18} className="px-3 py-6 text-center text-slate-500">
+                  <td colSpan={19} className="px-3 py-6 text-center text-slate-500">
                     {hasLoaded
                       ? 'No inventory results for selected range'
                       : 'No inventory rows found for the selected filters.'}
@@ -410,6 +445,7 @@ export function InventoryReportTab() {
                     <td className="px-3 py-2">{row.toFollowBlister}</td>
                     <td className="px-3 py-2">PHP {row.amount.toLocaleString()}</td>
                     <td className="px-3 py-2">{row.modeOfPayment}</td>
+                    <td className="px-3 py-2">{row.memberType}</td>
                   </tr>
                 ))
               )}

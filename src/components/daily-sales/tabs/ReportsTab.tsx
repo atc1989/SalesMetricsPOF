@@ -507,7 +507,6 @@ export function ReportsTab() {
           pof_number: string;
           member_name: string;
           username: string;
-          member_type: string;
           package_type: string;
           quantity: number;
           original_price: number;

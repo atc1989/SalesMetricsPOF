@@ -4,7 +4,6 @@ type DailySalesPrintDetail = {
   pof_number: string;
   member_name: string;
   username: string;
-  member_type: string;
   package_type: string;
   quantity: number;
   original_price: number;
@@ -70,35 +69,8 @@ function getPackageBottleLabel(packageType: string) {
   }
 }
 
-function abbreviateMemberType(value: string) {
-  const normalized = value.trim().toUpperCase();
-
-  switch (normalized) {
-    case "MOBILE STOCKIST":
-      return "MS";
-    case "CITY STOCKIST":
-      return "CS";
-    case "STOCKIST":
-      return "ST";
-    case "DISTRIBUTOR":
-      return "D";
-    case "CENTER":
-      return "C";
-    case "NON-MEMBER":
-      return "NM";
-    default: {
-      const initials = normalized
-        .split(/[\s-]+/)
-        .filter((part) => part.length > 0)
-        .map((part) => part[0])
-        .join("");
-      return initials || "N/A";
-    }
-  }
-}
-
 function renderPaymentRows(rows: DailySalesPrintDetail[]) {
-  const paymentMap = new Map<string, { mode: string; reference: string; amount: number; memberType: string }>();
+  const paymentMap = new Map<string, { mode: string; reference: string; amount: number }>();
 
   for (const row of rows) {
     const entries = [
@@ -129,12 +101,7 @@ function renderPaymentRows(rows: DailySalesPrintDetail[]) {
         ? entry.referenceNumber.trim() || "N/A"
         : "N/A";
       const key = `${mode}::${reference}`;
-      const current = paymentMap.get(key) ?? {
-        mode,
-        reference,
-        amount: 0,
-        memberType: abbreviateMemberType(row.member_type),
-      };
+      const current = paymentMap.get(key) ?? { mode, reference, amount: 0 };
       current.amount += entry.amount;
       paymentMap.set(key, current);
     }
@@ -149,7 +116,6 @@ function renderPaymentRows(rows: DailySalesPrintDetail[]) {
           <th colspan="5" style="text-align: center;">${escapeHtml(type)}</th>
           <th colspan="3" style="text-align: center;">${escapeHtml(entry.reference)}</th>
           <th colspan="2" style="text-align: center;">${escapeHtml(formatPeso(entry.amount))}</th>
-          <th style="text-align: center;">${escapeHtml(entry.memberType)}</th>
         </tr>
       `;
     })
@@ -192,7 +158,6 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
           <td>${row.released_blpk_count}</td>
           <td>${row.to_follow_count}</td>
           <td>${row.to_follow_blpk_count}</td>
-          <td></td>
         </tr>
       `;
     })
@@ -228,7 +193,6 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
             <th>RELEASED (BLISTER)</th>
             <th>BALANCE (BOTTLE)</th>
             <th>BALANCE (BLISTER)</th>
-            <th>MEMBER TYPE</th>
           </tr>
         </thead>
         <tbody>
@@ -237,15 +201,15 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
         <tfoot>
           <tr>
             <th colspan="5" style="text-align: center;">Grand Total:</th>
-            <th colspan="6" style="text-align: center;">${escapeHtml(formatPeso(totalAmount))}</th>
+            <th colspan="5" style="text-align: center;">${escapeHtml(formatPeso(totalAmount))}</th>
           </tr>
           <tr>
             <th colspan="5" style="text-align: center;">One-time Discount:</th>
-            <th colspan="6" style="text-align: center;">${escapeHtml(formatPeso(totalOneTimeDiscount))}</th>
+            <th colspan="5" style="text-align: center;">${escapeHtml(formatPeso(totalOneTimeDiscount))}</th>
           </tr>
           <tr>
             <th colspan="5" style="text-align: center;">Net Payable:</th>
-            <th colspan="6" style="text-align: center;">${escapeHtml(formatPeso(totalSales))}</th>
+            <th colspan="5" style="text-align: center;">${escapeHtml(formatPeso(totalSales))}</th>
           </tr>
           ${renderPaymentRows(rows)}
         </tfoot>

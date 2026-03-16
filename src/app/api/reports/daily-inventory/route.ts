@@ -7,6 +7,7 @@ type InventorySourceRow = {
   trans_date: string | null;
   member_name: string | null;
   username: string | null;
+  member_type: string | null;
   pof_number: string | null;
   package_type: string | null;
   quantity: number | string | null;
@@ -24,6 +25,7 @@ type InventoryReportRow = {
   trans_date: string | null;
   member_name: string;
   username: string;
+  member_type: string;
   pof_number: string;
   package_type: string;
   quantity: number;
@@ -73,7 +75,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("daily_sales")
       .select(
-        "trans_date, member_name, username, pof_number, package_type, quantity, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment",
+        "trans_date, member_name, username, member_type, pof_number, package_type, quantity, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment",
       )
       .gte("trans_date", dateFrom)
       .lte("trans_date", dateTo)
@@ -102,6 +104,7 @@ export async function GET(request: NextRequest) {
         trans_date: row.trans_date,
         member_name: normalizeText(row.member_name, "N/A"),
         username: normalizeText(row.username, "-"),
+        member_type: normalizeText(row.member_type, "N/A"),
         pof_number: normalizeText(row.pof_number, "-"),
         package_type: normalizeText(row.package_type, "UNKNOWN"),
         quantity: toNumber(row.quantity),
