@@ -77,12 +77,10 @@ const abbreviateMemberType = (value: string) => {
       return 'MS';
     case 'CITY STOCKIST':
       return 'CS';
-    case 'STOCKIST':
-      return 'ST';
     case 'DISTRIBUTOR':
       return 'D';
     case 'CENTER':
-      return 'C';
+      return 'CD';
     case 'NON-MEMBER':
       return 'NM';
     default: {
