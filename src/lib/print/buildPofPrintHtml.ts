@@ -24,6 +24,10 @@ type DailySalesPrintDetail = {
   mode_of_payment_two: string;
   payment_type_two: string;
   reference_number_two: string;
+  sales_three: number;
+  mode_of_payment_three: string;
+  payment_type_three: string;
+  reference_number_three: string;
   remarks: string;
   received_by: string;
   collected_by: string;
@@ -70,7 +74,7 @@ function renderPaymentRows(rows: DailySalesPrintDetail[]) {
     [
       {
         mode: row.mode_of_payment,
-        amount: row.sales - row.sales_two,
+        amount: row.sales - row.sales_two - row.sales_three,
         referenceNumber: row.reference_number,
       },
       {
@@ -78,7 +82,15 @@ function renderPaymentRows(rows: DailySalesPrintDetail[]) {
         amount: row.sales_two,
         referenceNumber: row.reference_number_two,
       },
-    ].filter((entry) => entry.mode && entry.amount > 0),
+      {
+        mode: row.mode_of_payment_three,
+        amount: row.sales_three,
+        referenceNumber: row.reference_number_three,
+      },
+    ].filter((entry) => {
+      const mode = entry.mode.trim();
+      return mode.length > 0 && mode !== "N/A";
+    }),
   );
 
   return payments

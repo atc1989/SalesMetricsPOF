@@ -30,6 +30,10 @@ type DailySalesDetailRow = {
   mode_of_payment_two: string | null;
   payment_type_two: string | null;
   reference_number_two: string | null;
+  sales_three: number | string | null;
+  mode_of_payment_three: string | null;
+  payment_type_three: string | null;
+  reference_number_three: string | null;
   remarks: string | null;
   received_by: string | null;
   collected_by: string | null;
@@ -73,7 +77,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("daily_sales")
     .select(
-      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, is_to_blister, one_time_discount, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, reference_number, sales_two, mode_of_payment_two, payment_type_two, reference_number_two, remarks, received_by, collected_by",
+      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, is_to_blister, one_time_discount, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, reference_number, sales_two, mode_of_payment_two, payment_type_two, reference_number_two, sales_three, mode_of_payment_three, payment_type_three, reference_number_three, remarks, received_by, collected_by",
     )
     .order("daily_sales_id", { ascending: true });
 
@@ -144,6 +148,10 @@ export async function GET(request: NextRequest) {
       mode_of_payment_two: typedRow.mode_of_payment_two ?? "",
       payment_type_two: typedRow.payment_type_two ?? "",
       reference_number_two: typedRow.reference_number_two ?? "",
+      sales_three: toNumber(typedRow.sales_three),
+      mode_of_payment_three: typedRow.mode_of_payment_three ?? "",
+      payment_type_three: typedRow.payment_type_three ?? "",
+      reference_number_three: typedRow.reference_number_three ?? "",
       remarks: typedRow.remarks ?? "",
       received_by: typedRow.received_by ?? "",
       collected_by: typedRow.collected_by ?? "",

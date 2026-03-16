@@ -527,6 +527,10 @@ export function ReportsTab() {
           mode_of_payment_two: string;
           payment_type_two: string;
           reference_number_two: string;
+          sales_three: number;
+          mode_of_payment_three: string;
+          payment_type_three: string;
+          reference_number_three: string;
           remarks: string;
           received_by: string;
           collected_by: string;
