@@ -47,8 +47,14 @@ function isObject(value: unknown): value is JsonObject {
 function normalizeDailySalesPayload(payload: JsonObject): JsonObject {
   const normalized = { ...payload };
 
-  if (normalized.member_type === "CITY STOCKIST") {
-    normalized.member_type = "STOCKIST";
+  if (typeof normalized.member_type === "string") {
+    const memberType = normalized.member_type.trim().toUpperCase();
+
+    if (memberType === "STOCKIST") {
+      normalized.member_type = "MOBILE STOCKIST";
+    } else {
+      normalized.member_type = memberType;
+    }
   }
 
   if (typeof normalized.pof_number === "string") {

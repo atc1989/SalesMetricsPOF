@@ -75,7 +75,7 @@ function normalizePackageType(value: string | null) {
 function normalizeMemberType(value: string | null) {
   const normalized = normalizeText(value, "DISTRIBUTOR").toUpperCase();
 
-  if (normalized === "CITY STOCKIST") {
+  if (normalized === "MOBILE STOCKIST" || normalized === "CITY STOCKIST") {
     return "STOCKIST";
   }
 
