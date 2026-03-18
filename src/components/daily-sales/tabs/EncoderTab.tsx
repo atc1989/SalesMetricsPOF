@@ -952,7 +952,7 @@ export function EncoderTab() {
       */}
 
       <Modal isOpen={isSavedOpen} title="Saved" onClose={() => setIsSavedOpen(false)}>
-        Daily sales entry saved successfully (mock).
+        Daily sales entry saved successfully.
       </Modal>
     </>
   );
