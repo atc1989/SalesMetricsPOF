@@ -266,6 +266,9 @@ const formatDateDMYY = (value: string) => {
 const formatAmount = (value: number) =>
   value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+const sortByLabelAscending = <T extends { label: string }>(rows: T[]) =>
+  [...rows].sort((left, right) => left.label.localeCompare(right.label));
+
 function PackageTable({
   id,
   title,
@@ -279,7 +282,8 @@ function PackageTable({
   totalLabel: string;
   includeGrandTotal?: boolean;
 }) {
-  const rowAmounts = rows.map((row) => row.amount ?? row.qty * row.price);
+  const sortedRows = sortByLabelAscending(rows);
+  const rowAmounts = sortedRows.map((row) => row.amount ?? row.qty * row.price);
   const total = rowAmounts.reduce((sum, amount) => sum + amount, 0);
 
   return (
@@ -294,7 +298,7 @@ function PackageTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
+          {sortedRows.map((row, index) => (
             <tr key={`${id}-${row.label}`}>
               <td className="border border-slate-300 px-2 py-1">{row.label}</td>
               <td className="border border-slate-300 px-2 py-1">{row.qty}</td>
@@ -323,7 +327,8 @@ function PackageTable({
 }
 
 function PaymentTable({ id, title, rows }: { id: string; title: string; rows: AmountRow[] }) {
-  const total = rows.reduce((sum, row) => sum + row.amount, 0);
+  const sortedRows = sortByLabelAscending(rows);
+  const total = sortedRows.reduce((sum, row) => sum + row.amount, 0);
 
   return (
     <Card className="p-0">
@@ -336,7 +341,7 @@ function PaymentTable({ id, title, rows }: { id: string; title: string; rows: Am
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {sortedRows.map((row) => (
             <tr key={`${id}-${row.label}`}>
               <td className="border border-slate-300 px-2 py-1">{row.label}</td>
               <td className="border border-slate-300 px-2 py-1">{formatAmount(row.amount)}</td>
@@ -410,7 +415,9 @@ export function SalesReportTab() {
         paymentTotals.set(key, (paymentTotals.get(key) ?? 0) + toNumber(row.total_sales));
       }
 
-      return paymentTypeTableIds.map((item) => ({
+      return [...paymentTypeTableIds]
+        .sort((left, right) => left.title.localeCompare(right.title))
+        .map((item) => ({
         id: item.id,
         title: item.title,
         rows: [

@@ -69,6 +69,14 @@ const escapeHtml = (value: string) =>
 
 const formatAmount = (value: number) => `PHP ${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 
+const sortInventoryRowsAscending = (input: InventoryReportRow[]) =>
+  [...input].sort(
+    (left, right) =>
+      left.name.localeCompare(right.name) ||
+      left.pofNumber.localeCompare(right.pofNumber) ||
+      left.ggTransNo.localeCompare(right.ggTransNo),
+  );
+
 const abbreviateMemberType = (value: string) => {
   const normalized = value.trim().toUpperCase();
 
@@ -95,10 +103,11 @@ const abbreviateMemberType = (value: string) => {
 };
 
 const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string) => {
+  const sortedRows = sortInventoryRowsAscending(rows);
   const bodyRows =
-    rows.length === 0
+    sortedRows.length === 0
       ? `<tr><td colspan="19">No inventory results for selected range</td></tr>`
-      : rows
+      : sortedRows
           .map(
             (row) => `
               <tr>
@@ -295,6 +304,8 @@ export function InventoryReportTab() {
     openPrintWindow('Inventory Report', printHtml);
   };
 
+  const sortedRows = sortInventoryRowsAscending(rows);
+
   return (
     <section id="inventory-report" className="mt-4 space-y-4">
       <Card className="p-3">
@@ -414,7 +425,7 @@ export function InventoryReportTab() {
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 ? (
+              {sortedRows.length === 0 ? (
                 <tr>
                   <td colSpan={19} className="px-3 py-6 text-center text-slate-500">
                     {hasLoaded
@@ -423,7 +434,7 @@ export function InventoryReportTab() {
                   </td>
                 </tr>
               ) : (
-                rows.map((row) => (
+                sortedRows.map((row) => (
                   <tr key={row.id} className="border-t border-slate-100">
                     <td className="px-3 py-2">{row.name}</td>
                     <td className="px-3 py-2">{row.ggTransNo}</td>

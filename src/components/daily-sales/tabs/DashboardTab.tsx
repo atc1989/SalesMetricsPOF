@@ -48,6 +48,14 @@ function normalizePaymentMode(value: string | null): RecentSale['paymentMode'] {
   return 'CASH';
 }
 
+const sortRecentSalesAscending = (input: RecentSale[]) =>
+  [...input].sort(
+    (left, right) =>
+      left.pofNumber.localeCompare(right.pofNumber) ||
+      left.date.localeCompare(right.date) ||
+      left.memberName.localeCompare(right.memberName),
+  );
+
 export function DashboardTab() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [pendingFromDate, setPendingFromDate] = useState(today);
@@ -153,7 +161,7 @@ export function DashboardTab() {
   const filteredRows = useMemo(() => {
     const search = searchQuery.trim().toLowerCase();
 
-    return rows.filter((row) => {
+    return sortRecentSalesAscending(rows.filter((row) => {
       if (
         search &&
         !row.pofNumber.toLowerCase().includes(search) &&
@@ -165,7 +173,7 @@ export function DashboardTab() {
       }
 
       return true;
-    });
+    }));
   }, [rows, searchQuery]);
 
   const totalSales = filteredRows.reduce((sum, row) => sum + row.sales, 0);
