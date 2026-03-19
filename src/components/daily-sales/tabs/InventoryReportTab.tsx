@@ -69,12 +69,39 @@ const escapeHtml = (value: string) =>
 
 const formatAmount = (value: number) => `PHP ${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 
+const comparePofNumbers = (left: string, right: string) => {
+  const normalize = (value: string) => {
+    const trimmed = value.trim();
+    const match = /^(\d+)\s*-\s*(\d+)$/.exec(trimmed);
+
+    if (!match) {
+      return { base: trimmed, suffix: Number.NaN };
+    }
+
+    return { base: match[1], suffix: Number(match[2]) };
+  };
+
+  const leftPof = normalize(left);
+  const rightPof = normalize(right);
+  const baseComparison = leftPof.base.localeCompare(rightPof.base, undefined, { numeric: true });
+
+  if (baseComparison !== 0) {
+    return baseComparison;
+  }
+
+  if (Number.isFinite(leftPof.suffix) && Number.isFinite(rightPof.suffix)) {
+    return leftPof.suffix - rightPof.suffix;
+  }
+
+  return left.localeCompare(right, undefined, { numeric: true });
+};
+
 const sortInventoryRowsAscending = (input: InventoryReportRow[]) =>
   [...input].sort(
     (left, right) =>
+      comparePofNumbers(left.pofNumber, right.pofNumber) ||
       left.name.localeCompare(right.name) ||
-      left.pofNumber.localeCompare(right.pofNumber) ||
-      left.ggTransNo.localeCompare(right.ggTransNo),
+      left.ggTransNo.localeCompare(right.ggTransNo, undefined, { numeric: true }),
   );
 
 const abbreviateMemberType = (value: string) => {
