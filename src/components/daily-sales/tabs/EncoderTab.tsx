@@ -243,6 +243,17 @@ const initialManualOverrides: ManualOverrides = {
   salesTwo: false,
 };
 
+function resetDerivedOverrides(overrides: ManualOverrides): ManualOverrides {
+  return {
+    ...overrides,
+    blisterCount: false,
+    price: false,
+    sales: false,
+    released: false,
+    releasedBlpk: false,
+  };
+}
+
 const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOverrides): EncoderFormModel => {
   const quantity = Math.max(input.quantity, 0);
   const discount = Math.max(input.discount, 0);
@@ -509,11 +520,15 @@ export function EncoderTab() {
   };
 
   const onMemberTypeChange = (value: EncoderMemberTypeOption) => {
-    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, value, prev.packageType), manualOverrides));
+    const nextOverrides = resetDerivedOverrides(manualOverrides);
+    setManualOverrides(nextOverrides);
+    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, value, prev.packageType), nextOverrides));
   };
 
   const onPackageTypeChange = (value: EncoderPackageTypeOption) => {
-    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, prev.memberType, value), manualOverrides));
+    const nextOverrides = resetDerivedOverrides(manualOverrides);
+    setManualOverrides(nextOverrides);
+    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, prev.memberType, value), nextOverrides));
   };
 
   const onPaymentModeChange = (value: Exclude<EncoderPaymentModeOption, 'N/A'>) => {
