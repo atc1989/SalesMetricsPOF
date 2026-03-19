@@ -57,20 +57,18 @@ const defaultPaymentTypeOption: PaymentTypeOption = { label: 'N/A', value: 'N/A'
 
 const discountOptions: Array<{ label: string; value: number }> = [
   { label: 'No Discount', value: 0 },
-  { label: '₱50', value: 50 },
-  { label: '₱150', value: 150 },
-  { label: '₱500', value: 500 },
-  { label: '₱80', value: 80 },
-  { label: '₱240', value: 240 },
-  { label: '₱800', value: 800 },
-  { label: '₱1748', value: 1748 },
-  { label: '40% (₱1,520)', value: 1520 },
-  { label: '45% (₱1,710)', value: 1710 },
-  { label: '50% (₱1,900)', value: 1900 },
-  { label: '40% (₱520)', value: 520 },
-  { label: '45% (₱585)', value: 585 },
-  { label: '47.5% (₱618)', value: 618 },
-  { label: '50% (₱650)', value: 650 },
+  { label: 'P50', value: 50 },
+  { label: 'P150', value: 150 },
+  { label: 'P500', value: 500 },
+  { label: 'P240', value: 240 },
+  { label: 'P1748', value: 1748 },
+  { label: '40% (P1,520)', value: 1520 },
+  { label: '45% (P1,710)', value: 1710 },
+  { label: '50% (P1,900)', value: 1900 },
+  { label: '40% (P520)', value: 520 },
+  { label: '45% (P585)', value: 585 },
+  { label: '47.5% (P618)', value: 618 },
+  { label: '50% (P650)', value: 650 },
 ];
 
 const encoderDiscountOptions: Array<{ label: string; value: number }> = [
@@ -78,12 +76,9 @@ const encoderDiscountOptions: Array<{ label: string; value: number }> = [
   { label: '10% (P380)', value: 380 },
   { label: '20% (P760)', value: 760 },
   { label: 'P50', value: 50 },
-  { label: 'P60', value: 60 },
   { label: 'P150', value: 150 },
   { label: 'P500', value: 500 },
-  { label: 'P80', value: 80 },
   { label: 'P240', value: 240 },
-  { label: 'P800', value: 800 },
   { label: 'P1748', value: 1748 },
   { label: '40% (P1,520)', value: 1520 },
   { label: '45% (P1,710)', value: 1710 },
@@ -619,7 +614,7 @@ export function EncoderTab() {
                     </option>
                   ))}
                 </datalist>
-                {isUserSearchLoading ? <span className="text-xs text-slate-500">Searching users…</span> : null}
+                {isUserSearchLoading ? <span className="text-xs text-slate-500">Searching users...</span> : null}
                 {userSearchError ? <span className="text-xs text-red-600">{userSearchError}</span> : null}
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">

@@ -69,7 +69,19 @@ function normalizeText(value: string | null, fallback: string) {
 function normalizePackageType(value: string | null) {
   const rawValue = normalizeText(value, "UNKNOWN");
   const normalized = normalizeDailySalesPackageType(rawValue);
-  return normalized ?? rawValue.toUpperCase();
+
+  switch (normalized) {
+    case "SILVER_RETAIL_BOTTLE":
+    case "GOLD_RETAIL_BOTTLE":
+    case "PLATINUM_RETAIL_BOTTLE":
+      return "RETAIL";
+    case "SILVER_RETAIL_BLISTER":
+    case "GOLD_RETAIL_BLISTER":
+    case "PLATINUM_RETAIL_BLISTER":
+      return "BLISTER";
+    default:
+      return normalized ?? rawValue.toUpperCase();
+  }
 }
 
 function normalizeMemberType(value: string | null) {
