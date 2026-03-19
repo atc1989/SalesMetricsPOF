@@ -104,6 +104,42 @@ const sortInventoryRowsAscending = (input: InventoryReportRow[]) =>
       left.ggTransNo.localeCompare(right.ggTransNo, undefined, { numeric: true }),
   );
 
+const sumInventoryRows = (input: InventoryReportRow[]) =>
+  input.reduce(
+    (totals, row) => ({
+      platinum: totals.platinum + row.platinum,
+      gold: totals.gold + row.gold,
+      silver: totals.silver + row.silver,
+      synbioticBottle: totals.synbioticBottle + row.synbioticBottle,
+      synbioticBlister: totals.synbioticBlister + row.synbioticBlister,
+      voucher: totals.voucher + row.voucher,
+      employeeDiscount: totals.employeeDiscount + row.employeeDiscount,
+      numberOfBottles: totals.numberOfBottles + row.numberOfBottles,
+      numberOfBlisters: totals.numberOfBlisters + row.numberOfBlisters,
+      releasedBottle: totals.releasedBottle + row.releasedBottle,
+      releasedBlister: totals.releasedBlister + row.releasedBlister,
+      toFollowBottle: totals.toFollowBottle + row.toFollowBottle,
+      toFollowBlister: totals.toFollowBlister + row.toFollowBlister,
+      amount: totals.amount + row.amount,
+    }),
+    {
+      platinum: 0,
+      gold: 0,
+      silver: 0,
+      synbioticBottle: 0,
+      synbioticBlister: 0,
+      voucher: 0,
+      employeeDiscount: 0,
+      numberOfBottles: 0,
+      numberOfBlisters: 0,
+      releasedBottle: 0,
+      releasedBlister: 0,
+      toFollowBottle: 0,
+      toFollowBlister: 0,
+      amount: 0,
+    },
+  );
+
 const abbreviateMemberType = (value: string) => {
   const normalized = value.trim().toUpperCase();
 
@@ -131,6 +167,7 @@ const abbreviateMemberType = (value: string) => {
 
 const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string) => {
   const sortedRows = sortInventoryRowsAscending(rows);
+  const totals = sumInventoryRows(sortedRows);
   const bodyRows =
     sortedRows.length === 0
       ? `<tr><td colspan="19">No inventory results for selected range</td></tr>`
@@ -213,7 +250,27 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
         <tbody>
           ${bodyRows}
         </tbody>
-        <tfoot></tfoot>
+        <tfoot>
+          <tr>
+            <td colspan="3"><strong>TOTAL</strong></td>
+            <td>${totals.platinum}</td>
+            <td>${totals.gold}</td>
+            <td>${totals.silver}</td>
+            <td>${totals.synbioticBottle}</td>
+            <td>${totals.synbioticBlister}</td>
+            <td>${totals.voucher}</td>
+            <td>${totals.employeeDiscount}</td>
+            <td>${totals.numberOfBottles}</td>
+            <td>${totals.numberOfBlisters}</td>
+            <td>${totals.releasedBottle}</td>
+            <td>${totals.releasedBlister}</td>
+            <td>${totals.toFollowBottle}</td>
+            <td>${totals.toFollowBlister}</td>
+            <td>${escapeHtml(formatAmount(totals.amount))}</td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tfoot>
       </table>
 
       <br />
@@ -332,6 +389,7 @@ export function InventoryReportTab() {
   };
 
   const sortedRows = sortInventoryRowsAscending(rows);
+  const totals = sumInventoryRows(sortedRows);
 
   return (
     <section id="inventory-report" className="mt-4 space-y-4">
@@ -486,7 +544,29 @@ export function InventoryReportTab() {
                 ))
               )}
             </tbody>
-            <tfoot />
+            <tfoot className="bg-slate-50 font-semibold text-slate-700">
+              <tr>
+                <td colSpan={3} className="px-3 py-2">
+                  TOTAL
+                </td>
+                <td className="px-3 py-2">{totals.platinum}</td>
+                <td className="px-3 py-2">{totals.gold}</td>
+                <td className="px-3 py-2">{totals.silver}</td>
+                <td className="px-3 py-2">{totals.synbioticBottle}</td>
+                <td className="px-3 py-2">{totals.synbioticBlister}</td>
+                <td className="px-3 py-2">{totals.voucher}</td>
+                <td className="px-3 py-2">{totals.employeeDiscount}</td>
+                <td className="px-3 py-2">{totals.numberOfBottles}</td>
+                <td className="px-3 py-2">{totals.numberOfBlisters}</td>
+                <td className="px-3 py-2">{totals.releasedBottle}</td>
+                <td className="px-3 py-2">{totals.releasedBlister}</td>
+                <td className="px-3 py-2">{totals.toFollowBottle}</td>
+                <td className="px-3 py-2">{totals.toFollowBlister}</td>
+                <td className="px-3 py-2">PHP {totals.amount.toLocaleString()}</td>
+                <td className="px-3 py-2" />
+                <td className="px-3 py-2" />
+              </tr>
+            </tfoot>
           </table>
         </div>
       </Card>
