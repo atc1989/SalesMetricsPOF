@@ -905,12 +905,16 @@ export function SalesReportTab() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 pt-2 text-center text-xs text-slate-700 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 pt-2 text-center text-xs text-slate-700 md:grid-cols-3">
               <div>
                 <p>PREPARED BY:</p>
                 <p id="txtPreparedBy" className="font-semibold">
                   Alaiza Jane Emoylan
                 </p>
+              </div>
+              <div>
+                <p>PREPARED BY:</p>
+                <p className="font-semibold">Mary Grace Damasin</p>
               </div>
               <div>
                 <p>CHECKED BY:</p>
