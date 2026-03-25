@@ -769,7 +769,7 @@ export function ReportsTab() {
         {!isLoading && !errorMessage && hasGenerated && filteredRows.length === 0 ? (
           <p className="px-4 pb-2 text-xs text-slate-500">No results for selected date range</p>
         ) : null}
-        <div className="overflow-x-auto">
+        <div className="app-table-scroll">
           <table id="tblSalesReport" className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
               <tr>

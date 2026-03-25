@@ -105,13 +105,16 @@ function createAccountCounts(): AccountCounts {
 function addPackageCount(target: AccountCounts, packageType: string, quantity: number) {
   switch (packageType) {
     case "SILVER":
+    case "OLD_SILVER":
       target.silver += quantity;
       break;
     case "GOLD":
+    case "OLD_GOLD":
     case "USILVERGOLD":
       target.gold += quantity;
       break;
     case "PLATINUM":
+    case "OLD_PLATINUM":
     case "UGOLDPLATINUM":
     case "USILVERPLATINUM":
       target.platinum += quantity;
@@ -210,6 +213,17 @@ function addPaymentSummary(
   paymentMap.set(mode, paymentSummary);
 }
 
+function isAncillaryInventoryType(packageType: string) {
+  return [
+    "SILVER_BAG",
+    "BLUE_BAG",
+    "BROCHURE",
+    "TRIFOLD",
+    "FLYERS",
+    "TUMBLER",
+  ].includes(packageType);
+}
+
 export async function GET(request: NextRequest) {
   const transDate = request.nextUrl.searchParams.get("transDate");
 
@@ -267,6 +281,10 @@ export async function GET(request: NextRequest) {
       const salesTwo = toNumber(row.sales_two);
       const salesThree = toNumber(row.sales_three);
       const primarySales = Math.max(sales - salesTwo - salesThree, 0);
+
+      if (isAncillaryInventoryType(packageType)) {
+        continue;
+      }
 
       const packageTotals = packageMap.get(packageType) ?? {
         package_type: packageType,

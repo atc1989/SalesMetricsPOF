@@ -21,10 +21,19 @@ type InventoryReportRow = {
   platinum: number;
   gold: number;
   silver: number;
+  oldPlatinum: number;
+  oldGold: number;
+  oldSilver: number;
   synbioticBottle: number;
   synbioticBlister: number;
   voucher: number;
   employeeDiscount: number;
+  silverBag: number;
+  blueBag: number;
+  brochure: number;
+  trifold: number;
+  flyers: number;
+  tumbler: number;
   numberOfBottles: number;
   numberOfBlisters: number;
   releasedBottle: number;
@@ -110,10 +119,19 @@ const sumInventoryRows = (input: InventoryReportRow[]) =>
       platinum: totals.platinum + row.platinum,
       gold: totals.gold + row.gold,
       silver: totals.silver + row.silver,
+      oldPlatinum: totals.oldPlatinum + row.oldPlatinum,
+      oldGold: totals.oldGold + row.oldGold,
+      oldSilver: totals.oldSilver + row.oldSilver,
       synbioticBottle: totals.synbioticBottle + row.synbioticBottle,
       synbioticBlister: totals.synbioticBlister + row.synbioticBlister,
       voucher: totals.voucher + row.voucher,
       employeeDiscount: totals.employeeDiscount + row.employeeDiscount,
+      silverBag: totals.silverBag + row.silverBag,
+      blueBag: totals.blueBag + row.blueBag,
+      brochure: totals.brochure + row.brochure,
+      trifold: totals.trifold + row.trifold,
+      flyers: totals.flyers + row.flyers,
+      tumbler: totals.tumbler + row.tumbler,
       numberOfBottles: totals.numberOfBottles + row.numberOfBottles,
       numberOfBlisters: totals.numberOfBlisters + row.numberOfBlisters,
       releasedBottle: totals.releasedBottle + row.releasedBottle,
@@ -126,10 +144,19 @@ const sumInventoryRows = (input: InventoryReportRow[]) =>
       platinum: 0,
       gold: 0,
       silver: 0,
+      oldPlatinum: 0,
+      oldGold: 0,
+      oldSilver: 0,
       synbioticBottle: 0,
       synbioticBlister: 0,
       voucher: 0,
       employeeDiscount: 0,
+      silverBag: 0,
+      blueBag: 0,
+      brochure: 0,
+      trifold: 0,
+      flyers: 0,
+      tumbler: 0,
       numberOfBottles: 0,
       numberOfBlisters: 0,
       releasedBottle: 0,
@@ -170,7 +197,7 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
   const totals = sumInventoryRows(sortedRows);
   const bodyRows =
     sortedRows.length === 0
-      ? `<tr><td colspan="19">No inventory results for selected range</td></tr>`
+      ? `<tr><td colspan="28">No inventory results for selected range</td></tr>`
       : sortedRows
           .map(
             (row) => `
@@ -181,10 +208,19 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
                 <td>${row.platinum}</td>
                 <td>${row.gold}</td>
                 <td>${row.silver}</td>
+                <td>${row.oldPlatinum}</td>
+                <td>${row.oldGold}</td>
+                <td>${row.oldSilver}</td>
                 <td>${row.synbioticBottle}</td>
                 <td>${row.synbioticBlister}</td>
                 <td>${row.voucher}</td>
                 <td>${row.employeeDiscount}</td>
+                <td>${row.silverBag}</td>
+                <td>${row.blueBag}</td>
+                <td>${row.brochure}</td>
+                <td>${row.trifold}</td>
+                <td>${row.flyers}</td>
+                <td>${row.tumbler}</td>
                 <td>${row.numberOfBottles}</td>
                 <td>${row.numberOfBlisters}</td>
                 <td>${row.releasedBottle}</td>
@@ -225,8 +261,9 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
             <th rowspan="2">NAME</th>
             <th rowspan="2">GG TRANS NO.</th>
             <th rowspan="2">POF NUMBER</th>
-            <th colspan="3">PACKAGE TYPE</th>
+            <th colspan="6">PACKAGE TYPE</th>
             <th colspan="4">RETAIL</th>
+            <th colspan="6">OTHERS</th>
             <th rowspan="2">NUMBER OF BOTTLES</th>
             <th rowspan="2">NUMBER OF BLISTERS</th>
             <th rowspan="2">RELEASED (BOTTLE)</th>
@@ -241,10 +278,19 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
             <th>PLATINUM</th>
             <th>GOLD</th>
             <th>SILVER</th>
+            <th>OLD PLATINUM</th>
+            <th>OLD GOLD</th>
+            <th>OLD SILVER</th>
             <th>SYNBIOTIC+ BOTTLE</th>
             <th>SYNBIOTIC+ BLISTER</th>
             <th>VOUCHER</th>
             <th>EMPLOYEE DISCOUNT</th>
+            <th>SILVER BAG</th>
+            <th>BLUE BAG</th>
+            <th>BROCHURE</th>
+            <th>TRIFOLD</th>
+            <th>FLYERS</th>
+            <th>TUMBLER</th>
           </tr>
         </thead>
         <tbody>
@@ -256,10 +302,19 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
             <td>${totals.platinum}</td>
             <td>${totals.gold}</td>
             <td>${totals.silver}</td>
+            <td>${totals.oldPlatinum}</td>
+            <td>${totals.oldGold}</td>
+            <td>${totals.oldSilver}</td>
             <td>${totals.synbioticBottle}</td>
             <td>${totals.synbioticBlister}</td>
             <td>${totals.voucher}</td>
             <td>${totals.employeeDiscount}</td>
+            <td>${totals.silverBag}</td>
+            <td>${totals.blueBag}</td>
+            <td>${totals.brochure}</td>
+            <td>${totals.trifold}</td>
+            <td>${totals.flyers}</td>
+            <td>${totals.tumbler}</td>
             <td>${totals.numberOfBottles}</td>
             <td>${totals.numberOfBlisters}</td>
             <td>${totals.releasedBottle}</td>
@@ -289,8 +344,17 @@ const mapApiRowToReportRow = (
 ): InventoryReportRow => {
   const upperPackageType = row.package_type.toUpperCase();
   const normalizedPackageType = normalizeDailySalesPackageType(row.package_type);
-  const isBlister = upperPackageType.includes('BLISTER');
+  const isBlister = upperPackageType.includes('BLISTER') && !upperPackageType.includes('OLD');
   const isRetail = upperPackageType.includes('RETAIL');
+  const isOldPlatinum = upperPackageType.includes('OLD') && upperPackageType.includes('PLATINUM');
+  const isOldGold = upperPackageType.includes('OLD') && upperPackageType.includes('GOLD');
+  const isOldSilver = upperPackageType.includes('OLD') && upperPackageType.includes('SILVER');
+  const isSilverBag = upperPackageType.includes('SILVER_BAG') || upperPackageType.includes('SILVER BAG');
+  const isBlueBag = upperPackageType.includes('BLUE_BAG') || upperPackageType.includes('BLUE BAG');
+  const isBrochure = upperPackageType.includes('BROCHURE');
+  const isTrifold = upperPackageType.includes('TRIFOLD');
+  const isFlyers = upperPackageType.includes('FLYERS');
+  const isTumbler = upperPackageType.includes('TUMBLER');
   const amountMultiplier =
     row.sales > 0
       ? 0
@@ -308,13 +372,22 @@ const mapApiRowToReportRow = (
     ggTransNo: formatZeroOne(row.username) || '-',
     memberType: abbreviateMemberType(row.member_type) || 'N/A',
     pofNumber: formatPofNumber(row.pof_number) || '-',
-    platinum: upperPackageType.includes('PLATINUM') ? totalQuantity : 0,
-    gold: upperPackageType.includes('GOLD') ? totalQuantity : 0,
-    silver: upperPackageType.includes('SILVER') ? totalQuantity : 0,
+    platinum: upperPackageType.includes('PLATINUM') && !upperPackageType.includes('OLD') ? totalQuantity : 0,
+    gold: upperPackageType.includes('GOLD') && !upperPackageType.includes('OLD') ? totalQuantity : 0,
+    silver: upperPackageType.includes('SILVER') && !upperPackageType.includes('OLD') && !isSilverBag ? totalQuantity : 0,
+    oldPlatinum: isOldPlatinum ? totalQuantity : 0,
+    oldGold: isOldGold ? totalQuantity : 0,
+    oldSilver: isOldSilver ? totalQuantity : 0,
     synbioticBottle: isRetail ? totalBottles : 0,
     synbioticBlister: isBlister ? totalBlisters : 0,
     voucher: 0,
     employeeDiscount: 0,
+    silverBag: isSilverBag ? totalQuantity : 0,
+    blueBag: isBlueBag ? totalQuantity : 0,
+    brochure: isBrochure ? totalQuantity : 0,
+    trifold: isTrifold ? totalQuantity : 0,
+    flyers: isFlyers ? totalQuantity : 0,
+    tumbler: isTumbler ? totalQuantity : 0,
     numberOfBottles: totalBottles,
     numberOfBlisters: totalBlisters,
     releasedBottle: row.released_count ?? 0,
@@ -453,8 +526,8 @@ export function InventoryReportTab() {
         {errorMessage ? (
           <p className="px-4 pb-2 text-xs text-amber-700">{errorMessage}</p>
         ) : null}
-        <div className="overflow-x-auto">
-          <table id="tblDailyInventory" className="min-w-[1600px] text-sm">
+        <div className="app-table-scroll">
+          <table id="tblDailyInventory" className="min-w-[2400px] text-sm">
             <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-600">
               <tr>
                 <th rowSpan={2} className="px-3 py-2">
@@ -466,11 +539,14 @@ export function InventoryReportTab() {
                 <th rowSpan={2} className="px-3 py-2">
                   POF NUMBER
                 </th>
-                <th colSpan={3} className="px-3 py-2 text-center">
+                <th colSpan={6} className="px-3 py-2 text-center">
                   PACKAGE TYPE
                 </th>
                 <th colSpan={4} className="px-3 py-2 text-center">
                   RETAIL
+                </th>
+                <th colSpan={6} className="px-3 py-2 text-center">
+                  OTHERS
                 </th>
                 <th rowSpan={2} className="px-3 py-2">
                   NUMBER OF BOTTLES
@@ -504,16 +580,25 @@ export function InventoryReportTab() {
                 <th className="px-3 py-2">PLATINUM</th>
                 <th className="px-3 py-2">GOLD</th>
                 <th className="px-3 py-2">SILVER</th>
+                <th className="px-3 py-2">OLD PLATINUM</th>
+                <th className="px-3 py-2">OLD GOLD</th>
+                <th className="px-3 py-2">OLD SILVER</th>
                 <th className="px-3 py-2">SYNBIOTIC+ (BOTTLE)</th>
                 <th className="px-3 py-2">SYNBIOTIC+ (BLISTER)</th>
                 <th className="px-3 py-2">VOUCHER</th>
                 <th className="px-3 py-2">EMPLOYEE DISCOUNT</th>
+                <th className="px-3 py-2">SILVER BAG</th>
+                <th className="px-3 py-2">BLUE BAG</th>
+                <th className="px-3 py-2">BROCHURE</th>
+                <th className="px-3 py-2">TRIFOLD</th>
+                <th className="px-3 py-2">FLYERS</th>
+                <th className="px-3 py-2">TUMBLER</th>
               </tr>
             </thead>
             <tbody>
               {sortedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={19} className="px-3 py-6 text-center text-slate-500">
+                  <td colSpan={28} className="px-3 py-6 text-center text-slate-500">
                     {hasLoaded
                       ? 'No inventory results for selected range'
                       : 'No inventory rows found for the selected filters.'}
@@ -528,10 +613,19 @@ export function InventoryReportTab() {
                     <td className="px-3 py-2">{row.platinum}</td>
                     <td className="px-3 py-2">{row.gold}</td>
                     <td className="px-3 py-2">{row.silver}</td>
+                    <td className="px-3 py-2">{row.oldPlatinum}</td>
+                    <td className="px-3 py-2">{row.oldGold}</td>
+                    <td className="px-3 py-2">{row.oldSilver}</td>
                     <td className="px-3 py-2">{row.synbioticBottle}</td>
                     <td className="px-3 py-2">{row.synbioticBlister}</td>
                     <td className="px-3 py-2">{row.voucher}</td>
                     <td className="px-3 py-2">{row.employeeDiscount}</td>
+                    <td className="px-3 py-2">{row.silverBag}</td>
+                    <td className="px-3 py-2">{row.blueBag}</td>
+                    <td className="px-3 py-2">{row.brochure}</td>
+                    <td className="px-3 py-2">{row.trifold}</td>
+                    <td className="px-3 py-2">{row.flyers}</td>
+                    <td className="px-3 py-2">{row.tumbler}</td>
                     <td className="px-3 py-2">{row.numberOfBottles}</td>
                     <td className="px-3 py-2">{row.numberOfBlisters}</td>
                     <td className="px-3 py-2">{row.releasedBottle}</td>
@@ -553,10 +647,19 @@ export function InventoryReportTab() {
                 <td className="px-3 py-2">{totals.platinum}</td>
                 <td className="px-3 py-2">{totals.gold}</td>
                 <td className="px-3 py-2">{totals.silver}</td>
+                <td className="px-3 py-2">{totals.oldPlatinum}</td>
+                <td className="px-3 py-2">{totals.oldGold}</td>
+                <td className="px-3 py-2">{totals.oldSilver}</td>
                 <td className="px-3 py-2">{totals.synbioticBottle}</td>
                 <td className="px-3 py-2">{totals.synbioticBlister}</td>
                 <td className="px-3 py-2">{totals.voucher}</td>
                 <td className="px-3 py-2">{totals.employeeDiscount}</td>
+                <td className="px-3 py-2">{totals.silverBag}</td>
+                <td className="px-3 py-2">{totals.blueBag}</td>
+                <td className="px-3 py-2">{totals.brochure}</td>
+                <td className="px-3 py-2">{totals.trifold}</td>
+                <td className="px-3 py-2">{totals.flyers}</td>
+                <td className="px-3 py-2">{totals.tumbler}</td>
                 <td className="px-3 py-2">{totals.numberOfBottles}</td>
                 <td className="px-3 py-2">{totals.numberOfBlisters}</td>
                 <td className="px-3 py-2">{totals.releasedBottle}</td>

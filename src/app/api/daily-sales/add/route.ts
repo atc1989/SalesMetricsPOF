@@ -146,8 +146,42 @@ export async function POST(request: NextRequest) {
   }
 
   const normalizedPayload = normalizeDailySalesPayload(payload);
+  const extraEntries = Array.isArray(normalizedPayload.extra_entries)
+    ? normalizedPayload.extra_entries
+        .filter(isObject)
+        .map((entry) => normalizeDailySalesPayload(entry))
+    : [];
 
   const supabase = getSupabaseAdminClient();
+
+  if (extraEntries.length > 0) {
+    const insertPayload = [
+      buildDirectInsertPayload(normalizedPayload),
+      ...extraEntries.map((entry) => buildDirectInsertPayload(entry)),
+    ];
+    const { data: insertedRows, error: insertError } = await supabase
+      .from("daily_sales")
+      .insert(insertPayload)
+      .select("daily_sales_id");
+
+    if (insertError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: insertError.message || "Failed to add daily sales entry",
+          error: {
+            code: insertError.code,
+            details: insertError.details,
+            message: insertError.message,
+          },
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ success: true, data: insertedRows, fallback: "direct-insert-batch" });
+  }
+
   const { data, error } = await supabase.rpc("rpc_add_daily_sales", { p: normalizedPayload });
 
   if (error) {

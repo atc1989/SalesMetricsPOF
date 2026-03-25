@@ -3,3 +3,16 @@
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
+
+.app-table-scroll {
+  max-width: 100%;
+  max-height: 32rem;
+  overflow: auto;
+}
+
+@media print {
+  .app-table-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}

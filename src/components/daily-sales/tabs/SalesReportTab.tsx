@@ -288,40 +288,42 @@ function PackageTable({
 
   return (
     <Card className="p-0">
-      <table id={id} className="min-w-full text-xs">
-        <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-          <tr>
-            <th className="border border-slate-300 px-2 py-1">{title}</th>
-            <th className="border border-slate-300 px-2 py-1">QTY</th>
-            <th className="border border-slate-300 px-2 py-1">PRICE</th>
-            <th className="border border-slate-300 px-2 py-1">AMOUNT TOTAL</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.map((row, index) => (
-            <tr key={`${id}-${row.label}`}>
-              <td className="border border-slate-300 px-2 py-1">{row.label}</td>
-              <td className="border border-slate-300 px-2 py-1">{row.qty}</td>
-              <td className="border border-slate-300 px-2 py-1">{formatAmount(row.price)}</td>
-              <td className="border border-slate-300 px-2 py-1">{formatAmount(rowAmounts[index])}</td>
+      <div className="app-table-scroll">
+        <table id={id} className="min-w-full text-xs">
+          <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
+            <tr>
+              <th className="border border-slate-300 px-2 py-1">{title}</th>
+              <th className="border border-slate-300 px-2 py-1">QTY</th>
+              <th className="border border-slate-300 px-2 py-1">PRICE</th>
+              <th className="border border-slate-300 px-2 py-1">AMOUNT TOTAL</th>
             </tr>
-          ))}
-          <tr className="font-semibold">
-            <td className="border border-slate-300 px-2 py-1" colSpan={3}>
-              {totalLabel}
-            </td>
-            <td className="border border-slate-300 px-2 py-1">{formatAmount(total)}</td>
-          </tr>
-          {includeGrandTotal ? (
+          </thead>
+          <tbody>
+            {sortedRows.map((row, index) => (
+              <tr key={`${id}-${row.label}`}>
+                <td className="border border-slate-300 px-2 py-1">{row.label}</td>
+                <td className="border border-slate-300 px-2 py-1">{row.qty}</td>
+                <td className="border border-slate-300 px-2 py-1">{formatAmount(row.price)}</td>
+                <td className="border border-slate-300 px-2 py-1">{formatAmount(rowAmounts[index])}</td>
+              </tr>
+            ))}
             <tr className="font-semibold">
-              <td className="border border-slate-300 px-2 py-1 text-center" colSpan={3}>
-                GRAND TOTAL
+              <td className="border border-slate-300 px-2 py-1" colSpan={3}>
+                {totalLabel}
               </td>
               <td className="border border-slate-300 px-2 py-1">{formatAmount(total)}</td>
             </tr>
-          ) : null}
-        </tbody>
-      </table>
+            {includeGrandTotal ? (
+              <tr className="font-semibold">
+                <td className="border border-slate-300 px-2 py-1 text-center" colSpan={3}>
+                  GRAND TOTAL
+                </td>
+                <td className="border border-slate-300 px-2 py-1">{formatAmount(total)}</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
     </Card>
   );
 }
@@ -332,27 +334,29 @@ function PaymentTable({ id, title, rows }: { id: string; title: string; rows: Am
 
   return (
     <Card className="p-0">
-      <table id={id} className="min-w-full text-xs">
-        <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-          <tr>
-            <th className="border border-slate-300 px-2 py-1" colSpan={2}>
-              {title}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.map((row) => (
-            <tr key={`${id}-${row.label}`}>
-              <td className="border border-slate-300 px-2 py-1">{row.label}</td>
-              <td className="border border-slate-300 px-2 py-1">{formatAmount(row.amount)}</td>
+      <div className="app-table-scroll">
+        <table id={id} className="min-w-full text-xs">
+          <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
+            <tr>
+              <th className="border border-slate-300 px-2 py-1" colSpan={2}>
+                {title}
+              </th>
             </tr>
-          ))}
-          <tr className="font-semibold">
-            <td className="border border-slate-300 px-2 py-1 text-center">TOTAL</td>
-            <td className="border border-slate-300 px-2 py-1">{formatAmount(total)}</td>
-          </tr>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sortedRows.map((row) => (
+              <tr key={`${id}-${row.label}`}>
+                <td className="border border-slate-300 px-2 py-1">{row.label}</td>
+                <td className="border border-slate-300 px-2 py-1">{formatAmount(row.amount)}</td>
+              </tr>
+            ))}
+            <tr className="font-semibold">
+              <td className="border border-slate-300 px-2 py-1 text-center">TOTAL</td>
+              <td className="border border-slate-300 px-2 py-1">{formatAmount(total)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </Card>
   );
 }
@@ -806,43 +810,45 @@ export function SalesReportTab() {
 
               <div className="space-y-3">
                 <Card className="p-0">
-                  <table id="tblCashOnHand" className="min-w-full text-xs">
-                    <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-                      <tr>
-                        <th className="border border-slate-300 px-2 py-1">Cash on Hand</th>
-                        <th className="border border-slate-300 px-2 py-1">Pieces</th>
-                        <th className="border border-slate-300 px-2 py-1">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cashDenominations.map((entry) => (
-                        <tr key={entry.id}>
-                          <td className="border border-slate-300 px-2 py-1">{entry.label}</td>
-                          <td className="border border-slate-300 px-2 py-1">
-                            <input
-                              id={entry.id}
-                              type="number"
-                              min="0"
-                              value={cashPieces[entry.id]}
-                              onChange={(event) => onCashPieceChange(entry.id, event.target.value)}
-                              className="h-7 w-20 rounded border border-slate-300 px-2"
-                            />
+                  <div className="app-table-scroll">
+                    <table id="tblCashOnHand" className="min-w-full text-xs">
+                      <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
+                        <tr>
+                          <th className="border border-slate-300 px-2 py-1">Cash on Hand</th>
+                          <th className="border border-slate-300 px-2 py-1">Pieces</th>
+                          <th className="border border-slate-300 px-2 py-1">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cashDenominations.map((entry) => (
+                          <tr key={entry.id}>
+                            <td className="border border-slate-300 px-2 py-1">{entry.label}</td>
+                            <td className="border border-slate-300 px-2 py-1">
+                              <input
+                                id={entry.id}
+                                type="number"
+                                min="0"
+                                value={cashPieces[entry.id]}
+                                onChange={(event) => onCashPieceChange(entry.id, event.target.value)}
+                                className="h-7 w-20 rounded border border-slate-300 px-2"
+                              />
+                            </td>
+                            <td className="border border-slate-300 px-2 py-1">
+                              <span id={entry.spanId}>{formatAmount(cashAmounts[entry.id])}</span>
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="font-semibold">
+                          <td className="border border-slate-300 px-2 py-1 text-center" colSpan={2}>
+                            TOTAL CASH ON HAND
                           </td>
                           <td className="border border-slate-300 px-2 py-1">
-                            <span id={entry.spanId}>{formatAmount(cashAmounts[entry.id])}</span>
+                            <span id="spnTotal">{formatAmount(displayedTotalCash)}</span>
                           </td>
                         </tr>
-                      ))}
-                      <tr className="font-semibold">
-                        <td className="border border-slate-300 px-2 py-1 text-center" colSpan={2}>
-                          TOTAL CASH ON HAND
-                        </td>
-                        <td className="border border-slate-300 px-2 py-1">
-                          <span id="spnTotal">{formatAmount(displayedTotalCash)}</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
 
                 <PaymentTable id="tblPaymentBreakdown" title="PAYMENT BREAKDOWN" rows={displayedPaymentBreakdownRows} />
@@ -851,51 +857,55 @@ export function SalesReportTab() {
 
             <div className="grid gap-3 md:grid-cols-2">
               <Card className="p-0">
-                <table id="tblNewAccounts" className="min-w-full text-xs">
-                  <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-                    <tr>
-                      <th className="border border-slate-300 px-2 py-1" colSpan={3}>
-                        New Accounts
-                      </th>
-                    </tr>
-                    <tr>
-                      <th className="border border-slate-300 px-2 py-1">Silver</th>
-                      <th className="border border-slate-300 px-2 py-1">Gold</th>
-                      <th className="border border-slate-300 px-2 py-1">Platinum</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.silver}</td>
-                      <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.gold}</td>
-                      <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.platinum}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="app-table-scroll">
+                  <table id="tblNewAccounts" className="min-w-full text-xs">
+                    <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
+                      <tr>
+                        <th className="border border-slate-300 px-2 py-1" colSpan={3}>
+                          New Accounts
+                        </th>
+                      </tr>
+                      <tr>
+                        <th className="border border-slate-300 px-2 py-1">Silver</th>
+                        <th className="border border-slate-300 px-2 py-1">Gold</th>
+                        <th className="border border-slate-300 px-2 py-1">Platinum</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.silver}</td>
+                        <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.gold}</td>
+                        <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.platinum}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </Card>
 
               <Card className="p-0">
-                <table id="tblUpgrades" className="min-w-full text-xs">
-                  <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-                    <tr>
-                      <th className="border border-slate-300 px-2 py-1" colSpan={3}>
-                        Upgrades
-                      </th>
-                    </tr>
-                    <tr>
-                      <th className="border border-slate-300 px-2 py-1">Silver</th>
-                      <th className="border border-slate-300 px-2 py-1">Gold</th>
-                      <th className="border border-slate-300 px-2 py-1">Platinum</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.silver}</td>
-                      <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.gold}</td>
-                      <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.platinum}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="app-table-scroll">
+                  <table id="tblUpgrades" className="min-w-full text-xs">
+                    <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
+                      <tr>
+                        <th className="border border-slate-300 px-2 py-1" colSpan={3}>
+                          Upgrades
+                        </th>
+                      </tr>
+                      <tr>
+                        <th className="border border-slate-300 px-2 py-1">Silver</th>
+                        <th className="border border-slate-300 px-2 py-1">Gold</th>
+                        <th className="border border-slate-300 px-2 py-1">Platinum</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.silver}</td>
+                        <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.gold}</td>
+                        <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.platinum}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </Card>
             </div>
 

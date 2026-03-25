@@ -22,7 +22,7 @@ export function UsersTable({ rows }: UsersTableProps) {
     <>
       <Card>
         <h3 className="mb-3 text-lg font-semibold text-slate-900">Users</h3>
-        <div className="overflow-x-auto">
+        <div className="app-table-scroll">
           <table className="min-w-full border-collapse text-sm">
             <thead>
               <tr className="bg-slate-50">

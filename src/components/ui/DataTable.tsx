@@ -20,7 +20,7 @@ export function DataTable<T extends { id: string | number }>({
 }: DataTableProps<T>) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <div className="overflow-x-auto">
+      <div className="app-table-scroll">
         <table className="min-w-full border-collapse text-sm">
           <thead className="bg-slate-50">
             <tr>

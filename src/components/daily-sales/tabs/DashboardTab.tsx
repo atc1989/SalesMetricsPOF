@@ -337,7 +337,7 @@ export function DashboardTab() {
         </div>
         {isLoading ? <p className="px-4 pb-2 text-xs text-slate-500">Loading daily sales...</p> : null}
         {errorMessage ? <p className="px-4 pb-2 text-xs text-amber-600">{errorMessage}</p> : null}
-        <div className="overflow-x-auto">
+        <div className="app-table-scroll">
           <table id="tblSalesToday" className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
               <tr>

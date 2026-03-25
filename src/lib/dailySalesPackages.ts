@@ -37,6 +37,27 @@ export const dailySalesPackageCatalog: Record<
     bundledBlisterCount: 10,
     defaultIsToBlister: '0',
   },
+  OLD_SILVER: {
+    label: 'Old Silver (1 blister)',
+    originalPrice: 1000,
+    bottleCount: 0,
+    bundledBlisterCount: 1,
+    defaultIsToBlister: '1',
+  },
+  OLD_GOLD: {
+    label: 'Old Gold (3 blisters)',
+    originalPrice: 3000,
+    bottleCount: 0,
+    bundledBlisterCount: 3,
+    defaultIsToBlister: '1',
+  },
+  OLD_PLATINUM: {
+    label: 'Old Platinum (10 blisters)',
+    originalPrice: 10000,
+    bottleCount: 0,
+    bundledBlisterCount: 10,
+    defaultIsToBlister: '1',
+  },
   USILVERGOLD: {
     label: 'USilverGold (2 bottles + 2 blisters)',
     originalPrice: 9000,
@@ -133,6 +154,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 0,
     GOLD: 0,
     PLATINUM: 0,
+    OLD_SILVER: 0,
+    OLD_GOLD: 0,
+    OLD_PLATINUM: 0,
     USILVERGOLD: 0,
     UGOLDPLATINUM: 0,
     USILVERPLATINUM: 0,
@@ -149,6 +173,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 50,
     GOLD: 150,
     PLATINUM: 500,
+    OLD_SILVER: 0,
+    OLD_GOLD: 0,
+    OLD_PLATINUM: 0,
     USILVERGOLD: 100,
     UGOLDPLATINUM: 350,
     USILVERPLATINUM: 450,
@@ -165,6 +192,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 180,
     GOLD: 540,
     PLATINUM: 1800,
+    OLD_SILVER: 0,
+    OLD_GOLD: 0,
+    OLD_PLATINUM: 0,
     USILVERGOLD: 360,
     UGOLDPLATINUM: 1260,
     USILVERPLATINUM: 1620,
@@ -181,6 +211,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 240,
     GOLD: 720,
     PLATINUM: 2400,
+    OLD_SILVER: 0,
+    OLD_GOLD: 0,
+    OLD_PLATINUM: 0,
     USILVERGOLD: 480,
     UGOLDPLATINUM: 1680,
     USILVERPLATINUM: 2160,
@@ -197,6 +230,9 @@ export const dailySalesDiscountMatrix: Record<
     SILVER: 0,
     GOLD: 0,
     PLATINUM: 0,
+    OLD_SILVER: 0,
+    OLD_GOLD: 0,
+    OLD_PLATINUM: 0,
     USILVERGOLD: 0,
     UGOLDPLATINUM: 0,
     USILVERPLATINUM: 0,
@@ -269,6 +305,18 @@ export function normalizeDailySalesPackageType(
 
   if (normalized.includes('PLATINUM') && normalized.includes('RETAIL') && normalized.includes('BLISTER')) {
     return 'PLATINUM_RETAIL_BLISTER';
+  }
+
+  if (normalized.includes('OLD') && normalized.includes('PLATINUM')) {
+    return 'OLD_PLATINUM';
+  }
+
+  if (normalized.includes('OLD') && normalized.includes('GOLD')) {
+    return 'OLD_GOLD';
+  }
+
+  if (normalized.includes('OLD') && normalized.includes('SILVER')) {
+    return 'OLD_SILVER';
   }
 
   if (normalized.includes('GOLD') && normalized.includes('RETAIL') && normalized.includes('BLISTER')) {

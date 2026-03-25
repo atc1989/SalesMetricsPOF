@@ -30,9 +30,9 @@ export function SectionPrintPreviewModal({
     });
 
     printRoot
-      .querySelectorAll<HTMLElement>(".overflow-auto, .overflow-x-auto, .overflow-y-auto")
+      .querySelectorAll<HTMLElement>(".overflow-auto, .overflow-x-auto, .overflow-y-auto, .app-table-scroll")
       .forEach((node) => {
-        node.classList.remove("overflow-auto", "overflow-x-auto", "overflow-y-auto");
+        node.classList.remove("overflow-auto", "overflow-x-auto", "overflow-y-auto", "app-table-scroll");
       });
 
     printRoot.querySelectorAll<HTMLElement>("table").forEach((table) => {

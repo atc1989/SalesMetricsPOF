@@ -25,9 +25,9 @@ export function PrintPreviewModal({ isOpen, transaction, lineItems, onClose }: P
     });
 
     printNode
-      .querySelectorAll<HTMLElement>(".overflow-auto, .overflow-x-auto, .overflow-y-auto")
+      .querySelectorAll<HTMLElement>(".overflow-auto, .overflow-x-auto, .overflow-y-auto, .app-table-scroll")
       .forEach((node) => {
-        node.classList.remove("overflow-auto", "overflow-x-auto", "overflow-y-auto");
+        node.classList.remove("overflow-auto", "overflow-x-auto", "overflow-y-auto", "app-table-scroll");
       });
 
     printNode.querySelectorAll<HTMLElement>("table").forEach((table) => {
@@ -83,7 +83,7 @@ export function PrintPreviewModal({ isOpen, transaction, lineItems, onClose }: P
           </p>
         </section>
 
-        <div className="overflow-x-auto">
+        <div className="app-table-scroll">
           <table className="min-w-[1100px] border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50">

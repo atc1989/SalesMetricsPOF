@@ -35,7 +35,7 @@ export default function RecentSalesTable({
           Excel
         </Button>
       </div>
-      <div className="overflow-x-auto">
+      <div className="app-table-scroll">
         <table id="tblSalesToday" className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600">
             <tr>

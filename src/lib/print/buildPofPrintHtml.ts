@@ -62,6 +62,12 @@ function getPackageBottleLabel(packageType: string) {
       return 3;
     case "PLATINUM":
       return 10;
+    case "OLD_SILVER":
+      return 1;
+    case "OLD_GOLD":
+      return 3;
+    case "OLD_PLATINUM":
+      return 10;
     case "RETAIL":
       return 1;
     default:

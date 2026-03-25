@@ -14,8 +14,10 @@ import {
   hasBundledPackageBlisters,
 } from '@/lib/dailySalesPackages';
 import type {
+  EncoderBagTypeOption,
   EncoderBlisterOption,
   EncoderFormModel,
+  EncoderMarketingToolOption,
   EncoderMemberTypeOption,
   EncoderPackageTypeOption,
   EncoderPaymentModeOption,
@@ -54,6 +56,20 @@ const paymentTypeOptionsByMode: Partial<Record<Exclude<EncoderPaymentModeOption,
 };
 
 const defaultPaymentTypeOption: PaymentTypeOption = { label: 'N/A', value: 'N/A' };
+
+const bagTypeOptions: Array<{ label: string; value: EncoderBagTypeOption }> = [
+  { label: 'N/A', value: 'N/A' },
+  { label: 'Silver bag', value: 'SILVER_BAG' },
+  { label: 'Blue bag', value: 'BLUE_BAG' },
+];
+
+const marketingToolOptions: Array<{ label: string; value: EncoderMarketingToolOption }> = [
+  { label: 'N/A', value: 'N/A' },
+  { label: 'Brochure', value: 'BROCHURE' },
+  { label: 'Trifold', value: 'TRIFOLD' },
+  { label: 'Flyers', value: 'FLYERS' },
+  { label: 'Tumbler', value: 'TUMBLER' },
+];
 
 const discountOptions: Array<{ label: string; value: number }> = [
   { label: 'No Discount', value: 0 },
@@ -199,6 +215,10 @@ const buildInitialForm = (): EncoderFormModel => {
     oneTimeDiscount: 0,
     noOfBottles: 1,
     sales: getDailySalesPackagePrice('SILVER'),
+    bagType: 'N/A',
+    bagQuantity: 0,
+    marketingTool: 'N/A',
+    marketingQuantity: 0,
     paymentMode: 'CASH',
     paymentType: 'N/A',
     referenceNo: 'N/A',
@@ -294,11 +314,68 @@ type NumericField =
   | 'price'
   | 'oneTimeDiscount'
   | 'sales'
+  | 'bagQuantity'
+  | 'marketingQuantity'
   | 'released'
   | 'releasedBlpk'
   | 'toFollow'
   | 'toFollowBlpk'
   | 'salesTwo';
+
+function buildSupplementaryEntries(form: EncoderFormModel) {
+  const baseEntry = {
+    event_name: form.event,
+    trans_date: form.date,
+    pof_number: form.pofNumber,
+    member_name: form.name,
+    username: form.username,
+    is_new_member: form.newMember === '1',
+    member_type: form.memberType,
+    original_price: 0,
+    is_to_blister: false,
+    blister_count: 0,
+    discount: 0,
+    price_after_discount: 0,
+    one_time_discount: 0,
+    bottle_count: 0,
+    released_count: 0,
+    released_blpk_count: 0,
+    to_follow_count: 0,
+    to_follow_blpk_count: 0,
+    sales: 0,
+    mode_of_payment: null,
+    payment_type: null,
+    reference_number: null,
+    sales_two: 0,
+    mode_of_payment_two: null,
+    payment_type_two: null,
+    reference_number_two: null,
+    remarks: form.remarks,
+    received_by: form.receivedBy,
+    collected_by: form.collectedBy,
+    fullfilment_date: form.date,
+  };
+
+  const entries: Array<Record<string, unknown>> = [];
+
+  if (form.bagType !== 'N/A' && form.bagQuantity > 0) {
+    entries.push({
+      ...baseEntry,
+      package_type: form.bagType,
+      quantity: form.bagQuantity,
+    });
+  }
+
+  if (form.marketingTool !== 'N/A' && form.marketingQuantity > 0) {
+    entries.push({
+      ...baseEntry,
+      package_type: form.marketingTool,
+      quantity: form.marketingQuantity,
+    });
+  }
+
+  return entries;
+}
 
 export function EncoderTab() {
   const [form, setForm] = useState<EncoderFormModel>(() => applyComputedFields(buildInitialForm(), initialManualOverrides));
@@ -311,6 +388,7 @@ export function EncoderTab() {
   const [paymentModeTwoError, setPaymentModeTwoError] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const isBundledPackage = hasBundledPackageBlisters(form.packageType);
+  const isZeroDiscountPackage = form.packageType.startsWith('OLD_');
 
   const primaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentMode), [form.paymentMode]);
   const secondaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentModeTwo), [form.paymentModeTwo]);
@@ -489,6 +567,7 @@ export function EncoderTab() {
       received_by: form.receivedBy,
       collected_by: form.collectedBy,
       fullfilment_date: form.date,
+      extra_entries: buildSupplementaryEntries(form),
     };
 
     try {
@@ -528,7 +607,15 @@ export function EncoderTab() {
   const onPackageTypeChange = (value: EncoderPackageTypeOption) => {
     const nextOverrides = resetDerivedOverrides(manualOverrides);
     setManualOverrides(nextOverrides);
-    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, prev.memberType, value), nextOverrides));
+    setForm((prev) =>
+      applyComputedFields(
+        {
+          ...applyMemberPackageRules(prev, prev.memberType, value),
+          discount: value.startsWith('OLD_') ? 0 : dailySalesDiscountMatrix[prev.memberType][value],
+        },
+        nextOverrides,
+      ),
+    );
   };
 
   const onPaymentModeChange = (value: Exclude<EncoderPaymentModeOption, 'N/A'>) => {
@@ -592,6 +679,32 @@ export function EncoderTab() {
         paymentTypeTwo: nextPaymentTypeTwo,
         referenceNoTwo: nextReferenceNoTwo,
       }, manualOverrides)
+    );
+  };
+
+  const onBagTypeChange = (value: EncoderBagTypeOption) => {
+    setForm((prev) =>
+      applyComputedFields(
+        {
+          ...prev,
+          bagType: value,
+          bagQuantity: value === 'N/A' ? 0 : prev.bagQuantity,
+        },
+        manualOverrides,
+      ),
+    );
+  };
+
+  const onMarketingToolChange = (value: EncoderMarketingToolOption) => {
+    setForm((prev) =>
+      applyComputedFields(
+        {
+          ...prev,
+          marketingTool: value,
+          marketingQuantity: value === 'N/A' ? 0 : prev.marketingQuantity,
+        },
+        manualOverrides,
+      ),
     );
   };
 
@@ -748,7 +861,8 @@ export function EncoderTab() {
                   id="discount"
                   value={form.discount}
                   onChange={(event) => updateNumericField('discount', event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  disabled={isZeroDiscountPackage}
+                  className="h-10 rounded-md border border-slate-300 px-3 disabled:bg-slate-50"
                 >
                   {encoderDiscountOptions.map((option) => (
                     <option key={`discount-${option.value}`} value={option.value}>
@@ -756,6 +870,9 @@ export function EncoderTab() {
                     </option>
                   ))}
                 </select>
+                {isZeroDiscountPackage ? (
+                  <span className="text-xs text-slate-500">Old package types do not allow discounts.</span>
+                ) : null}
               </label>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
                 Price
@@ -796,6 +913,63 @@ export function EncoderTab() {
                   value={form.sales}
                   onChange={(event) => updateNumericField('sales', event.target.value, 'sales')}
                   className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-4">
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                Bag Type
+                <select
+                  id="bagType"
+                  value={form.bagType}
+                  onChange={(event) => onBagTypeChange(event.target.value as EncoderBagTypeOption)}
+                  className="h-10 rounded-md border border-slate-300 px-3"
+                >
+                  {bagTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                Bag Quantity
+                <input
+                  id="bagQuantity"
+                  type="number"
+                  min="0"
+                  value={form.bagQuantity}
+                  onChange={(event) => updateNumericField('bagQuantity', event.target.value)}
+                  disabled={form.bagType === 'N/A'}
+                  className="h-10 rounded-md border border-slate-300 px-3 disabled:bg-slate-50"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                Marketing Tool
+                <select
+                  id="marketingTool"
+                  value={form.marketingTool}
+                  onChange={(event) => onMarketingToolChange(event.target.value as EncoderMarketingToolOption)}
+                  className="h-10 rounded-md border border-slate-300 px-3"
+                >
+                  {marketingToolOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                Marketing Quantity
+                <input
+                  id="marketingQuantity"
+                  type="number"
+                  min="0"
+                  value={form.marketingQuantity}
+                  onChange={(event) => updateNumericField('marketingQuantity', event.target.value)}
+                  disabled={form.marketingTool === 'N/A'}
+                  className="h-10 rounded-md border border-slate-300 px-3 disabled:bg-slate-50"
                 />
               </label>
             </div>

@@ -108,6 +108,9 @@ export type EncoderPackageTypeOption =
   | 'SILVER'
   | 'GOLD'
   | 'PLATINUM'
+  | 'OLD_SILVER'
+  | 'OLD_GOLD'
+  | 'OLD_PLATINUM'
   | 'USILVERGOLD'
   | 'UGOLDPLATINUM'
   | 'USILVERPLATINUM'
@@ -137,6 +140,15 @@ export type EncoderPaymentModeOption =
   | 'AR(CSA)'
   | 'AR(LEADERSUPPORT)';
 
+export type EncoderBagTypeOption = 'N/A' | 'SILVER_BAG' | 'BLUE_BAG';
+
+export type EncoderMarketingToolOption =
+  | 'N/A'
+  | 'BROCHURE'
+  | 'TRIFOLD'
+  | 'FLYERS'
+  | 'TUMBLER';
+
 export type EncoderFormModel = {
   event: string;
   date: string;
@@ -155,6 +167,10 @@ export type EncoderFormModel = {
   oneTimeDiscount: number;
   noOfBottles: number;
   sales: number;
+  bagType: EncoderBagTypeOption;
+  bagQuantity: number;
+  marketingTool: EncoderMarketingToolOption;
+  marketingQuantity: number;
   paymentMode: EncoderPaymentModeOption;
   paymentType: string;
   referenceNo: string;

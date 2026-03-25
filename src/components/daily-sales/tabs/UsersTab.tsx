@@ -585,7 +585,7 @@ export function UsersTab() {
               className="h-9 w-full max-w-xs rounded border border-slate-300 px-3 text-sm"
             />
           </div>
-          <div className="overflow-x-auto">
+          <div className="app-table-scroll">
             <table id="tblUsers" className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
                 <tr>
@@ -641,7 +641,7 @@ export function UsersTab() {
               </Button>
             </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="app-table-scroll">
             <table id="tblUserAccount" className="min-w-[1400px] text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
                 <tr>
