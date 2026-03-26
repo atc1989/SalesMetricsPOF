@@ -322,61 +322,6 @@ type NumericField =
   | 'toFollowBlpk'
   | 'salesTwo';
 
-function buildSupplementaryEntries(form: EncoderFormModel) {
-  const baseEntry = {
-    event_name: form.event,
-    trans_date: form.date,
-    pof_number: form.pofNumber,
-    member_name: form.name,
-    username: form.username,
-    is_new_member: form.newMember === '1',
-    member_type: form.memberType,
-    original_price: 0,
-    is_to_blister: false,
-    blister_count: 0,
-    discount: 0,
-    price_after_discount: 0,
-    one_time_discount: 0,
-    bottle_count: 0,
-    released_count: 0,
-    released_blpk_count: 0,
-    to_follow_count: 0,
-    to_follow_blpk_count: 0,
-    sales: 0,
-    mode_of_payment: null,
-    payment_type: null,
-    reference_number: null,
-    sales_two: 0,
-    mode_of_payment_two: null,
-    payment_type_two: null,
-    reference_number_two: null,
-    remarks: form.remarks,
-    received_by: form.receivedBy,
-    collected_by: form.collectedBy,
-    fullfilment_date: form.date,
-  };
-
-  const entries: Array<Record<string, unknown>> = [];
-
-  if (form.bagType !== 'N/A' && form.bagQuantity > 0) {
-    entries.push({
-      ...baseEntry,
-      package_type: form.bagType,
-      quantity: form.bagQuantity,
-    });
-  }
-
-  if (form.marketingTool !== 'N/A' && form.marketingQuantity > 0) {
-    entries.push({
-      ...baseEntry,
-      package_type: form.marketingTool,
-      quantity: form.marketingQuantity,
-    });
-  }
-
-  return entries;
-}
-
 export function EncoderTab() {
   const [form, setForm] = useState<EncoderFormModel>(() => applyComputedFields(buildInitialForm(), initialManualOverrides));
   const [manualOverrides, setManualOverrides] = useState<ManualOverrides>(initialManualOverrides);
@@ -567,7 +512,10 @@ export function EncoderTab() {
       received_by: form.receivedBy,
       collected_by: form.collectedBy,
       fullfilment_date: form.date,
-      extra_entries: buildSupplementaryEntries(form),
+      bag_type: form.bagType === 'N/A' ? null : form.bagType,
+      bag_quantity: form.bagType === 'N/A' ? 0 : form.bagQuantity,
+      marketing_tool: form.marketingTool === 'N/A' ? null : form.marketingTool,
+      marketing_quantity: form.marketingTool === 'N/A' ? 0 : form.marketingQuantity,
     };
 
     try {

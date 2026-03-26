@@ -31,6 +31,10 @@ type DailySalesPrintDetail = {
   remarks: string;
   received_by: string;
   collected_by: string;
+  bag_type: string;
+  bag_quantity: number;
+  marketing_tool: string;
+  marketing_quantity: number;
 };
 
 const REFERENCE_PAYMENT_MODES = new Set([
@@ -146,26 +150,64 @@ export function buildPofPrintHtml(rows: DailySalesPrintDetail[]) {
   );
 
   const bodyRows = rows
-    .map((row) => {
+    .flatMap((row) => {
       const totalProductPrice = row.quantity * row.price_after_discount;
       totalAmount += totalProductPrice;
       totalOneTimeDiscount += row.one_time_discount;
       totalSales += row.sales;
 
-      return `
-        <tr>
-          <td>${escapeHtml(`${row.package_type} (${getPackageBottleLabel(row.package_type)})`)}</td>
-          <td>${escapeHtml(formatPeso(row.original_price))}</td>
-          <td>${escapeHtml(formatPeso(row.discount))}</td>
-          <td>${escapeHtml(formatPeso(row.price_after_discount))}</td>
-          <td>${row.quantity}</td>
-          <td>${escapeHtml(formatPeso(totalProductPrice))}</td>
-          <td>${row.released_count}</td>
-          <td>${row.released_blpk_count}</td>
-          <td>${row.to_follow_count}</td>
-          <td>${row.to_follow_blpk_count}</td>
-        </tr>
-      `;
+      const lineRows = [
+        `
+          <tr>
+            <td>${escapeHtml(`${row.package_type} (${getPackageBottleLabel(row.package_type)})`)}</td>
+            <td>${escapeHtml(formatPeso(row.original_price))}</td>
+            <td>${escapeHtml(formatPeso(row.discount))}</td>
+            <td>${escapeHtml(formatPeso(row.price_after_discount))}</td>
+            <td>${row.quantity}</td>
+            <td>${escapeHtml(formatPeso(totalProductPrice))}</td>
+            <td>${row.released_count}</td>
+            <td>${row.released_blpk_count}</td>
+            <td>${row.to_follow_count}</td>
+            <td>${row.to_follow_blpk_count}</td>
+          </tr>
+        `,
+      ];
+
+      if (row.bag_type.trim() && row.bag_type !== "N/A" && row.bag_quantity > 0) {
+        lineRows.push(`
+          <tr>
+            <td>${escapeHtml(row.bag_type)}</td>
+            <td>${escapeHtml(formatPeso(0))}</td>
+            <td>${escapeHtml(formatPeso(0))}</td>
+            <td>${escapeHtml(formatPeso(0))}</td>
+            <td>${row.bag_quantity}</td>
+            <td>${escapeHtml(formatPeso(0))}</td>
+            <td>0</td>
+            <td>0</td>
+            <td>0</td>
+            <td>0</td>
+          </tr>
+        `);
+      }
+
+      if (row.marketing_tool.trim() && row.marketing_tool !== "N/A" && row.marketing_quantity > 0) {
+        lineRows.push(`
+          <tr>
+            <td>${escapeHtml(row.marketing_tool)}</td>
+            <td>${escapeHtml(formatPeso(0))}</td>
+            <td>${escapeHtml(formatPeso(0))}</td>
+            <td>${escapeHtml(formatPeso(0))}</td>
+            <td>${row.marketing_quantity}</td>
+            <td>${escapeHtml(formatPeso(0))}</td>
+            <td>0</td>
+            <td>0</td>
+            <td>0</td>
+            <td>0</td>
+          </tr>
+        `);
+      }
+
+      return lineRows;
     })
     .join("");
 

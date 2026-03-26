@@ -35,6 +35,10 @@ type DailySalesInsertRow = {
   received_by?: string;
   collected_by?: string;
   fullfilment_date?: string;
+  bag_type?: string | null;
+  bag_quantity?: number;
+  marketing_tool?: string | null;
+  marketing_quantity?: number;
 };
 
 export const dynamic = "force-dynamic";
@@ -132,6 +136,10 @@ function buildDirectInsertPayload(payload: JsonObject): DailySalesInsertRow {
     received_by: readString(payload.received_by),
     collected_by: readString(payload.collected_by),
     fullfilment_date: readString(payload.fullfilment_date),
+    bag_type: readNullableString(payload.bag_type),
+    bag_quantity: readNumber(payload.bag_quantity),
+    marketing_tool: readNullableString(payload.marketing_tool),
+    marketing_quantity: readNumber(payload.marketing_quantity),
   };
 }
 
@@ -146,20 +154,15 @@ export async function POST(request: NextRequest) {
   }
 
   const normalizedPayload = normalizeDailySalesPayload(payload);
-  const extraEntries = Array.isArray(normalizedPayload.extra_entries)
-    ? normalizedPayload.extra_entries
-        .filter(isObject)
-        .map((entry) => normalizeDailySalesPayload(entry))
-    : [];
+  const hasAncillaryColumns =
+    typeof normalizedPayload.bag_type === "string" ||
+    typeof normalizedPayload.marketing_tool === "string";
 
   const supabase = getSupabaseAdminClient();
 
-  if (extraEntries.length > 0) {
-    const insertPayload = [
-      buildDirectInsertPayload(normalizedPayload),
-      ...extraEntries.map((entry) => buildDirectInsertPayload(entry)),
-    ];
-    const { data: insertedRows, error: insertError } = await supabase
+  if (hasAncillaryColumns) {
+    const insertPayload = buildDirectInsertPayload(normalizedPayload);
+    const { data: insertedRow, error: insertError } = await supabase
       .from("daily_sales")
       .insert(insertPayload)
       .select("daily_sales_id");
@@ -179,7 +182,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, data: insertedRows, fallback: "direct-insert-batch" });
+    return NextResponse.json({ success: true, data: insertedRow, fallback: "direct-insert-ancillary-columns" });
   }
 
   const { data, error } = await supabase.rpc("rpc_add_daily_sales", { p: normalizedPayload });

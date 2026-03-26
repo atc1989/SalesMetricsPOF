@@ -37,6 +37,10 @@ type DailySalesDetailRow = {
   remarks: string | null;
   received_by: string | null;
   collected_by: string | null;
+  bag_type: string | null;
+  bag_quantity: number | string | null;
+  marketing_tool: string | null;
+  marketing_quantity: number | string | null;
 };
 
 function toNumber(value: unknown) {
@@ -77,7 +81,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("daily_sales")
     .select(
-      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, is_to_blister, one_time_discount, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, reference_number, sales_two, mode_of_payment_two, payment_type_two, reference_number_two, sales_three, mode_of_payment_three, payment_type_three, reference_number_three, remarks, received_by, collected_by",
+      "daily_sales_id, pof_number, trans_date, member_name, username, package_type, quantity, original_price, discount, price_after_discount, bottle_count, blister_count, is_to_blister, one_time_discount, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, payment_type, reference_number, sales_two, mode_of_payment_two, payment_type_two, reference_number_two, sales_three, mode_of_payment_three, payment_type_three, reference_number_three, remarks, received_by, collected_by, bag_type, bag_quantity, marketing_tool, marketing_quantity",
     )
     .order("daily_sales_id", { ascending: true });
 
@@ -155,6 +159,10 @@ export async function GET(request: NextRequest) {
       remarks: typedRow.remarks ?? "",
       received_by: typedRow.received_by ?? "",
       collected_by: typedRow.collected_by ?? "",
+      bag_type: typedRow.bag_type ?? "",
+      bag_quantity: toNumber(typedRow.bag_quantity),
+      marketing_tool: typedRow.marketing_tool ?? "",
+      marketing_quantity: toNumber(typedRow.marketing_quantity),
     };
   });
 

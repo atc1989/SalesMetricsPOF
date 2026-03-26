@@ -60,6 +60,10 @@ type DailyInventoryApiRow = {
   to_follow_blpk_count: number;
   sales: number;
   mode_of_payment: string;
+  bag_type: string;
+  bag_quantity: number;
+  marketing_tool: string;
+  marketing_quantity: number;
 };
 
 type DailyInventoryApiResponse = {
@@ -349,12 +353,8 @@ const mapApiRowToReportRow = (
   const isOldPlatinum = upperPackageType.includes('OLD') && upperPackageType.includes('PLATINUM');
   const isOldGold = upperPackageType.includes('OLD') && upperPackageType.includes('GOLD');
   const isOldSilver = upperPackageType.includes('OLD') && upperPackageType.includes('SILVER');
-  const isSilverBag = upperPackageType.includes('SILVER_BAG') || upperPackageType.includes('SILVER BAG');
-  const isBlueBag = upperPackageType.includes('BLUE_BAG') || upperPackageType.includes('BLUE BAG');
-  const isBrochure = upperPackageType.includes('BROCHURE');
-  const isTrifold = upperPackageType.includes('TRIFOLD');
-  const isFlyers = upperPackageType.includes('FLYERS');
-  const isTumbler = upperPackageType.includes('TUMBLER');
+  const upperBagType = (row.bag_type ?? '').toUpperCase();
+  const upperMarketingTool = (row.marketing_tool ?? '').toUpperCase();
   const amountMultiplier =
     row.sales > 0
       ? 0
@@ -364,6 +364,8 @@ const mapApiRowToReportRow = (
   const totalQuantity = row.quantity ?? 0;
   const totalBottles = row.bottle_count ?? 0;
   const totalBlisters = row.blister_count ?? 0;
+  const bagQuantity = row.bag_quantity ?? 0;
+  const marketingQuantity = row.marketing_quantity ?? 0;
 
   return {
     id: `api-${index}-${upperPackageType}`,
@@ -374,7 +376,7 @@ const mapApiRowToReportRow = (
     pofNumber: formatPofNumber(row.pof_number) || '-',
     platinum: upperPackageType.includes('PLATINUM') && !upperPackageType.includes('OLD') ? totalQuantity : 0,
     gold: upperPackageType.includes('GOLD') && !upperPackageType.includes('OLD') ? totalQuantity : 0,
-    silver: upperPackageType.includes('SILVER') && !upperPackageType.includes('OLD') && !isSilverBag ? totalQuantity : 0,
+    silver: upperPackageType.includes('SILVER') && !upperPackageType.includes('OLD') ? totalQuantity : 0,
     oldPlatinum: isOldPlatinum ? totalQuantity : 0,
     oldGold: isOldGold ? totalQuantity : 0,
     oldSilver: isOldSilver ? totalQuantity : 0,
@@ -382,12 +384,12 @@ const mapApiRowToReportRow = (
     synbioticBlister: isBlister ? totalBlisters : 0,
     voucher: 0,
     employeeDiscount: 0,
-    silverBag: isSilverBag ? totalQuantity : 0,
-    blueBag: isBlueBag ? totalQuantity : 0,
-    brochure: isBrochure ? totalQuantity : 0,
-    trifold: isTrifold ? totalQuantity : 0,
-    flyers: isFlyers ? totalQuantity : 0,
-    tumbler: isTumbler ? totalQuantity : 0,
+    silverBag: upperBagType.includes('SILVER_BAG') || upperBagType.includes('SILVER BAG') ? bagQuantity : 0,
+    blueBag: upperBagType.includes('BLUE_BAG') || upperBagType.includes('BLUE BAG') ? bagQuantity : 0,
+    brochure: upperMarketingTool.includes('BROCHURE') ? marketingQuantity : 0,
+    trifold: upperMarketingTool.includes('TRIFOLD') ? marketingQuantity : 0,
+    flyers: upperMarketingTool.includes('FLYERS') ? marketingQuantity : 0,
+    tumbler: upperMarketingTool.includes('TUMBLER') ? marketingQuantity : 0,
     numberOfBottles: totalBottles,
     numberOfBlisters: totalBlisters,
     releasedBottle: row.released_count ?? 0,

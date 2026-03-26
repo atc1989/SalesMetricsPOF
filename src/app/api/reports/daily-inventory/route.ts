@@ -19,6 +19,10 @@ type InventorySourceRow = {
   to_follow_blpk_count: number | string | null;
   sales: number | string | null;
   mode_of_payment: string | null;
+  bag_type: string | null;
+  bag_quantity: number | string | null;
+  marketing_tool: string | null;
+  marketing_quantity: number | string | null;
 };
 
 type InventoryReportRow = {
@@ -37,6 +41,10 @@ type InventoryReportRow = {
   to_follow_blpk_count: number;
   sales: number;
   mode_of_payment: string;
+  bag_type: string;
+  bag_quantity: number;
+  marketing_tool: string;
+  marketing_quantity: number;
 };
 
 function toNumber(value: unknown) {
@@ -75,7 +83,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("daily_sales")
       .select(
-        "trans_date, member_name, username, member_type, pof_number, package_type, quantity, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment",
+        "trans_date, member_name, username, member_type, pof_number, package_type, quantity, bottle_count, blister_count, released_count, released_blpk_count, to_follow_count, to_follow_blpk_count, sales, mode_of_payment, bag_type, bag_quantity, marketing_tool, marketing_quantity",
       )
       .gte("trans_date", dateFrom)
       .lte("trans_date", dateTo)
@@ -116,6 +124,10 @@ export async function GET(request: NextRequest) {
         to_follow_blpk_count: toNumber(row.to_follow_blpk_count),
         sales: toNumber(row.sales),
         mode_of_payment: normalizeText(row.mode_of_payment, "N/A"),
+        bag_type: normalizeText(row.bag_type, ""),
+        bag_quantity: toNumber(row.bag_quantity),
+        marketing_tool: normalizeText(row.marketing_tool, ""),
+        marketing_quantity: toNumber(row.marketing_quantity),
       };
     });
 

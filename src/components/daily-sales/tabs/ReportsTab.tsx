@@ -563,6 +563,10 @@ export function ReportsTab() {
           remarks: string;
           received_by: string;
           collected_by: string;
+          bag_type: string;
+          bag_quantity: number;
+          marketing_tool: string;
+          marketing_quantity: number;
         }>;
       };
 
