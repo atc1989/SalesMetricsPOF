@@ -81,6 +81,9 @@ export async function GET(request: NextRequest) {
 
   const rows = (data ?? []).map((row) => {
     const typedRow = row as SalesReportRow;
+    const bottleCount = toNumber(typedRow.released_count);
+    const blisterCount = toNumber(typedRow.released_blpk_count);
+
     return {
       daily_sales_id: toNumber(typedRow.daily_sales_id),
       pof_number: typedRow.pof_number,
@@ -92,8 +95,8 @@ export async function GET(request: NextRequest) {
       original_price: toNumber(typedRow.original_price),
       discount: toNumber(typedRow.discount),
       price_after_discount: toNumber(typedRow.price_after_discount),
-      bottle_count: toNumber(typedRow.bottle_count),
-      blister_count: toNumber(typedRow.blister_count),
+      bottle_count: bottleCount,
+      blister_count: blisterCount,
       released_count: toNumber(typedRow.released_count),
       released_blpk_count: toNumber(typedRow.released_blpk_count),
       to_follow_count: toNumber(typedRow.to_follow_count),
@@ -110,8 +113,8 @@ export async function GET(request: NextRequest) {
   const totals = rows.reduce(
     (acc, row) => {
       acc.total_sales += row.sales;
-      acc.total_bottles += row.bottle_count;
-      acc.total_blisters += row.blister_count;
+      acc.total_bottles += row.released_count;
+      acc.total_blisters += row.released_blpk_count;
       acc.total_transactions += 1;
       return acc;
     },
