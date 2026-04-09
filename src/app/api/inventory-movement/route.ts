@@ -13,6 +13,8 @@ const SUPABASE_UNDEFINED_TABLE_CODE = "42P01";
 
 type DailySalesMovementSourceRow = {
   trans_date: string | null;
+  bottle_count: number | string | null;
+  blister_count: number | string | null;
   released_count: number | string | null;
   released_blpk_count: number | string | null;
 };
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
       await Promise.all([
         supabase
           .from("daily_sales")
-          .select("trans_date, released_count, released_blpk_count")
+          .select("trans_date, bottle_count, blister_count, released_count, released_blpk_count")
           .lte("trans_date", dateTo),
         supabase
           .from("inventory_stock_movements")
@@ -103,8 +105,17 @@ export async function GET(request: NextRequest) {
       }
 
       const current = releasedByDate.get(date) ?? { bottleOut: 0, blisterOut: 0 };
-      current.bottleOut += normalizeWholeNumber(row.released_count);
-      current.blisterOut += normalizeWholeNumber(row.released_blpk_count);
+      const fallbackBottleOut = row.bottle_count == null ? 0 : normalizeWholeNumber(row.bottle_count);
+      const fallbackBlisterOut = row.blister_count == null ? 0 : normalizeWholeNumber(row.blister_count);
+      const bottleOut =
+        row.released_count == null ? fallbackBottleOut : normalizeWholeNumber(row.released_count);
+      const blisterOut =
+        row.released_blpk_count == null
+          ? fallbackBlisterOut
+          : normalizeWholeNumber(row.released_blpk_count);
+
+      current.bottleOut += bottleOut;
+      current.blisterOut += blisterOut;
       releasedByDate.set(date, current);
     }
 
