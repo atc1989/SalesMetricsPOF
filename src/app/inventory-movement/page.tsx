@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -14,6 +15,7 @@ import {
 type InventoryMovementResponse = {
   success: boolean;
   message?: string;
+  stockInSetupRequired?: boolean;
   rows?: InventoryMovementDayRow[];
   stockIns?: InventoryStockInRow[];
   totals?: {
@@ -61,6 +63,18 @@ function formatNumber(value: number) {
   return value.toLocaleString("en-US");
 }
 
+function formatExcelDateLabel(value: string) {
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const month = parsed.toLocaleString("en-US", { month: "short" });
+  const year = String(parsed.getFullYear()).slice(-2);
+  return `${day}-${month}-${year}`;
+}
+
 function getDefaultDateRange() {
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -80,6 +94,7 @@ export default function InventoryMovementPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [noticeMessage, setNoticeMessage] = useState("");
+  const [stockInSetupRequired, setStockInSetupRequired] = useState(false);
   const [isStockInModalOpen, setIsStockInModalOpen] = useState(false);
   const [movementDate, setMovementDate] = useState(defaults.dateTo);
   const [bottleIn, setBottleIn] = useState("");
@@ -120,6 +135,7 @@ export default function InventoryMovementPage() {
 
         setRows(payload.rows ?? []);
         setStockIns(payload.stockIns ?? []);
+        setStockInSetupRequired(payload.stockInSetupRequired === true);
         setTotals(
           payload.totals ?? {
             bottleIn: 0,
@@ -138,6 +154,7 @@ export default function InventoryMovementPage() {
             rangeClosingBlisterStock: INITIAL_BLISTER_STOCK,
           },
         );
+        setNoticeMessage(payload.stockInSetupRequired ? payload.message ?? "" : "");
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
           return;
@@ -159,6 +176,7 @@ export default function InventoryMovementPage() {
           rangeClosingBottleStock: INITIAL_BOTTLE_STOCK,
           rangeClosingBlisterStock: INITIAL_BLISTER_STOCK,
         });
+        setStockInSetupRequired(false);
         setErrorMessage(error instanceof Error ? error.message : "Failed to load inventory movement.");
       } finally {
         setIsLoading(false);
@@ -214,6 +232,7 @@ export default function InventoryMovementPage() {
 
       setRows(reloadPayload.rows ?? []);
       setStockIns(reloadPayload.stockIns ?? []);
+      setStockInSetupRequired(reloadPayload.stockInSetupRequired === true);
       setTotals(
         reloadPayload.totals ?? {
           bottleIn: 0,
@@ -232,6 +251,9 @@ export default function InventoryMovementPage() {
           rangeClosingBlisterStock: INITIAL_BLISTER_STOCK,
         },
       );
+      if (reloadPayload.stockInSetupRequired) {
+        setNoticeMessage(reloadPayload.message ?? "");
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to save stock-in record.");
     } finally {
@@ -245,6 +267,62 @@ export default function InventoryMovementPage() {
     ((bottleIn.trim() === "" || Number(bottleIn) === 0) &&
       (blisterIn.trim() === "" || Number(blisterIn) === 0));
 
+  const handleExportExcel = () => {
+    const worksheetData: Array<Array<string | number>> = [
+      ["", "", "Inventory Movement", "", "", "", "", "", ""],
+      ["Date", "Bottles", "", "", "", "Blister", "", "", ""],
+      ["", "Opening", "In", "Out", "Closing", "Opening", "In", "Out", "Closing"],
+      ...rows.map((row) => [
+        formatExcelDateLabel(row.date),
+        row.bottleOpening,
+        row.bottleIn,
+        row.bottleOut,
+        row.bottleClosing,
+        row.blisterOpening,
+        row.blisterIn,
+        row.blisterOut,
+        row.blisterClosing,
+      ]),
+    ];
+
+    if (rows.length === 0) {
+      worksheetData.push([
+        "No rows found",
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+    }
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    worksheet["!merges"] = [
+      { s: { r: 0, c: 2 }, e: { r: 0, c: 7 } },
+      { s: { r: 1, c: 1 }, e: { r: 1, c: 4 } },
+      { s: { r: 1, c: 5 }, e: { r: 1, c: 8 } },
+      { s: { r: 1, c: 0 }, e: { r: 2, c: 0 } },
+    ];
+    worksheet["!cols"] = [
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 9 },
+      { wch: 9 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 9 },
+      { wch: 9 },
+      { wch: 12 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory Movement");
+    XLSX.writeFile(workbook, `inventory-movement-${dateFrom}-to-${dateTo}.xlsx`);
+  };
+
   return (
     <main className="mx-auto max-w-7xl space-y-6">
       <Card className="space-y-4">
@@ -255,7 +333,14 @@ export default function InventoryMovementPage() {
               Track bottle and blister opening, stock-in, released, and closing balances by date.
             </p>
           </div>
-          <Button onClick={() => setIsStockInModalOpen(true)}>Add Stock In</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={handleExportExcel} disabled={isLoading}>
+              Export Excel
+            </Button>
+            <Button onClick={() => setIsStockInModalOpen(true)} disabled={stockInSetupRequired}>
+              Add Stock In
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">

@@ -4,6 +4,8 @@ import { isIsoDateString, normalizeWholeNumber } from "@/lib/inventoryMovement";
 
 export const dynamic = "force-dynamic";
 
+const SUPABASE_UNDEFINED_TABLE_CODE = "42P01";
+
 type JsonObject = Record<string, unknown>;
 
 function readString(body: JsonObject, key: string) {
@@ -56,6 +58,21 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      if (error.code === SUPABASE_UNDEFINED_TABLE_CODE) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Stock-in table not found yet. Please run the SQL setup for inventory_stock_movements first.",
+            error: {
+              code: error.code,
+              details: error.details,
+              message: error.message,
+            },
+          },
+          { status: 400 },
+        );
+      }
+
       return NextResponse.json(
         {
           success: false,

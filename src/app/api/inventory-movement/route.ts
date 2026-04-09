@@ -9,6 +9,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const SUPABASE_UNDEFINED_TABLE_CODE = "42P01";
+
 type DailySalesMovementSourceRow = {
   trans_date: string | null;
   released_count: number | string | null;
@@ -74,11 +76,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (stockInError) {
+    const isMissingStockInTable = stockInError?.code === SUPABASE_UNDEFINED_TABLE_CODE;
+
+    if (stockInError && !isMissingStockInTable) {
       return NextResponse.json(
         {
           success: false,
-          message: "Failed to load stock-in records. Create the inventory_stock_movements table first.",
+          message: "Failed to load stock-in records.",
           error: {
             code: stockInError.code,
             details: stockInError.details,
@@ -104,8 +108,12 @@ export async function GET(request: NextRequest) {
       releasedByDate.set(date, current);
     }
 
+    const normalizedStockInRows = isMissingStockInTable
+      ? []
+      : ((stockInRows ?? []) as InventoryStockInSourceRow[]);
+
     const stockInByDate = new Map<string, { bottleIn: number; blisterIn: number }>();
-    const stockInRecords = ((stockInRows ?? []) as InventoryStockInSourceRow[]).map((row) => {
+    const stockInRecords = normalizedStockInRows.map((row) => {
       const date = row.movement_date?.trim() ?? "";
       const bottleIn = normalizeWholeNumber(row.bottle_in);
       const blisterIn = normalizeWholeNumber(row.blister_in);
@@ -158,6 +166,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      message: isMissingStockInTable
+        ? "Stock-in table not found yet. Run the SQL setup to enable stock-in entries."
+        : undefined,
+      stockInSetupRequired: isMissingStockInTable,
       rows,
       stockIns: filteredStockIns,
       totals,
