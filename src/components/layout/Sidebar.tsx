@@ -13,6 +13,7 @@ export const appNavLinks: NavLink[] = [
   { href: "/sales", label: "Sales API" },
   { href: "/daily-sales", label: "Daily Sales" },
   { href: "/encoder", label: "Encoder" },
+  { href: "/inventory-movement", label: "Inventory Movement" },
 ];
 
 export function isNavLinkActive(pathname: string, href: string) {
