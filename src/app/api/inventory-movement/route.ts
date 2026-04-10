@@ -23,6 +23,15 @@ type InventoryMovementSourceRow = {
   created_at: string | null;
 };
 
+type InventoryStockInSourceRow = {
+  inventory_stock_movement_id: number | string | null;
+  movement_date: string | null;
+  bottle_in: number | string | null;
+  blister_in: number | string | null;
+  note: string | null;
+  created_at: string | null;
+};
+
 export async function GET(request: NextRequest) {
   const dateFrom = request.nextUrl.searchParams.get("dateFrom")?.trim() ?? "";
   const dateTo = request.nextUrl.searchParams.get("dateTo")?.trim() ?? "";
@@ -43,7 +52,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = getSupabaseAdminClient();
-    const [{ data: rangeRows, error: rangeError }, { data: firstRowData, error: firstRowError }] =
+    const [
+      { data: rangeRows, error: rangeError },
+      { data: firstRowData, error: firstRowError },
+      { data: stockInRows, error: stockInError },
+    ] =
       await Promise.all([
         supabase
           .from("inventory_movement_daily")
@@ -61,10 +74,18 @@ export async function GET(request: NextRequest) {
           .order("movement_date", { ascending: true })
           .limit(1)
           .maybeSingle(),
+        supabase
+          .from("inventory_stock_movements")
+          .select("inventory_stock_movement_id, movement_date, bottle_in, blister_in, note, created_at")
+          .gte("movement_date", dateFrom)
+          .lte("movement_date", dateTo)
+          .order("movement_date", { ascending: false })
+          .order("inventory_stock_movement_id", { ascending: false }),
       ]);
 
     const isMissingMainTable =
       rangeError?.code === SUPABASE_UNDEFINED_TABLE_CODE || firstRowError?.code === SUPABASE_UNDEFINED_TABLE_CODE;
+    const isMissingStockInTable = stockInError?.code === SUPABASE_UNDEFINED_TABLE_CODE;
 
     if (isMissingMainTable) {
       return NextResponse.json(
@@ -106,6 +127,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (stockInError && !isMissingStockInTable) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Failed to load stock-in records.",
+          error: {
+            code: stockInError.code,
+            details: stockInError.details,
+            message: stockInError.message,
+          },
+        },
+        { status: 500 },
+      );
+    }
+
     const rows = ((rangeRows ?? []) as InventoryMovementSourceRow[]).map((row) => {
       const date = row.movement_date?.trim() ?? "";
 
@@ -138,14 +174,13 @@ export async function GET(request: NextRequest) {
       },
     );
 
-    const stockIns = ((rangeRows ?? []) as InventoryMovementSourceRow[])
-      .filter((row) => normalizeWholeNumber(row.bottle_in) > 0 || normalizeWholeNumber(row.blister_in) > 0)
+    const stockIns = (isMissingStockInTable ? [] : ((stockInRows ?? []) as InventoryStockInSourceRow[]))
       .map((row) => ({
-        id: row.movement_date?.trim() ?? "",
+        id: String(row.inventory_stock_movement_id ?? row.movement_date ?? ""),
         movement_date: row.movement_date?.trim() ?? "",
         bottle_in: normalizeWholeNumber(row.bottle_in),
         blister_in: normalizeWholeNumber(row.blister_in),
-        note: "",
+        note: row.note?.trim() ?? "",
         created_at: row.created_at ?? "",
       }));
 
@@ -155,6 +190,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      message: isMissingStockInTable
+        ? "inventory_stock_movements table not found. Stock-in history is disabled until you create it."
+        : undefined,
+      stockInSetupRequired: isMissingStockInTable,
       rows,
       stockIns,
       totals,

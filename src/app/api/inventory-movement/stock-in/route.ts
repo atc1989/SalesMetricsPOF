@@ -7,15 +7,6 @@ export const dynamic = "force-dynamic";
 const SUPABASE_UNDEFINED_TABLE_CODE = "42P01";
 
 type JsonObject = Record<string, unknown>;
-type InventoryMovementRow = {
-  movement_date: string | null;
-  bottle_in: number | string | null;
-  blister_in: number | string | null;
-  bottle_opening: number | string | null;
-  bottle_closing: number | string | null;
-  blister_opening: number | string | null;
-  blister_closing: number | string | null;
-};
 
 function readString(body: JsonObject, key: string) {
   const value = body[key];
@@ -53,24 +44,25 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = getSupabaseAdminClient();
-    const { data: targetRow, error: targetError } = await supabase
-      .from("inventory_movement_daily")
-      .select(
-        "movement_date, bottle_in, blister_in, bottle_opening, bottle_closing, blister_opening, blister_closing",
-      )
-      .eq("movement_date", movementDate)
-      .maybeSingle();
+    const { error: insertError } = await supabase
+      .from("inventory_stock_movements")
+      .insert({
+        movement_date: movementDate,
+        bottle_in: bottleIn,
+        blister_in: blisterIn,
+        note,
+      });
 
-    if (targetError) {
-      if (targetError.code === SUPABASE_UNDEFINED_TABLE_CODE) {
+    if (insertError) {
+      if (insertError.code === SUPABASE_UNDEFINED_TABLE_CODE) {
         return NextResponse.json(
           {
             success: false,
-            message: "inventory_movement_daily table not found. Please create and populate it first.",
+            message: "inventory_stock_movements table not found. Please create it first.",
             error: {
-              code: targetError.code,
-              details: targetError.details,
-              message: targetError.message,
+              code: insertError.code,
+              details: insertError.details,
+              message: insertError.message,
             },
           },
           { status: 400 },
@@ -80,117 +72,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Failed to load inventory movement row.",
+          message: "Failed to save stock-in record.",
           error: {
-            code: targetError.code,
-            details: targetError.details,
-            message: targetError.message,
+            code: insertError.code,
+            details: insertError.details,
+            message: insertError.message,
           },
         },
         { status: 500 },
       );
     }
 
-    if (!targetRow) {
-      return NextResponse.json(
-        { success: false, message: "No inventory movement row found for the selected date." },
-        { status: 404 },
-      );
-    }
+    const { error: rebuildError } = await supabase.rpc("rebuild_inventory_movement_daily");
 
-    const typedTargetRow = targetRow as InventoryMovementRow;
-    const nextBottleIn = normalizeWholeNumber(typedTargetRow.bottle_in) + bottleIn;
-    const nextBlisterIn = normalizeWholeNumber(typedTargetRow.blister_in) + blisterIn;
-    const nextBottleClosing = normalizeWholeNumber(typedTargetRow.bottle_closing) + bottleIn;
-    const nextBlisterClosing = normalizeWholeNumber(typedTargetRow.blister_closing) + blisterIn;
-
-    const { error: updateTargetError } = await supabase
-      .from("inventory_movement_daily")
-      .update({
-        bottle_in: nextBottleIn,
-        blister_in: nextBlisterIn,
-        bottle_closing: nextBottleClosing,
-        blister_closing: nextBlisterClosing,
-      })
-      .eq("movement_date", movementDate);
-
-    if (updateTargetError) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Failed to update selected inventory movement row.",
-          error: {
-            code: updateTargetError.code,
-            details: updateTargetError.details,
-            message: updateTargetError.message,
-          },
-        },
-        { status: 500 },
-      );
-    }
-
-    const { data: laterRows, error: laterRowsError } = await supabase
-      .from("inventory_movement_daily")
-      .select(
-        "movement_date, bottle_opening, bottle_closing, blister_opening, blister_closing",
-      )
-      .gt("movement_date", movementDate)
-      .order("movement_date", { ascending: true });
-
-    if (laterRowsError) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Failed to load subsequent inventory movement rows.",
-          error: {
-            code: laterRowsError.code,
-            details: laterRowsError.details,
-            message: laterRowsError.message,
-          },
-        },
-        { status: 500 },
-      );
-    }
-
-    for (const row of (laterRows ?? []) as InventoryMovementRow[]) {
-      const rowDate = row.movement_date?.trim();
-      if (!rowDate) {
-        continue;
-      }
-
-      const { error: updateLaterError } = await supabase
-        .from("inventory_movement_daily")
-        .update({
-          bottle_opening: normalizeWholeNumber(row.bottle_opening) + bottleIn,
-          bottle_closing: normalizeWholeNumber(row.bottle_closing) + bottleIn,
-          blister_opening: normalizeWholeNumber(row.blister_opening) + blisterIn,
-          blister_closing: normalizeWholeNumber(row.blister_closing) + blisterIn,
-        })
-        .eq("movement_date", rowDate);
-
-      if (updateLaterError) {
+    if (rebuildError) {
+      if (rebuildError.code === "42883") {
         return NextResponse.json(
           {
             success: false,
-            message: "Failed to cascade stock-in to later inventory movement rows.",
+            message:
+              "rebuild_inventory_movement_daily() function not found. Please create it first in Supabase SQL Editor.",
             error: {
-              code: updateLaterError.code,
-              details: updateLaterError.details,
-              message: updateLaterError.message,
+              code: rebuildError.code,
+              details: rebuildError.details,
+              message: rebuildError.message,
             },
           },
-          { status: 500 },
+          { status: 400 },
         );
       }
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Stock-in was saved, but rebuild_inventory_movement_daily() failed.",
+          error: {
+            code: rebuildError.code,
+            details: rebuildError.details,
+            message: rebuildError.message,
+          },
+        },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({
       success: true,
       row: {
-        id: movementDate,
+        id: `${movementDate}-${Date.now()}`,
         movement_date: movementDate,
-        bottle_in: nextBottleIn,
-        blister_in: nextBlisterIn,
+        bottle_in: bottleIn,
+        blister_in: blisterIn,
         note,
         created_at: "",
       },
