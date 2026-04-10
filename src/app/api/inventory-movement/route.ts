@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import {
-  buildInventoryMovementRows,
   INITIAL_BLISTER_STOCK,
   INITIAL_BOTTLE_STOCK,
   normalizeWholeNumber,
@@ -11,20 +10,16 @@ export const dynamic = "force-dynamic";
 
 const SUPABASE_UNDEFINED_TABLE_CODE = "42P01";
 
-type DailySalesMovementSourceRow = {
-  trans_date: string | null;
-  bottle_count: number | string | null;
-  blister_count: number | string | null;
-  released_count: number | string | null;
-  released_blpk_count: number | string | null;
-};
-
-type InventoryStockInSourceRow = {
-  inventory_stock_movement_id: number | string | null;
+type InventoryMovementSourceRow = {
   movement_date: string | null;
+  bottle_opening: number | string | null;
   bottle_in: number | string | null;
+  bottle_out: number | string | null;
+  bottle_closing: number | string | null;
+  blister_opening: number | string | null;
   blister_in: number | string | null;
-  note: string | null;
+  blister_out: number | string | null;
+  blister_closing: number | string | null;
   created_at: string | null;
 };
 
@@ -48,109 +43,83 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = getSupabaseAdminClient();
-
-    const [{ data: dailySalesRows, error: dailySalesError }, { data: stockInRows, error: stockInError }] =
+    const [{ data: rangeRows, error: rangeError }, { data: firstRowData, error: firstRowError }] =
       await Promise.all([
         supabase
-          .from("daily_sales")
-          .select("trans_date, bottle_count, blister_count, released_count, released_blpk_count")
-          .lte("trans_date", dateTo),
-        supabase
-          .from("inventory_stock_movements")
-          .select("inventory_stock_movement_id, movement_date, bottle_in, blister_in, note, created_at")
+          .from("inventory_movement_daily")
+          .select(
+            "movement_date, bottle_opening, bottle_in, bottle_out, bottle_closing, blister_opening, blister_in, blister_out, blister_closing, created_at",
+          )
+          .gte("movement_date", dateFrom)
           .lte("movement_date", dateTo)
-          .order("movement_date", { ascending: false })
-          .order("inventory_stock_movement_id", { ascending: false }),
+          .order("movement_date", { ascending: true }),
+        supabase
+          .from("inventory_movement_daily")
+          .select(
+            "movement_date, bottle_opening, bottle_in, bottle_out, bottle_closing, blister_opening, blister_in, blister_out, blister_closing, created_at",
+          )
+          .order("movement_date", { ascending: true })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
-    if (dailySalesError) {
+    const isMissingMainTable =
+      rangeError?.code === SUPABASE_UNDEFINED_TABLE_CODE || firstRowError?.code === SUPABASE_UNDEFINED_TABLE_CODE;
+
+    if (isMissingMainTable) {
       return NextResponse.json(
         {
           success: false,
-          message: "Failed to load released inventory totals.",
+          message: "inventory_movement_daily table not found. Please create and populate it first.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (rangeError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Failed to load inventory movement rows.",
           error: {
-            code: dailySalesError.code,
-            details: dailySalesError.details,
-            message: dailySalesError.message,
+            code: rangeError.code,
+            details: rangeError.details,
+            message: rangeError.message,
           },
         },
         { status: 500 },
       );
     }
 
-    const isMissingStockInTable = stockInError?.code === SUPABASE_UNDEFINED_TABLE_CODE;
-
-    if (stockInError && !isMissingStockInTable) {
+    if (firstRowError) {
       return NextResponse.json(
         {
           success: false,
-          message: "Failed to load stock-in records.",
+          message: "Failed to load initial inventory movement row.",
           error: {
-            code: stockInError.code,
-            details: stockInError.details,
-            message: stockInError.message,
+            code: firstRowError.code,
+            details: firstRowError.details,
+            message: firstRowError.message,
           },
         },
         { status: 500 },
       );
     }
 
-    const releasedByDate = new Map<string, { bottleOut: number; blisterOut: number }>();
-
-    for (const row of (dailySalesRows ?? []) as DailySalesMovementSourceRow[]) {
-      const date = row.trans_date?.trim();
-
-      if (!date) {
-        continue;
-      }
-
-      const current = releasedByDate.get(date) ?? { bottleOut: 0, blisterOut: 0 };
-      const fallbackBottleOut = row.bottle_count == null ? 0 : normalizeWholeNumber(row.bottle_count);
-      const fallbackBlisterOut = row.blister_count == null ? 0 : normalizeWholeNumber(row.blister_count);
-      const bottleOut =
-        row.released_count == null ? fallbackBottleOut : normalizeWholeNumber(row.released_count);
-      const blisterOut =
-        row.released_blpk_count == null
-          ? fallbackBlisterOut
-          : normalizeWholeNumber(row.released_blpk_count);
-
-      current.bottleOut += bottleOut;
-      current.blisterOut += blisterOut;
-      releasedByDate.set(date, current);
-    }
-
-    const normalizedStockInRows = isMissingStockInTable
-      ? []
-      : ((stockInRows ?? []) as InventoryStockInSourceRow[]);
-
-    const stockInByDate = new Map<string, { bottleIn: number; blisterIn: number }>();
-    const stockInRecords = normalizedStockInRows.map((row) => {
+    const rows = ((rangeRows ?? []) as InventoryMovementSourceRow[]).map((row) => {
       const date = row.movement_date?.trim() ?? "";
-      const bottleIn = normalizeWholeNumber(row.bottle_in);
-      const blisterIn = normalizeWholeNumber(row.blister_in);
-      const current = stockInByDate.get(date) ?? { bottleIn: 0, blisterIn: 0 };
-
-      if (date) {
-        current.bottleIn += bottleIn;
-        current.blisterIn += blisterIn;
-        stockInByDate.set(date, current);
-      }
 
       return {
-        id: normalizeWholeNumber(row.inventory_stock_movement_id),
-        movement_date: date,
-        bottle_in: bottleIn,
-        blister_in: blisterIn,
-        note: row.note?.trim() ?? "",
-        created_at: row.created_at ?? "",
+        date,
+        bottleOpening: normalizeWholeNumber(row.bottle_opening),
+        bottleIn: normalizeWholeNumber(row.bottle_in),
+        bottleOut: normalizeWholeNumber(row.bottle_out),
+        bottleClosing: normalizeWholeNumber(row.bottle_closing),
+        blisterOpening: normalizeWholeNumber(row.blister_opening),
+        blisterIn: normalizeWholeNumber(row.blister_in),
+        blisterOut: normalizeWholeNumber(row.blister_out),
+        blisterClosing: normalizeWholeNumber(row.blister_closing),
       };
-    });
-
-    const rows = buildInventoryMovementRows({
-      dateFrom,
-      dateTo,
-      releasedByDate,
-      stockInByDate,
     });
 
     const totals = rows.reduce(
@@ -169,24 +138,29 @@ export async function GET(request: NextRequest) {
       },
     );
 
-    const filteredStockIns = stockInRecords.filter(
-      (row) => row.movement_date >= dateFrom && row.movement_date <= dateTo,
-    );
+    const stockIns = ((rangeRows ?? []) as InventoryMovementSourceRow[])
+      .filter((row) => normalizeWholeNumber(row.bottle_in) > 0 || normalizeWholeNumber(row.blister_in) > 0)
+      .map((row) => ({
+        id: row.movement_date?.trim() ?? "",
+        movement_date: row.movement_date?.trim() ?? "",
+        bottle_in: normalizeWholeNumber(row.bottle_in),
+        blister_in: normalizeWholeNumber(row.blister_in),
+        note: "",
+        created_at: row.created_at ?? "",
+      }));
+
+    const initialRow = firstRowData as InventoryMovementSourceRow | null;
     const firstRow = rows[0] ?? null;
     const lastRow = rows[rows.length - 1] ?? null;
 
     return NextResponse.json({
       success: true,
-      message: isMissingStockInTable
-        ? "Stock-in table not found yet. Run the SQL setup to enable stock-in entries."
-        : undefined,
-      stockInSetupRequired: isMissingStockInTable,
       rows,
-      stockIns: filteredStockIns,
+      stockIns,
       totals,
       summary: {
-        initialBottleStock: INITIAL_BOTTLE_STOCK,
-        initialBlisterStock: INITIAL_BLISTER_STOCK,
+        initialBottleStock: initialRow ? normalizeWholeNumber(initialRow.bottle_opening) : INITIAL_BOTTLE_STOCK,
+        initialBlisterStock: initialRow ? normalizeWholeNumber(initialRow.blister_opening) : INITIAL_BLISTER_STOCK,
         rangeOpeningBottleStock: firstRow?.bottleOpening ?? INITIAL_BOTTLE_STOCK,
         rangeOpeningBlisterStock: firstRow?.blisterOpening ?? INITIAL_BLISTER_STOCK,
         rangeClosingBottleStock: lastRow?.bottleClosing ?? INITIAL_BOTTLE_STOCK,
