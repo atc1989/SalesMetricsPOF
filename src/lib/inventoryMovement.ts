@@ -1,5 +1,5 @@
-export const INITIAL_BOTTLE_STOCK = 23057;
-export const INITIAL_BLISTER_STOCK = 16212;
+export const INITIAL_BOTTLE_STOCK = 24139;
+export const INITIAL_BLISTER_STOCK = 20051;
 
 export type InventoryMovementDayRow = {
   date: string;
