@@ -407,7 +407,7 @@ export default function InventoryMovementPage() {
             Daily Movement Table ({formatDateLabel(dateFrom)} to {formatDateLabel(dateTo)})
           </h2>
         </div>
-        <div className="overflow-x-auto">
+        <div className="max-h-[70vh] overflow-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-600">
               <tr>
@@ -459,7 +459,7 @@ export default function InventoryMovementPage() {
         <div className="border-b border-slate-200 px-4 py-3">
           <h2 className="text-base font-semibold text-slate-900">Stock-In Entries In Selected Range</h2>
         </div>
-        <div className="overflow-x-auto">
+        <div className="max-h-80 overflow-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-600">
               <tr>
