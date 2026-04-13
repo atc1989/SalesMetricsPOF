@@ -60,6 +60,8 @@ type DailyInventoryApiRow = {
   to_follow_blpk_count: number;
   sales: number;
   mode_of_payment: string;
+  mode_of_payment_two: string;
+  mode_of_payment_three: string;
   bag_type: string;
   bag_quantity: number;
   marketing_tool: string;
@@ -81,6 +83,15 @@ const escapeHtml = (value: string) =>
     .replaceAll("'", '&#39;');
 
 const formatAmount = (value: number) => `PHP ${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+
+const formatModeOfPayment = (...values: Array<string | null | undefined>) => {
+  const uniqueModes = values
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value && value.length > 0 && value.toUpperCase() !== 'N/A'))
+    .filter((value, index, list) => list.indexOf(value) === index);
+
+  return uniqueModes.join(' / ') || 'N/A';
+};
 
 const comparePofNumbers = (left: string, right: string) => {
   const normalize = (value: string) => {
@@ -397,7 +408,11 @@ const mapApiRowToReportRow = (
     toFollowBottle: row.to_follow_count ?? 0,
     toFollowBlister: row.to_follow_blpk_count ?? 0,
     amount: row.sales > 0 ? row.sales : totalQuantity * amountMultiplier,
-    modeOfPayment: row.mode_of_payment || 'N/A',
+    modeOfPayment: formatModeOfPayment(
+      row.mode_of_payment,
+      row.mode_of_payment_two,
+      row.mode_of_payment_three,
+    ),
   };
 };
 
