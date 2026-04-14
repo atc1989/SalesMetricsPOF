@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from("user_account")
       .select(
-        "user_account_id,user_name,full_name,sponsor,placement,group,account_type,zero_one,code_payment,is_leader,is_new_member,city,province,region,country,date_created,date_updated",
+        "user_account_id,user_name,full_name,sponsor,placement,group,account_type,zero_one,code_payment,is_leader,is_new_member,brgy,city,province,region,country,date_created,date_updated",
       )
       .order("date_updated", { ascending: false })
       .limit(limit);

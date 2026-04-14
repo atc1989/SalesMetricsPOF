@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
@@ -41,6 +41,7 @@ type UserAccountApiRow = {
   account_type: string | null;
   zero_one: string | null;
   code_payment: string | null;
+  brgy: string | null;
   city: string | null;
   province: string | null;
   region: string | null;
@@ -55,134 +56,6 @@ type ModalNotice = {
 
 const defaultZeroOneOptions = ['HeadEagle01', 'HERA01', 'Romar01', 'Ironman'];
 const defaultCodePaymentOptions: Array<'PD' | 'FS'> = ['PD', 'FS'];
-
-const initialUsersRows: UsersNoZeroOneRow[] = [
-  {
-    id: 'usr-001',
-    username: 'Amazinggrace01',
-    fullName: 'Ozarraga, Jevelyn',
-    zeroOne: 'HeadEagle01',
-    codePayment: 'FS',
-  },
-  {
-    id: 'usr-002',
-    username: 'airyne24',
-    fullName: 'Airyne Dytes Obalag',
-    zeroOne: 'HeadEagle01',
-    codePayment: 'PD',
-  },
-  {
-    id: 'usr-003',
-    username: 'jane.cruz',
-    fullName: 'Jane Cruz',
-    zeroOne: 'HERA01',
-    codePayment: 'FS',
-  },
-  {
-    id: 'usr-004',
-    username: 'mark.v',
-    fullName: 'Mark Villanueva',
-    zeroOne: 'Romar01',
-    codePayment: 'PD',
-  },
-];
-
-const initialUserAccountRows: UserAccountRow[] = [
-  {
-    id: 'uac-001',
-    fullName: 'Ozarraga, Jevelyn',
-    username: 'Amazinggrace01',
-    sponsor: 'HeadEagle01',
-    placement: 'Left',
-    group: 'A',
-    accountType: 'Distributor',
-    zeroOne: 'HeadEagle01',
-    codePayment: 'FS',
-    barangay: 'Poblacion',
-    city: 'Davao City',
-    province: 'Davao del Sur',
-    region: 'Region XI',
-    country: 'Philippines',
-    dateCreated: '2025-04-01',
-  },
-  {
-    id: 'uac-002',
-    fullName: 'Airyne Dytes Obalag',
-    username: 'airyne24',
-    sponsor: 'HeadEagle01',
-    placement: 'Right',
-    group: 'A',
-    accountType: 'Distributor',
-    zeroOne: 'HeadEagle01',
-    codePayment: 'PD',
-    barangay: 'Talomo',
-    city: 'Davao City',
-    province: 'Davao del Sur',
-    region: 'Region XI',
-    country: 'Philippines',
-    dateCreated: '2025-04-03',
-  },
-  {
-    id: 'uac-003',
-    fullName: 'Jane Cruz',
-    username: 'jane.cruz',
-    sponsor: 'HERA01',
-    placement: 'Left',
-    group: 'B',
-    accountType: 'Stockist',
-    zeroOne: 'HERA01',
-    codePayment: 'FS',
-    barangay: 'Catalunan',
-    city: 'Davao City',
-    province: 'Davao del Sur',
-    region: 'Region XI',
-    country: 'Philippines',
-    dateCreated: '2025-04-04',
-  },
-  {
-    id: 'uac-004',
-    fullName: 'Mark Villanueva',
-    username: 'mark.v',
-    sponsor: 'Romar01',
-    placement: 'Right',
-    group: 'C',
-    accountType: 'Center',
-    zeroOne: 'Romar01',
-    codePayment: 'PD',
-    barangay: 'Buhangin',
-    city: 'Davao City',
-    province: 'Davao del Sur',
-    region: 'Region XI',
-    country: 'Philippines',
-    dateCreated: '2025-04-05',
-  },
-];
-
-const uplinesByUsername: Record<string, Array<{ user_name: string }>> = {
-  Amazinggrace01: [{ user_name: 'KRAKEN01' }, { user_name: 'marband' }, { user_name: 'Ironman' }],
-  airyne24: [{ user_name: 'HeadEagle01' }, { user_name: 'Romar01' }],
-  'jane.cruz': [{ user_name: 'HERA01' }, { user_name: 'KRAKEN01' }],
-  'mark.v': [{ user_name: 'Romar01' }, { user_name: 'marband' }],
-};
-
-const userCodesByUsername: Record<string, { code_payment: string }> = {
-  Amazinggrace01: { code_payment: 'FREE' },
-  airyne24: { code_payment: 'PAID' },
-  'jane.cruz': { code_payment: 'FREE' },
-  'mark.v': { code_payment: 'PAID' },
-};
-
-const mapUplineUsername = (value: string) => {
-  if (value === 'KRAKEN01') {
-    return 'HERA01';
-  }
-
-  if (value === 'marband') {
-    return 'joyann';
-  }
-
-  return value;
-};
 
 const matchesSearch = (values: Array<string | number>, search: string) =>
   values.join(' ').toLowerCase().includes(search);
@@ -200,7 +73,7 @@ const mapApiRowToUserAccount = (row: UserAccountApiRow): UserAccountRow => ({
   accountType: row.account_type ?? '',
   zeroOne: row.zero_one ?? '',
   codePayment: normalizeCodePayment(row.code_payment),
-  barangay: '',
+  barangay: row.brgy ?? '',
   city: row.city ?? '',
   province: row.province ?? '',
   region: row.region ?? '',
@@ -221,13 +94,14 @@ export function UsersTab() {
   const [usersRows, setUsersRows] = useState<UsersNoZeroOneRow[]>([]);
   const [rows, setRows] = useState<UserAccountRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncingUsers, setIsSyncingUsers] = useState(false);
+  const [isSyncingCodes, setIsSyncingCodes] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [searchText, setSearchText] = useState('');
 
-  const [fullName, setFullName] = useState('Ozarraga, Jevelyn');
-  const [selectedUserName, setSelectedUserName] = useState('Amazinggrace01');
+  const [fullName, setFullName] = useState('');
+  const [selectedUserName, setSelectedUserName] = useState('');
   const [zeroOneOptions, setZeroOneOptions] = useState<string[]>(defaultZeroOneOptions);
-  const [zeroOne, setZeroOne] = useState('HeadEagle01');
+  const [zeroOne, setZeroOne] = useState('');
   const [codePayment, setCodePayment] = useState<'PD' | 'FS'>('PD');
 
   const [usersSearchQuery, setUsersSearchQuery] = useState('');
@@ -236,11 +110,12 @@ export function UsersTab() {
 
   const filteredUsersRows = useMemo(() => {
     const search = usersSearchQuery.trim().toLowerCase();
+    const usersWithoutZeroOne = usersRows.filter((row) => row.zeroOne.trim().length === 0);
     if (!search) {
-      return usersRows;
+      return usersWithoutZeroOne;
     }
 
-    return usersRows.filter((row) =>
+    return usersWithoutZeroOne.filter((row) =>
       matchesSearch([row.username, row.fullName, row.zeroOne, row.codePayment], search)
     );
   }, [usersRows, usersSearchQuery]);
@@ -274,20 +149,11 @@ export function UsersTab() {
     );
   }, [rows, userAccountSearchQuery]);
 
-  const setFallbackRows = () => {
-    setRows(initialUserAccountRows);
-    setUsersRows(initialUsersRows);
-  };
-
-  const loadUserAccounts = useCallback(async (query = '') => {
-    const resolvedQuery = query.trim() || searchText.trim();
+  const loadUserAccounts = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage('');
     try {
       const params = new URLSearchParams({ limit: '200' });
-      if (resolvedQuery) {
-        params.set('q', resolvedQuery);
-      }
 
       const response = await fetch(`/api/user-account?${params.toString()}`);
       const payload = (await response.json()) as {
@@ -316,39 +182,36 @@ export function UsersTab() {
         setZeroOneOptions(mappedZeroOnes);
       }
     } catch {
-      setFallbackRows();
-      setErrorMessage('Backend error... showing fallback');
+      setRows([]);
+      setUsersRows([]);
+      setErrorMessage('Failed to load user accounts.');
     } finally {
       setIsLoading(false);
     }
-  }, [searchText]);
+  }, []);
 
-  const getUserCodes = (username: string) => {
-    const code = userCodesByUsername[username]?.code_payment;
-    if (code === 'PAID') {
-      setCodePayment('PD');
-    } else {
-      setCodePayment('FS');
-    }
-  };
+  const buildZeroOneOptions = useCallback(
+    (preferredValue = '') => {
+      const existingValues = Array.from(
+        new Set(rows.map((row) => row.zeroOne.trim()).filter((value) => value.length > 0))
+      );
 
-  const getUnilevelUplines = (username: string) => {
-    const uplines = uplinesByUsername[username] ?? [];
-    const mappedOptions = uplines.map((entry) => mapUplineUsername(entry.user_name));
-    const nextOptions = mappedOptions.length > 0 ? Array.from(new Set(mappedOptions)) : defaultZeroOneOptions;
+      if (preferredValue.trim().length > 0 && !existingValues.includes(preferredValue.trim())) {
+        return [preferredValue.trim(), ...existingValues];
+      }
 
-    setZeroOneOptions(nextOptions);
-    setZeroOne(nextOptions[0] ?? 'HeadEagle01');
-    getUserCodes(username);
-  };
+      return existingValues.length > 0 ? existingValues : defaultZeroOneOptions;
+    },
+    [rows]
+  );
 
-  const resetUsersForm = () => {
-    setFullName('Ozarraga, Jevelyn');
-    setSelectedUserName('Amazinggrace01');
-    setZeroOneOptions(defaultZeroOneOptions);
-    setZeroOne('HeadEagle01');
+  const resetUsersForm = useCallback(() => {
+    setFullName('');
+    setSelectedUserName('');
+    setZeroOneOptions(buildZeroOneOptions());
+    setZeroOne('');
     setCodePayment('PD');
-  };
+  }, [buildZeroOneOptions]);
 
   const modifyUserZeroOne = async (username: string, name: string, nextZeroOne: string, nextCodePayment: 'PD' | 'FS') => {
     try {
@@ -397,18 +260,54 @@ export function UsersTab() {
     });
   };
 
-  const syncUserAccounts = () => {
-    setNotice({
-      title: 'Info',
-      message: 'Not implemented yet.',
-    });
+  const syncUserAccounts = async () => {
+    setIsSyncingUsers(true);
+    try {
+      await loadUserAccounts();
+      resetUsersForm();
+      setNotice({
+        title: 'Success',
+        message: 'Users synced from the database.',
+      });
+    } catch {
+      setNotice({
+        title: 'Error',
+        message: 'Failed to sync users.',
+      });
+    } finally {
+      setIsSyncingUsers(false);
+    }
   };
 
-  const syncCodes = () => {
-    setNotice({
-      title: 'Info',
-      message: 'Not implemented yet.',
-    });
+  const syncCodes = async () => {
+    setIsSyncingCodes(true);
+    try {
+      const response = await fetch('/api/user-account/sync-codes', {
+        method: 'POST',
+      });
+      const payload = (await response.json()) as {
+        success: boolean;
+        message?: string;
+        syncedRows?: number;
+      };
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message ?? 'Failed to sync codes.');
+      }
+
+      await loadUserAccounts();
+      setNotice({
+        title: 'Success',
+        message: `Codes synced successfully. Updated ${payload.syncedRows ?? 0} users.`,
+      });
+    } catch (error) {
+      setNotice({
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Failed to sync codes.',
+      });
+    } finally {
+      setIsSyncingCodes(false);
+    }
   };
 
   const onUsersFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -433,17 +332,9 @@ export function UsersTab() {
   const onEditRow = (row: UsersNoZeroOneRow) => {
     setSelectedUserName(row.username);
     setFullName(row.fullName);
-    getUnilevelUplines(row.username);
-  };
-
-  const onSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>, value: string) => {
-    if (event.key !== 'Enter') {
-      return;
-    }
-
-    event.preventDefault();
-    setSearchText(value);
-    void loadUserAccounts(value);
+    setZeroOneOptions(buildZeroOneOptions(row.zeroOne));
+    setZeroOne(row.zeroOne);
+    setCodePayment(row.codePayment);
   };
 
   useEffect(() => {
@@ -498,7 +389,7 @@ export function UsersTab() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'user_accounts.xlsx';
+    link.download = 'user_accounts.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -532,6 +423,7 @@ export function UsersTab() {
                 onChange={(event) => setZeroOne(event.target.value)}
                 className="mt-1 h-10 rounded border border-slate-300 px-3 text-sm"
               >
+                <option value="">Select zero one</option>
                 {zeroOneOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -562,11 +454,21 @@ export function UsersTab() {
               </Button>
             </div>
             <div className="flex items-end gap-2">
-              <Button type="button" variant="secondary" onClick={syncUserAccounts}>
-                Sync Users
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => void syncUserAccounts()}
+                disabled={isLoading || isSyncingUsers || isSyncingCodes}
+              >
+                {isSyncingUsers ? 'Syncing...' : 'Sync Users'}
               </Button>
-              <Button type="button" variant="secondary" onClick={syncCodes}>
-                Sync Codes
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => void syncCodes()}
+                disabled={isLoading || isSyncingUsers || isSyncingCodes}
+              >
+                {isSyncingCodes ? 'Syncing...' : 'Sync Codes'}
               </Button>
             </div>
           </form>
@@ -580,7 +482,6 @@ export function UsersTab() {
               type="text"
               value={usersSearchQuery}
               onChange={(event) => setUsersSearchQuery(event.target.value)}
-              onKeyDown={(event) => onSearchKeyDown(event, usersSearchQuery)}
               placeholder="Search table..."
               className="h-9 w-full max-w-xs rounded border border-slate-300 px-3 text-sm"
             />
@@ -632,12 +533,11 @@ export function UsersTab() {
                 type="text"
                 value={userAccountSearchQuery}
                 onChange={(event) => setUserAccountSearchQuery(event.target.value)}
-                onKeyDown={(event) => onSearchKeyDown(event, userAccountSearchQuery)}
                 placeholder="Search table..."
                 className="h-9 flex-1 rounded border border-slate-300 px-3 text-sm"
               />
               <Button id="exportUserAccount" type="button" size="sm" onClick={exportUserAccount}>
-                Excel
+                CSV
               </Button>
             </div>
           </div>
