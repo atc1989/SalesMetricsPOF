@@ -58,6 +58,11 @@ const escapeHtml = (value: string) =>
 const formatPeso = (value: number) =>
   `PHP ${value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
 
+function hasPaymentMode(value: string) {
+  const normalized = value.trim().toUpperCase();
+  return normalized.length > 0 && normalized !== "N/A";
+}
+
 function getPackageBottleLabel(packageType: string) {
   switch (packageType.toUpperCase()) {
     case "SILVER":
@@ -83,20 +88,22 @@ function renderPaymentRows(rows: DailySalesPrintDetail[]) {
   const paymentMap = new Map<string, { mode: string; reference: string; amount: number }>();
 
   for (const row of rows) {
+    const salesTwo = hasPaymentMode(row.mode_of_payment_two) ? row.sales_two : 0;
+    const salesThree = hasPaymentMode(row.mode_of_payment_three) ? row.sales_three : 0;
     const entries = [
       {
         mode: row.mode_of_payment,
-        amount: row.sales - row.sales_two - row.sales_three,
+        amount: Math.max(row.sales - salesTwo - salesThree, 0),
         referenceNumber: row.reference_number,
       },
       {
         mode: row.mode_of_payment_two,
-        amount: row.sales_two,
+        amount: salesTwo,
         referenceNumber: row.reference_number_two,
       },
       {
         mode: row.mode_of_payment_three,
-        amount: row.sales_three,
+        amount: salesThree,
         referenceNumber: row.reference_number_three,
       },
     ];
