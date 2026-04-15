@@ -179,6 +179,10 @@ function getPaymentTypeOptions(mode: EncoderPaymentModeOption): PaymentTypeOptio
   return paymentTypeOptionsByMode[mode] ?? [defaultPaymentTypeOption];
 }
 
+function hasSecondaryPayment(mode: EncoderPaymentModeOption) {
+  return mode !== 'N/A';
+}
+
 function applyMemberPackageRules(
   current: EncoderFormModel,
   memberType: EncoderMemberTypeOption,
@@ -288,9 +292,9 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
   const releasedBlpk = manualOverrides.releasedBlpk ? input.releasedBlpk : blisterCount;
   const normalizedSalesTwo = manualOverrides.salesTwo
     ? input.salesTwo
-    : input.paymentMode === 'EPOINTS'
-      ? sales
-      : Math.min(Math.max(input.salesTwo, 0), sales);
+    : hasSecondaryPayment(input.paymentModeTwo)
+      ? Math.min(Math.max(input.salesTwo, 0), sales)
+      : 0;
 
   return {
     ...input,
@@ -573,9 +577,9 @@ export function EncoderTab() {
       const nextReferenceNo = nextPaymentType === 'N/A' ? 'N/A' : '';
       const nextSalesTwo = manualOverrides.salesTwo
         ? prev.salesTwo
-        : value === 'EPOINTS'
-          ? prev.sales
-          : prev.salesTwo;
+        : hasSecondaryPayment(prev.paymentModeTwo)
+          ? prev.salesTwo
+          : 0;
 
       if (prev.paymentModeTwo !== 'N/A' && prev.paymentModeTwo === value) {
         setPaymentModeTwoError('Secondary payment mode cannot match primary mode.');

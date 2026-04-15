@@ -66,6 +66,11 @@ function normalizeText(value: string | null, fallback: string) {
   return trimmed && trimmed.length > 0 ? trimmed : fallback;
 }
 
+function hasPaymentMode(value: string | null) {
+  const normalized = normalizeText(value, "");
+  return normalized.length > 0 && normalized.toUpperCase() !== "N/A";
+}
+
 function normalizePackageType(value: string | null) {
   const rawValue = normalizeText(value, "UNKNOWN");
   const normalized = normalizeDailySalesPackageType(rawValue);
@@ -278,8 +283,8 @@ export async function GET(request: NextRequest) {
       const blisters =
         row.released_blpk_count == null ? fallbackBlisters : toNumber(row.released_blpk_count);
       const sales = toNumber(row.sales);
-      const salesTwo = toNumber(row.sales_two);
-      const salesThree = toNumber(row.sales_three);
+      const salesTwo = hasPaymentMode(row.mode_of_payment_two) ? toNumber(row.sales_two) : 0;
+      const salesThree = hasPaymentMode(row.mode_of_payment_three) ? toNumber(row.sales_three) : 0;
       const primarySales = Math.max(sales - salesTwo - salesThree, 0);
 
       if (isAncillaryInventoryType(packageType)) {
