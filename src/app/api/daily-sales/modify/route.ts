@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { rebuildInventoryMovementDaily } from "@/lib/rebuildInventoryMovementDaily";
 
 type JsonObject = Record<string, unknown>;
 
@@ -95,5 +96,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ success: true, data });
+  const inventoryMovementRebuildWarning =
+    await rebuildInventoryMovementDaily(supabase);
+
+  return NextResponse.json({
+    success: true,
+    data,
+    inventoryMovementRebuildWarning,
+  });
 }

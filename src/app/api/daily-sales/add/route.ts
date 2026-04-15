@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { rebuildInventoryMovementDaily } from "@/lib/rebuildInventoryMovementDaily";
 
 type JsonObject = Record<string, unknown>;
 type DailySalesInsertRow = {
@@ -182,7 +183,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, data: insertedRow, fallback: "direct-insert-ancillary-columns" });
+    const inventoryMovementRebuildWarning =
+      await rebuildInventoryMovementDaily(supabase);
+
+    return NextResponse.json({
+      success: true,
+      data: insertedRow,
+      fallback: "direct-insert-ancillary-columns",
+      inventoryMovementRebuildWarning,
+    });
   }
 
   const { data, error } = await supabase.rpc("rpc_add_daily_sales", { p: normalizedPayload });
@@ -197,7 +206,15 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (!insertError) {
-        return NextResponse.json({ success: true, data: insertedRow, fallback: "direct-insert" });
+        const inventoryMovementRebuildWarning =
+          await rebuildInventoryMovementDaily(supabase);
+
+        return NextResponse.json({
+          success: true,
+          data: insertedRow,
+          fallback: "direct-insert",
+          inventoryMovementRebuildWarning,
+        });
       }
 
       return NextResponse.json(
@@ -228,5 +245,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ success: true, data });
+  const inventoryMovementRebuildWarning =
+    await rebuildInventoryMovementDaily(supabase);
+
+  return NextResponse.json({
+    success: true,
+    data,
+    inventoryMovementRebuildWarning,
+  });
 }
