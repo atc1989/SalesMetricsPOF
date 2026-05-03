@@ -401,15 +401,6 @@ export function SalesReportTab() {
     [cashPieces]
   );
   const displayedTotalCash = hasCashPieces ? totalCashOnHand : (totalCashFromBackend ?? totalCashOnHand);
-  const displayedPaymentBreakdownRows = useMemo(
-    () =>
-      snapshot.paymentBreakdownRows.map((row) =>
-        row.label === 'Cash on hand'
-          ? { ...row, amount: displayedTotalCash }
-          : row
-      ),
-    [displayedTotalCash, snapshot.paymentBreakdownRows]
-  );
 
   const paymentTypeRows = useMemo(
     () => {
@@ -717,7 +708,7 @@ export function SalesReportTab() {
       dateCaption,
       snapshot: {
         ...snapshot,
-        paymentBreakdownRows: displayedPaymentBreakdownRows,
+        paymentBreakdownRows: snapshot.paymentBreakdownRows,
       },
       cashRows,
       totalCash: displayedTotalCash,
@@ -851,7 +842,7 @@ export function SalesReportTab() {
                   </div>
                 </Card>
 
-                <PaymentTable id="tblPaymentBreakdown" title="PAYMENT BREAKDOWN" rows={displayedPaymentBreakdownRows} />
+                <PaymentTable id="tblPaymentBreakdown" title="PAYMENT BREAKDOWN" rows={snapshot.paymentBreakdownRows} />
               </div>
             </div>
 
