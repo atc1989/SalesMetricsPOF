@@ -88,7 +88,7 @@ export const dailySalesPackageCatalog: Record<
   },
   BLISTER: {
     label: 'Blister (1 blister pack)',
-    originalPrice: 1299,
+    originalPrice: 780,
     bottleCount: 0,
     bundledBlisterCount: 0,
     defaultIsToBlister: '1',
