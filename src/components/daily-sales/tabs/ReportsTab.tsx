@@ -791,8 +791,8 @@ export function ReportsTab() {
           <div className="relative flex flex-col text-xs font-medium text-slate-700">
             <span>Exclude Payment Methods</span>
             <details className="group mt-1">
-              <summary className="cursor-pointer list-none px-2 py-1 text-sm text-slate-700">
-                <span className="block rounded border border-slate-300 bg-white">
+              <summary className="list-none cursor-pointer rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700">
+                <span className="block">
                   {selectedPaymentMethods.length === 0
                     ? 'None excluded'
                     : `${selectedPaymentMethods.length} excluded`}
