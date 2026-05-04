@@ -363,7 +363,7 @@ export function ReportsTab() {
 
       if (
         selectedPaymentMethods.length > 0 &&
-        !row.paymentModes.some((mode) => selectedPaymentMethods.includes(mode))
+        row.paymentModes.some((mode) => selectedPaymentMethods.includes(mode))
       ) {
         return false;
       }
@@ -789,41 +789,44 @@ export function ReportsTab() {
             />
           </label>
           <div className="flex flex-col text-xs font-medium text-slate-700">
-            <div className="flex items-center justify-between">
-              <span>Payment Methods</span>
-              <div className="flex items-center gap-2 text-[11px]">
-                <button
-                  type="button"
-                  className="text-blue-600 hover:underline"
-                  onClick={() => setSelectedPaymentMethods(paymentMethodOptions)}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className="text-slate-600 hover:underline"
-                  onClick={() => setSelectedPaymentMethods([])}
-                >
-                  Clear
-                </button>
+            <span>Exclude Payment Methods</span>
+            <details className="mt-1 rounded border border-slate-300 bg-white">
+              <summary className="cursor-pointer list-none px-2 py-1 text-sm text-slate-700">
+                {selectedPaymentMethods.length === 0
+                  ? 'None excluded'
+                  : `${selectedPaymentMethods.length} excluded`}
+              </summary>
+              <div className="space-y-1 border-t border-slate-200 px-2 py-2">
+                <div className="flex items-center gap-2 text-[11px]">
+                  <button
+                    type="button"
+                    className="text-blue-600 hover:underline"
+                    onClick={() => setSelectedPaymentMethods(paymentMethodOptions)}
+                  >
+                    Exclude All
+                  </button>
+                  <button
+                    type="button"
+                    className="text-slate-600 hover:underline"
+                    onClick={() => setSelectedPaymentMethods([])}
+                  >
+                    Include All
+                  </button>
+                </div>
+                <div className="max-h-24 space-y-1 overflow-y-auto">
+                  {paymentMethodOptions.map((method) => (
+                    <label key={method} className="flex items-center gap-2 text-xs font-normal text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={selectedPaymentMethods.includes(method)}
+                        onChange={() => onTogglePaymentMethod(method)}
+                      />
+                      <span>{method}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="mt-1 max-h-24 space-y-1 overflow-y-auto rounded border border-slate-300 px-2 py-1">
-              {paymentMethodOptions.length === 0 ? (
-                <p className="text-[11px] text-slate-500">No methods yet</p>
-              ) : (
-                paymentMethodOptions.map((method) => (
-                  <label key={method} className="flex items-center gap-2 text-xs font-normal text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={selectedPaymentMethods.includes(method)}
-                      onChange={() => onTogglePaymentMethod(method)}
-                    />
-                    <span>{method}</span>
-                  </label>
-                ))
-              )}
-            </div>
+            </details>
           </div>
         </div>
       </Card>
