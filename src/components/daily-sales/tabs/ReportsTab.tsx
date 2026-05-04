@@ -374,6 +374,9 @@ export function ReportsTab() {
 
   const paymentMethodOptions = useMemo(() => {
     const options = new Set<string>();
+    for (const mode of validPaymentModes) {
+      options.add(mode);
+    }
     for (const row of rows) {
       for (const mode of row.paymentModes) {
         if (mode) {
