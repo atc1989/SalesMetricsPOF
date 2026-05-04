@@ -788,15 +788,17 @@ export function ReportsTab() {
               className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
             />
           </label>
-          <div className="flex flex-col text-xs font-medium text-slate-700">
+          <div className="relative flex flex-col text-xs font-medium text-slate-700">
             <span>Exclude Payment Methods</span>
-            <details className="mt-1 rounded border border-slate-300 bg-white">
+            <details className="group mt-1">
               <summary className="cursor-pointer list-none px-2 py-1 text-sm text-slate-700">
-                {selectedPaymentMethods.length === 0
-                  ? 'None excluded'
-                  : `${selectedPaymentMethods.length} excluded`}
+                <span className="block rounded border border-slate-300 bg-white">
+                  {selectedPaymentMethods.length === 0
+                    ? 'None excluded'
+                    : `${selectedPaymentMethods.length} excluded`}
+                </span>
               </summary>
-              <div className="space-y-1 border-t border-slate-200 px-2 py-2">
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 space-y-1 rounded border border-slate-300 bg-white px-2 py-2 shadow-lg">
                 <div className="flex items-center gap-2 text-[11px]">
                   <button
                     type="button"
