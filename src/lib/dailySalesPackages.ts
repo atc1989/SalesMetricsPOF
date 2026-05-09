@@ -302,20 +302,22 @@ export function normalizeDailySalesPackageType(
   value: string,
 ): EncoderPackageTypeOption | null {
   const normalized = value.trim().toUpperCase();
+  const hasOldPackageMarker =
+    /(^|[\s_-])OLD([\s_-]|$)/.test(normalized) || /^OLD(SILVER|GOLD|PLATINUM)/.test(normalized);
 
   if (normalized.includes('PLATINUM') && normalized.includes('RETAIL') && normalized.includes('BLISTER')) {
     return 'PLATINUM_RETAIL_BLISTER';
   }
 
-  if (normalized.includes('OLD') && normalized.includes('PLATINUM')) {
+  if (hasOldPackageMarker && normalized.includes('PLATINUM')) {
     return 'OLD_PLATINUM';
   }
 
-  if (normalized.includes('OLD') && normalized.includes('GOLD')) {
+  if (hasOldPackageMarker && normalized.includes('GOLD')) {
     return 'OLD_GOLD';
   }
 
-  if (normalized.includes('OLD') && normalized.includes('SILVER')) {
+  if (hasOldPackageMarker && normalized.includes('SILVER')) {
     return 'OLD_SILVER';
   }
 

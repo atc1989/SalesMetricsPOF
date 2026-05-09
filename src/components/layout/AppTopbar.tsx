@@ -14,9 +14,6 @@ export function AppTopbar() {
           <Link href="/" className="shrink-0 text-lg font-semibold tracking-tight text-slate-950">
             SalesMetrics
           </Link>
-          <span className="inline-flex rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 lg:hidden">
-            Mock Mode
-          </span>
         </div>
 
         <nav aria-label="Main navigation" className="-mx-1 overflow-x-auto pb-1 lg:mx-0 lg:pb-0">
@@ -42,9 +39,6 @@ export function AppTopbar() {
           </ul>
         </nav>
 
-        <span className="hidden shrink-0 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 lg:inline-flex">
-          Mock Mode
-        </span>
       </div>
     </header>
   );
