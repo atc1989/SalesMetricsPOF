@@ -359,11 +359,16 @@ const mapApiRowToReportRow = (
 ): InventoryReportRow => {
   const upperPackageType = row.package_type.toUpperCase();
   const normalizedPackageType = normalizeDailySalesPackageType(row.package_type);
-  const isBlister = upperPackageType.includes('BLISTER') && !upperPackageType.includes('OLD');
-  const isRetail = upperPackageType.includes('RETAIL');
-  const isOldPlatinum = upperPackageType.includes('OLD') && upperPackageType.includes('PLATINUM');
-  const isOldGold = upperPackageType.includes('OLD') && upperPackageType.includes('GOLD');
-  const isOldSilver = upperPackageType.includes('OLD') && upperPackageType.includes('SILVER');
+  const isBlister =
+    normalizedPackageType === 'BLISTER' ||
+    normalizedPackageType === 'SILVER_RETAIL_BLISTER' ||
+    normalizedPackageType === 'GOLD_RETAIL_BLISTER' ||
+    normalizedPackageType === 'PLATINUM_RETAIL_BLISTER';
+  const isRetail =
+    normalizedPackageType === 'RETAIL' ||
+    normalizedPackageType === 'SILVER_RETAIL_BOTTLE' ||
+    normalizedPackageType === 'GOLD_RETAIL_BOTTLE' ||
+    normalizedPackageType === 'PLATINUM_RETAIL_BOTTLE';
   const upperBagType = (row.bag_type ?? '').toUpperCase();
   const upperMarketingTool = (row.marketing_tool ?? '').toUpperCase();
   const amountMultiplier =
@@ -385,12 +390,12 @@ const mapApiRowToReportRow = (
     ggTransNo: formatZeroOne(row.username) || '-',
     memberType: abbreviateMemberType(row.member_type) || 'N/A',
     pofNumber: formatPofNumber(row.pof_number) || '-',
-    platinum: upperPackageType.includes('PLATINUM') && !upperPackageType.includes('OLD') ? totalQuantity : 0,
-    gold: upperPackageType.includes('GOLD') && !upperPackageType.includes('OLD') ? totalQuantity : 0,
-    silver: upperPackageType.includes('SILVER') && !upperPackageType.includes('OLD') ? totalQuantity : 0,
-    oldPlatinum: isOldPlatinum ? totalQuantity : 0,
-    oldGold: isOldGold ? totalQuantity : 0,
-    oldSilver: isOldSilver ? totalQuantity : 0,
+    platinum: normalizedPackageType === 'PLATINUM' ? totalQuantity : 0,
+    gold: normalizedPackageType === 'GOLD' ? totalQuantity : 0,
+    silver: normalizedPackageType === 'SILVER' ? totalQuantity : 0,
+    oldPlatinum: normalizedPackageType === 'OLD_PLATINUM' ? totalQuantity : 0,
+    oldGold: normalizedPackageType === 'OLD_GOLD' ? totalQuantity : 0,
+    oldSilver: normalizedPackageType === 'OLD_SILVER' ? totalQuantity : 0,
     synbioticBottle: isRetail ? totalBottles : 0,
     synbioticBlister: isBlister ? totalBlisters : 0,
     voucher: 0,
