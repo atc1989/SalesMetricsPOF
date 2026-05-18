@@ -1,7 +1,9 @@
 "use client";
 
 import { TimeRange } from "@/types/dashboard";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
 type TimeRangeSelectorProps = {
   value: TimeRange;
@@ -32,36 +34,52 @@ export function TimeRangeSelector({
   return (
     <div className="w-full lg:w-auto">
       <div className="flex flex-wrap items-center justify-center gap-2">
-        {ranges.map((range) => (
-          <Button key={range.value} variant={range.value === value ? "default" : "secondary"} size="sm" onClick={() => onChange(range.value)}>
-            {range.label}
-          </Button>
-        ))}
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={value}
+          onValueChange={(v) => v && onChange(v as TimeRange)}
+        >
+          {ranges.map((range) => (
+            <ToggleGroupItem key={range.value} value={range.value}>
+              {range.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+
         <div className="h-8 w-[330px] overflow-hidden sm:w-[360px]">
           <div
             aria-hidden={!isCustom}
-            className={`flex h-8 items-center gap-2 transition-all duration-200 ease-out ${
-              isCustom ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
-            }`}
+            className={cn(
+              "flex h-8 items-center gap-2 transition-all duration-200 ease-out",
+              isCustom
+                ? "pointer-events-auto translate-y-0 opacity-100"
+                : "pointer-events-none translate-y-1 opacity-0",
+            )}
           >
             <label htmlFor="custom-start-date" className="inline-flex items-center gap-1.5">
-              <span className="text-[10px] font-medium tracking-wide text-slate-500">FROM</span>
-              <input
+              <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
+                FROM
+              </span>
+              <Input
                 id="custom-start-date"
                 type="date"
                 value={customStartDate}
                 onChange={(event) => onCustomStartDateChange(event.target.value)}
-                className="h-8 w-[145px] rounded-md border border-slate-300 px-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                className="h-8 w-[145px]"
               />
             </label>
             <label htmlFor="custom-end-date" className="inline-flex items-center gap-1.5">
-              <span className="text-[10px] font-medium tracking-wide text-slate-500">TO</span>
-              <input
+              <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
+                TO
+              </span>
+              <Input
                 id="custom-end-date"
                 type="date"
                 value={customEndDate}
                 onChange={(event) => onCustomEndDateChange(event.target.value)}
-                className="h-8 w-[145px] rounded-md border border-slate-300 px-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                className="h-8 w-[145px]"
               />
             </label>
           </div>
