@@ -491,24 +491,24 @@ export function InventoryReportTab() {
     <section id="inventory-report" className="mt-4 space-y-4">
       <Card className="p-3">
         <div className="grid gap-2 md:grid-cols-4">
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             FROM
             <input
               id="transDateFrom"
               type="date"
               value={pendingFromDate}
               onChange={(event) => setPendingFromDate(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 rounded border border-input px-2 py-1 text-sm"
             />
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             TO
             <input
               id="transDateTo"
               type="date"
               value={pendingToDate}
               onChange={(event) => setPendingToDate(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 rounded border border-input px-2 py-1 text-sm"
             />
           </label>
           <div className="flex items-end">
@@ -522,7 +522,7 @@ export function InventoryReportTab() {
               {isLoading ? 'Generating...' : 'Generate Report'}
             </Button>
           </div>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             SEARCH
             <input
               id="tblDailyInventorySearch"
@@ -530,7 +530,7 @@ export function InventoryReportTab() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search table..."
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 rounded border border-input px-2 py-1 text-sm"
             />
           </label>
         </div>
@@ -538,7 +538,7 @@ export function InventoryReportTab() {
 
       <Card id="cntnrDailyInventory" className="p-0">
         <div className="flex items-center justify-between px-4 py-3">
-          <span id="spnTransDate" className="text-sm text-slate-700">
+          <span id="spnTransDate" className="text-sm text-muted-foreground">
             {displayDateRange}
           </span>
           <Button id="printDailyInventory" data-print-exclude="true" size="sm" variant="secondary" onClick={onPrint}>
@@ -546,11 +546,11 @@ export function InventoryReportTab() {
           </Button>
         </div>
         {errorMessage ? (
-          <p className="px-4 pb-2 text-xs text-amber-700">{errorMessage}</p>
+          <p className="px-4 pb-2 text-xs text-amber-500">{errorMessage}</p>
         ) : null}
         <div className="app-table-scroll">
           <table id="tblDailyInventory" className="min-w-[2400px] text-sm">
-            <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-600">
+            <thead className="bg-muted/50 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th rowSpan={2} className="px-3 py-2">
                   name
@@ -620,7 +620,7 @@ export function InventoryReportTab() {
             <tbody>
               {sortedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={28} className="px-3 py-6 text-center text-slate-500">
+                  <td colSpan={28} className="px-3 py-6 text-center text-muted-foreground">
                     {hasLoaded
                       ? 'No inventory results for selected range'
                       : 'No inventory rows found for the selected filters.'}
@@ -628,7 +628,7 @@ export function InventoryReportTab() {
                 </tr>
               ) : (
                 sortedRows.map((row) => (
-                  <tr key={row.id} className="border-t border-slate-100">
+                  <tr key={row.id} className="border-t border-border">
                     <td className="px-3 py-2">{row.name}</td>
                     <td className="px-3 py-2">{row.ggTransNo}</td>
                     <td className="px-3 py-2">{row.pofNumber}</td>
@@ -661,7 +661,7 @@ export function InventoryReportTab() {
                 ))
               )}
             </tbody>
-            <tfoot className="bg-slate-50 font-semibold text-slate-700">
+            <tfoot className="bg-muted/50 font-semibold text-muted-foreground">
               <tr>
                 <td colSpan={3} className="px-3 py-2">
                   TOTAL

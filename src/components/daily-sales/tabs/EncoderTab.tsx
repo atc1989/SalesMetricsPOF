@@ -664,55 +664,55 @@ export function EncoderTab() {
     <>
       <section id="encoder" className="mt-4">
         <Card>
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Encoder</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Encoder</h2>
           {submitError ? <p className="mb-3 text-sm text-red-600">{submitError}</p> : null}
           <form id="salesForm" className="space-y-6" onSubmit={onSubmit} onReset={onReset}>
             <div className="grid gap-3 md:grid-cols-3">
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Event
                 <input
                   id="event"
                   value={form.event}
                   onChange={(event) => updateField('event', event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Date
                 <input
                   id="date"
                   type="date"
                   value={form.date}
                   onChange={(event) => onDateChange(event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 POF Number
                 <input
                   id="pofNumber"
                   value={form.pofNumber}
                   onChange={(event) => onPofChange(event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Member Name
                 <input
                   id="name"
                   value={form.name}
                   onChange={(event) => updateField('name', event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Username
                 <input
                   id="username"
                   list="encoder-usernames"
                   value={form.username}
                   onChange={(event) => onUsernameChange(event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
                 <datalist id="encoder-usernames">
                   {userSearchResults.map((entry) => (
@@ -721,16 +721,16 @@ export function EncoderTab() {
                     </option>
                   ))}
                 </datalist>
-                {isUserSearchLoading ? <span className="text-xs text-slate-500">Searching users...</span> : null}
+                {isUserSearchLoading ? <span className="text-xs text-muted-foreground">Searching users...</span> : null}
                 {userSearchError ? <span className="text-xs text-red-600">{userSearchError}</span> : null}
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 New Member?
                 <select
                   id="newMember"
                   value={form.newMember}
                   onChange={(event) => updateField('newMember', event.target.value as '1' | '0')}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   <option value="1">Yes</option>
                   <option value="0">No</option>
@@ -739,9 +739,9 @@ export function EncoderTab() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Member Type
-                <select id="memberType" value={form.memberType} onChange={(event) => onMemberTypeChange(event.target.value as EncoderMemberTypeOption)} className="h-10 rounded-md border border-slate-300 px-3">
+                <select id="memberType" value={form.memberType} onChange={(event) => onMemberTypeChange(event.target.value as EncoderMemberTypeOption)} className="h-10 rounded-md border border-input px-3">
                   <option value="DISTRIBUTOR">Distributor</option>
                   <option value="STOCKIST">Mobile Stockist</option>
                   <option value="CITY STOCKIST">City Stockist</option>
@@ -749,9 +749,9 @@ export function EncoderTab() {
                   <option value="NON-MEMBER">Non-member</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Package Type
-                <select id="packageType" value={form.packageType} onChange={(event) => onPackageTypeChange(event.target.value as EncoderPackageTypeOption)} className="h-10 rounded-md border border-slate-300 px-3">
+                <select id="packageType" value={form.packageType} onChange={(event) => onPackageTypeChange(event.target.value as EncoderPackageTypeOption)} className="h-10 rounded-md border border-input px-3">
                   {encoderPackageOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -759,33 +759,33 @@ export function EncoderTab() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 To Blister?
                 <select
                   id="isToBlister"
                   value={form.isToBlister}
                   onChange={(event) => updateField('isToBlister', event.target.value as EncoderBlisterOption)}
                   disabled={isBundledPackage}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   <option value="0">No</option>
                   <option value="1">Yes</option>
                 </select>
                 {isBundledPackage ? (
-                  <span className="text-xs text-slate-500">Package bundles already include blister counts.</span>
+                  <span className="text-xs text-muted-foreground">Package bundles already include blister counts.</span>
                 ) : null}
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Original Price
                 <input
                   id="originalPrice"
                   type="number"
                   value={form.originalPrice}
                   readOnly
-                  className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
+                  className="h-10 rounded-md border border-input bg-muted/50 px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Quantity
                 <input
                   id="quantity"
@@ -793,10 +793,10 @@ export function EncoderTab() {
                   min="0"
                   value={form.quantity}
                   onChange={(event) => updateNumericField('quantity', event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Blister Count
                 <input
                   id="blisterCount"
@@ -804,17 +804,17 @@ export function EncoderTab() {
                   min="0"
                   value={form.blisterCount}
                   onChange={(event) => updateNumericField('blisterCount', event.target.value, 'blisterCount')}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Discount
                 <select
                   id="discount"
                   value={form.discount}
                   onChange={(event) => updateNumericField('discount', event.target.value)}
                   disabled={isZeroDiscountPackage}
-                  className="h-10 rounded-md border border-slate-300 px-3 disabled:bg-slate-50"
+                  className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50"
                 >
                   {encoderDiscountOptions.map((option) => (
                     <option key={`discount-${option.value}`} value={option.value}>
@@ -823,20 +823,20 @@ export function EncoderTab() {
                   ))}
                 </select>
                 {isZeroDiscountPackage ? (
-                  <span className="text-xs text-slate-500">Old package types do not allow discounts.</span>
+                  <span className="text-xs text-muted-foreground">Old package types do not allow discounts.</span>
                 ) : null}
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Price
                 <input
                   id="price"
                   type="number"
                   value={form.price}
                   onChange={(event) => updateNumericField('price', event.target.value, 'price')}
-                  className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
+                  className="h-10 rounded-md border border-input bg-muted/50 px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 One-time Discount
                 <input
                   id="oneTimeDiscount"
@@ -844,39 +844,39 @@ export function EncoderTab() {
                   min="0"
                   value={form.oneTimeDiscount}
                   onChange={(event) => updateNumericField('oneTimeDiscount', event.target.value, 'oneTimeDiscount')}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Number of Bottles
                 <input
                   id="noOfBottles"
                   type="number"
                   value={form.noOfBottles}
                   readOnly
-                  className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
+                  className="h-10 rounded-md border border-input bg-muted/50 px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Total Sales
                 <input
                   id="sales"
                   type="number"
                   value={form.sales}
                   onChange={(event) => updateNumericField('sales', event.target.value, 'sales')}
-                  className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3"
+                  className="h-10 rounded-md border border-input bg-muted/50 px-3"
                 />
               </label>
             </div>
 
             <div className="grid gap-3 md:grid-cols-4">
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Bag Type
                 <select
                   id="bagType"
                   value={form.bagType}
                   onChange={(event) => onBagTypeChange(event.target.value as EncoderBagTypeOption)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   {bagTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -885,7 +885,7 @@ export function EncoderTab() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Bag Quantity
                 <input
                   id="bagQuantity"
@@ -894,16 +894,16 @@ export function EncoderTab() {
                   value={form.bagQuantity}
                   onChange={(event) => updateNumericField('bagQuantity', event.target.value)}
                   disabled={form.bagType === 'N/A'}
-                  className="h-10 rounded-md border border-slate-300 px-3 disabled:bg-slate-50"
+                  className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Marketing Tool
                 <select
                   id="marketingTool"
                   value={form.marketingTool}
                   onChange={(event) => onMarketingToolChange(event.target.value as EncoderMarketingToolOption)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   {marketingToolOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -912,7 +912,7 @@ export function EncoderTab() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Marketing Quantity
                 <input
                   id="marketingQuantity"
@@ -921,15 +921,15 @@ export function EncoderTab() {
                   value={form.marketingQuantity}
                   onChange={(event) => updateNumericField('marketingQuantity', event.target.value)}
                   disabled={form.marketingTool === 'N/A'}
-                  className="h-10 rounded-md border border-slate-300 px-3 disabled:bg-slate-50"
+                  className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50"
                 />
               </label>
             </div>
 
             <div className="grid gap-3 md:grid-cols-4">
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Mode of Payment
-                <select id="paymentMode" value={form.paymentMode} onChange={(event) => onPaymentModeChange(event.target.value as Exclude<EncoderPaymentModeOption, 'N/A'>)} className="h-10 rounded-md border border-slate-300 px-3">
+                <select id="paymentMode" value={form.paymentMode} onChange={(event) => onPaymentModeChange(event.target.value as Exclude<EncoderPaymentModeOption, 'N/A'>)} className="h-10 rounded-md border border-input px-3">
                   {primaryPaymentModes.map((mode) => (
                     <option key={mode} value={mode}>
                       {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : mode}
@@ -937,14 +937,14 @@ export function EncoderTab() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Payment Mode Type
                 <select
                   id="paymentType"
                   value={form.paymentType}
                   onChange={(event) => updateField('paymentType', event.target.value)}
                   disabled={primaryTypeIsReadOnly}
-                  className="h-10 rounded-md border border-slate-300 px-3 disabled:bg-slate-50 disabled:text-slate-500"
+                  className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50 disabled:text-muted-foreground"
                 >
                   {primaryPaymentTypeOptions.map((option) => (
                     <option key={`payment-type-${option.value}`} value={option.value}>
@@ -953,20 +953,20 @@ export function EncoderTab() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Reference Number
                 <input
                   id="referenceNo"
                   value={form.referenceNo}
                   onChange={(event) => updateField('referenceNo', event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
               <div />
 
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Mode of Payment (2)
-                <select id="paymentModeTwo" value={form.paymentModeTwo} onChange={(event) => onPaymentModeTwoChange(event.target.value as EncoderPaymentModeOption)} className="h-10 rounded-md border border-slate-300 px-3">
+                <select id="paymentModeTwo" value={form.paymentModeTwo} onChange={(event) => onPaymentModeTwoChange(event.target.value as EncoderPaymentModeOption)} className="h-10 rounded-md border border-input px-3">
                   {secondaryPaymentModes.map((mode) => (
                     <option key={`mode-two-${mode}`} value={mode}>
                       {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : mode}
@@ -975,14 +975,14 @@ export function EncoderTab() {
                 </select>
                 {paymentModeTwoError ? <span className="text-xs text-red-600">{paymentModeTwoError}</span> : null}
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Payment Mode Type (2)
                 <select
                   id="paymentTypeTwo"
                   value={form.paymentTypeTwo}
                   onChange={(event) => updateField('paymentTypeTwo', event.target.value)}
                   disabled={secondaryTypeIsReadOnly}
-                  className="h-10 rounded-md border border-slate-300 px-3 disabled:bg-slate-50 disabled:text-slate-500"
+                  className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50 disabled:text-muted-foreground"
                 >
                   {secondaryPaymentTypeOptions.map((option) => (
                     <option key={`payment-type-two-${option.value}`} value={option.value}>
@@ -991,16 +991,16 @@ export function EncoderTab() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Reference Number (2)
                 <input
                   id="referenceNoTwo"
                   value={form.referenceNoTwo}
                   onChange={(event) => updateField('referenceNoTwo', event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Amount (2)
                 <input
                   id="salesTwo"
@@ -1008,13 +1008,13 @@ export function EncoderTab() {
                   min="0"
                   value={form.salesTwo}
                   onChange={(event) => updateNumericField('salesTwo', event.target.value, 'salesTwo')}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
             </div>
 
             <div className="grid gap-3 md:grid-cols-4">
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Released (Bottle)
                 <input
                   id="released"
@@ -1022,10 +1022,10 @@ export function EncoderTab() {
                   min="0"
                   value={form.released}
                   onChange={(event) => updateNumericField('released', event.target.value, 'released')}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Released (Blister)
                 <input
                   id="releasedBlpk"
@@ -1033,10 +1033,10 @@ export function EncoderTab() {
                   min="0"
                   value={form.releasedBlpk}
                   onChange={(event) => updateNumericField('releasedBlpk', event.target.value, 'releasedBlpk')}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 To Follow (Bottle)
                 <input
                   id="toFollow"
@@ -1044,10 +1044,10 @@ export function EncoderTab() {
                   min="0"
                   value={form.toFollow}
                   onChange={(event) => updateNumericField('toFollow', event.target.value, 'toFollow')}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 To Follow (Blister)
                 <input
                   id="toFollowBlpk"
@@ -1055,38 +1055,38 @@ export function EncoderTab() {
                   min="0"
                   value={form.toFollowBlpk}
                   onChange={(event) => updateNumericField('toFollowBlpk', event.target.value, 'toFollowBlpk')}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm text-slate-700 md:col-span-2">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground md:col-span-2">
                 Remarks
                 <textarea
                   id="remarks"
                   rows={3}
                   value={form.remarks}
                   onChange={(event) => updateField('remarks', event.target.value)}
-                  className="rounded-md border border-slate-300 px-3 py-2"
+                  className="rounded-md border border-input px-3 py-2"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Received By
                 <input
                   id="receivedBy"
                   value={form.receivedBy}
                   onChange={(event) => updateField('receivedBy', event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Collected By
                 <input
                   id="collectedBy"
                   value={form.collectedBy}
                   onChange={(event) => updateField('collectedBy', event.target.value)}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
             </div>
