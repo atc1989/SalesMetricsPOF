@@ -69,7 +69,7 @@ function normalize(value: unknown): string {
   return String(value).trim().toLowerCase();
 }
 
-async function fetchAll(client: ReturnType<typeof createClient>): Promise<Row[]> {
+async function fetchAll(client: any): Promise<Row[]> {
   const rows: Row[] = [];
   const pageSize = 1000;
   let from = 0;

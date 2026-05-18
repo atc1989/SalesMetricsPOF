@@ -47,7 +47,7 @@ export function AuthProvider({
 
     supabase.auth
       .getSession()
-      .then(({ data }) => {
+      .then(({ data }: { data: { session: Session | null } }) => {
         if (!isMounted) return;
         setSession(data.session ?? null);
         setUser(data.session?.user ?? null);
@@ -61,7 +61,7 @@ export function AuthProvider({
       });
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
+      (_event: string, nextSession: Session | null) => {
         if (!isMounted) return;
         setSession(nextSession);
         setUser(nextSession?.user ?? null);
