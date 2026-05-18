@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download, Printer, Plus, Save, Trash2 } from "lucide-react";
-import { FormActionButton } from "@/components/ui/FormActionButton";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   fetchRecentPrints,
@@ -350,10 +350,10 @@ export function ProspectInvitationForm({
             <div className="form-toolbar no-print">
               {showBackButton ? (
                 <div className="form-toolbar__left">
-                  <FormActionButton onClick={() => router.push("/event-forms")} className="form-action-back">
-                    <ArrowLeft className="form-btn__icon" />
+                  <Button variant="outline" size="sm" className="no-print" onClick={() => router.push("/event-forms")}>
+                    <ArrowLeft data-icon="inline-start" />
                     Back to Forms
-                  </FormActionButton>
+                  </Button>
                 </div>
               ) : (
                 <div />
@@ -455,22 +455,22 @@ export function ProspectInvitationForm({
                           value={name}
                           onChange={(event) => updateApprovedBy(index, event.target.value)}
                         />
-                        <FormActionButton
+                        <Button variant="outline" size="sm" className="no-print"
                           onClick={() => removeApprovedByRow(index)}
                           disabled={approvedBy.length <= 1}
-                          ariaLabel="Remove approved by"
+                          aria-label="Remove approved by"
                         >
-                          <Trash2 className="form-btn__icon" />
+                          <Trash2 data-icon="inline-start" />
                           Remove
-                        </FormActionButton>
+                        </Button>
                       </div>
                     ))}
                   </div>
                   <div className="prospect-approval-actions">
-                    <FormActionButton onClick={addApprovedByRow}>
+                    <Button variant="outline" size="sm" className="no-print" onClick={addApprovedByRow}>
                       <Plus className="form-btn__icon" />
                       Add approved by
-                    </FormActionButton>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -480,22 +480,22 @@ export function ProspectInvitationForm({
 
             {showActions ? (
               <div className="form-actions-bottom no-print">
-                <FormActionButton onClick={handleSave}>
+                <Button variant="outline" size="sm" className="no-print" onClick={handleSave}>
                   <Save className="form-btn__icon" />
                   Save
-                </FormActionButton>
-                <FormActionButton onClick={handleLoad}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" onClick={handleLoad}>
                   <Download className="form-btn__icon" />
                   Load
-                </FormActionButton>
-                <FormActionButton onClick={handleClear}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" onClick={handleClear}>
                   <Trash2 className="form-btn__icon" />
                   Clear
-                </FormActionButton>
-                <FormActionButton onClick={handlePrint} disabled={isPrinting}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" onClick={handlePrint} disabled={isPrinting}>
                   <Printer className="form-btn__icon" />
                   Print
-                </FormActionButton>
+                </Button>
                 <span className="print-hint no-print">
                   Disable Headers and Footers in the print dialog for best results.
                 </span>

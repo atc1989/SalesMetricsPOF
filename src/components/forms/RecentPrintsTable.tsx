@@ -1,6 +1,16 @@
 import React from "react";
+
 import type { FormType, RecentPrintRow } from "@/services/formPrintTracking.service";
-import { FormActionButton } from "@/components/ui/FormActionButton";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type RecentPrintsTableProps = {
   formType: FormType;
@@ -70,12 +80,8 @@ const getRowSummary = (formType: FormType, payload: Record<string, unknown>) => 
 };
 
 const getColumns = (formType: FormType) => {
-  if (formType === "ER") {
-    return { colA: "Event Title", colB: "Event Date" };
-  }
-  if (formType === "SC") {
-    return { colA: "Event Details", colB: "Event Date" };
-  }
+  if (formType === "ER") return { colA: "Event Title", colB: "Event Date" };
+  if (formType === "SC") return { colA: "Event Details", colB: "Event Date" };
   return { colA: "Leader Name", colB: "Guest Name" };
 };
 
@@ -83,52 +89,61 @@ export function RecentPrintsTable({ formType, rows, onLoad }: RecentPrintsTableP
   const columns = getColumns(formType);
 
   return (
-    <div className="recent-prints no-print">
-      <div className="recent-prints__header">Recent Prints</div>
-      <div className="recent-prints__table-wrap">
-        <table className="recent-prints__table">
-          <thead>
-            <tr>
-              <th>Reference No</th>
-              <th>Printed At</th>
-              <th>{columns.colA}</th>
-              <th>{columns.colB}</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="recent-prints__empty">
-                  No prints yet.
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => {
-                const payload = getPayload(row);
-                const summary = getRowSummary(formType, payload);
-                const canLoad = Boolean(row.submission_id);
-                return (
-                  <tr key={row.id}>
-                    <td>{row.reference_no ?? "—"}</td>
-                    <td>{formatPrintedAt(row.printed_at)}</td>
-                    <td>{summary.colA || "—"}</td>
-                    <td>{summary.colB || "—"}</td>
-                    <td>
-                      <FormActionButton
-                        onClick={() => row.submission_id && onLoad(row.submission_id)}
-                        disabled={!canLoad}
-                      >
-                        Load
-                      </FormActionButton>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <Card className="no-print">
+      <CardHeader>
+        <CardTitle>Recent Prints</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Reference No</TableHead>
+                <TableHead>Printed At</TableHead>
+                <TableHead>{columns.colA}</TableHead>
+                <TableHead>{columns.colB}</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                    No prints yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map((row) => {
+                  const payload = getPayload(row);
+                  const summary = getRowSummary(formType, payload);
+                  const canLoad = Boolean(row.submission_id);
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell className="font-medium">{row.reference_no ?? "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm">
+                        {formatPrintedAt(row.printed_at)}
+                      </TableCell>
+                      <TableCell>{summary.colA || "—"}</TableCell>
+                      <TableCell>{summary.colB || "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="px-0"
+                          onClick={() => row.submission_id && onLoad(row.submission_id)}
+                          disabled={!canLoad}
+                        >
+                          Load
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

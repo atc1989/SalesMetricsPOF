@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
-import { FormActionButton } from "@/components/ui/FormActionButton";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   fetchRecentPrints,
@@ -510,10 +510,10 @@ export function EventRequestForm({
             <div className="erf-header-actions no-print">
               {showBackButton ? (
                 <div className="form-toolbar__left no-print">
-                  <FormActionButton type="button" onClick={() => router.push("/event-forms")} className="erf-back-btn">
-                    <ArrowLeft className="form-btn__icon" />
+                  <Button variant="outline" size="sm" className="no-print" type="button" onClick={() => router.push("/event-forms")}>
+                    <ArrowLeft data-icon="inline-start" />
                     Back to Forms
-                  </FormActionButton>
+                  </Button>
                 </div>
               ) : (
                 <div />
@@ -863,22 +863,22 @@ export function EventRequestForm({
 
             {showActions ? (
               <div className="form-actions-bottom no-print">
-                <FormActionButton type="button" onClick={handleSave}>
+                <Button variant="outline" size="sm" className="no-print" type="button" onClick={handleSave}>
                   <Save className="form-btn__icon" />
                   Save
-                </FormActionButton>
-                <FormActionButton type="button" onClick={handleLoad}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" type="button" onClick={handleLoad}>
                   <Download className="form-btn__icon" />
                   Load
-                </FormActionButton>
-                <FormActionButton type="button" onClick={handleClear}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" type="button" onClick={handleClear}>
                   <Trash2 className="form-btn__icon" />
                   Clear
-                </FormActionButton>
-                <FormActionButton type="button" onClick={handlePrint} disabled={isPrinting}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" type="button" onClick={handlePrint} disabled={isPrinting}>
                   <Printer className="form-btn__icon" />
                   Print
-                </FormActionButton>
+                </Button>
                 <span className="print-hint no-print">
                   Disable Headers and Footers in the print dialog for best results.
                 </span>
