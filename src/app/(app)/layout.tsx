@@ -25,7 +25,7 @@ export default async function AppLayout({
       <div className="flex min-h-screen flex-col">
         <AppTopbar />
         <main className="flex-1">
-          <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+          <div className="mx-auto w-full max-w-screen-2xl px-4 py-6 lg:px-6">{children}</div>
         </main>
       </div>
     </AuthProvider>

@@ -2,35 +2,47 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Vault } from "lucide-react";
+
 import { appNavLinks, isNavLinkActive } from "@/components/layout/navigation";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { cn } from "@/lib/utils";
 
 export function AppTopbar() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="shrink-0 text-lg font-semibold tracking-tight text-slate-950">
-            SalesMetrics
-          </Link>
-        </div>
+    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-screen-2xl items-center gap-4 px-4 lg:px-6">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2 text-sm font-semibold tracking-tight"
+        >
+          <span className="inline-flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Vault className="size-4" />
+          </span>
+          SalesMetrics
+        </Link>
 
-        <nav aria-label="Main navigation" className="-mx-1 overflow-x-auto pb-1 lg:mx-0 lg:pb-0 lg:flex-1">
+        <nav
+          aria-label="Main navigation"
+          className="-mx-1 flex-1 overflow-x-auto"
+        >
           <ul className="flex min-w-max items-center gap-1 px-1">
             {appNavLinks.map((link) => {
               const isActive = isNavLinkActive(pathname, link.href);
-
               return (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className={`inline-flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors ${
+                    className={cn(
+                      "inline-flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-slate-950 text-white"
-                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
-                    }`}
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    )}
+                    aria-current={isActive ? "page" : undefined}
                   >
                     {link.label}
                   </Link>
@@ -40,7 +52,8 @@ export function AppTopbar() {
           </ul>
         </nav>
 
-        <div className="shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
+          <ThemeToggle />
           <UserMenu />
         </div>
       </div>
