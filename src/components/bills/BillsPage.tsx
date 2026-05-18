@@ -10,8 +10,21 @@ import type { BillStatus } from "@/types/billing";
 import {
   exportBillsToCSV,
   exportBillsToExcel,
-  exportBillsToPDF
+  exportBillsToPDF,
 } from "@/utils/billsExport";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type BillRow = {
   id: string;
@@ -27,6 +40,15 @@ type BillRow = {
   created_by: string;
   remarks?: string | null;
 };
+
+type BadgeVariant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "success"
+  | "warning"
+  | "neutral";
 
 export function BillsPage() {
   const [activeTab, setActiveTab] = useState("All");
@@ -65,37 +87,37 @@ export function BillsPage() {
     }
   }, [activeTab]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string): BadgeVariant => {
     switch (status) {
       case "draft":
-        return "bg-gray-100 text-gray-700";
+        return "neutral";
       case "awaiting_approval":
-        return "bg-yellow-100 text-yellow-700";
+        return "warning";
       case "rejected":
-        return "bg-orange-100 text-orange-700";
+        return "destructive";
       case "approved":
-        return "bg-blue-100 text-blue-700";
+        return "secondary";
       case "paid":
-        return "bg-green-100 text-green-700";
+        return "success";
       case "void":
-        return "bg-red-100 text-red-700";
+        return "outline";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "neutral";
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityVariant = (priority: string): BadgeVariant => {
     switch (priority) {
       case "urgent":
-        return "bg-red-100 text-red-700";
+        return "destructive";
       case "high":
-        return "bg-orange-100 text-orange-700";
+        return "warning";
       case "standard":
-        return "bg-blue-100 text-blue-700";
+        return "secondary";
       case "low":
-        return "bg-gray-100 text-gray-600";
+        return "neutral";
       default:
-        return "bg-gray-100 text-gray-600";
+        return "neutral";
     }
   };
 
@@ -148,57 +170,32 @@ export function BillsPage() {
     }
   };
 
-  const renderPaymentMethods = (methods: string[]) => {
-    const uniqueMethods = Array.from(new Set(methods.filter(Boolean)));
-    const labels = uniqueMethods.map(formatPaymentMethod);
+  const renderChips = (labels: string[]) => {
     const visible = labels.slice(0, 2);
     const extra = labels.length - visible.length;
-
+    if (labels.length === 0) return <span className="text-sm text-muted-foreground">—</span>;
     return (
-      <div className="flex flex-wrap gap-2" title={labels.join(", ")}>
+      <div className="flex flex-wrap gap-1.5" title={labels.join(", ")}>
         {visible.map((label) => (
-          <span
-            key={label}
-            className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700"
-          >
+          <Badge key={label} variant="neutral">
             {label}
-          </span>
+          </Badge>
         ))}
-        {extra > 0 && (
-          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-700">
-            +{extra}
-          </span>
-        )}
-        {labels.length === 0 && <span className="text-sm text-gray-500">—</span>}
+        {extra > 0 && <Badge variant="outline">+{extra}</Badge>}
       </div>
     );
   };
 
-  const renderCategories = (categories: string[] = []) => {
-    const uniqueCategories = Array.from(
-      new Set(categories.map((value) => value.trim()).filter(Boolean))
-    );
-    const visible = uniqueCategories.slice(0, 2);
-    const extra = uniqueCategories.length - visible.length;
+  const renderPaymentMethods = (methods: string[]) => {
+    const labels = Array.from(new Set(methods.filter(Boolean))).map(formatPaymentMethod);
+    return renderChips(labels);
+  };
 
-    return (
-      <div className="flex flex-wrap gap-2" title={uniqueCategories.join(", ")}>
-        {visible.map((label) => (
-          <span
-            key={label}
-            className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700"
-          >
-            {label}
-          </span>
-        ))}
-        {extra > 0 && (
-          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-700">
-            +{extra}
-          </span>
-        )}
-        {uniqueCategories.length === 0 && <span className="text-sm text-gray-500">—</span>}
-      </div>
+  const renderCategories = (categories: string[] = []) => {
+    const labels = Array.from(
+      new Set(categories.map((value) => value.trim()).filter(Boolean)),
     );
+    return renderChips(labels);
   };
 
   useEffect(() => {
@@ -216,7 +213,7 @@ export function BillsPage() {
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
       page,
-      pageSize
+      pageSize,
     })
       .then((result) => {
         if (!isMounted) return;
@@ -247,7 +244,8 @@ export function BillsPage() {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const startItem = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
-  const endItem = totalCount === 0 ? 0 : Math.min(totalCount, (page - 1) * pageSize + bills.length);
+  const endItem =
+    totalCount === 0 ? 0 : Math.min(totalCount, (page - 1) * pageSize + bills.length);
 
   const pageWindow = 5;
   const halfWindow = Math.floor(pageWindow / 2);
@@ -267,7 +265,7 @@ export function BillsPage() {
       status: statusFilter,
       search: searchQuery,
       dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined
+      dateTo: dateTo || undefined,
     });
 
     if (result.error) {
@@ -308,375 +306,301 @@ export function BillsPage() {
     }
   };
 
-  const exportButtonClass =
-    "rounded-full border border-blue-400 bg-white text-blue-500 px-5 py-2 text-sm hover:bg-blue-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors";
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="pt-16">
-        <div className="max-w-[1600px] mx-auto px-6 py-8">
-          {/* Page Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Payment Requests</h1>
-              <p className="text-gray-600 mt-1">View and manage payment requests</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleExport("csv")}
-                  disabled={exporting !== null}
-                  className={exportButtonClass}
-                >
-                  {exporting === "csv" ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Exporting...
-                    </span>
-                  ) : (
-                    "CSV"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExport("xlsx")}
-                  disabled={exporting !== null}
-                  className={exportButtonClass}
-                >
-                  {exporting === "xlsx" ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Exporting...
-                    </span>
-                  ) : (
-                    "Excel"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExport("pdf")}
-                  disabled={exporting !== null}
-                  className={exportButtonClass}
-                >
-                  {exporting === "pdf" ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Exporting...
-                    </span>
-                  ) : (
-                    "PDF"
-                  )}
-                </button>
-              </div>
-              <button
-                onClick={() => router.push("/bills/new")}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                New Bill
-              </button>
-            </div>
-          </div>
-
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1 border-b border-gray-200 mb-6">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  setPage(1);
-                }}
-                className={`px-4 py-3 font-medium transition-colors relative ${
-                  activeTab === tab
-                    ? "text-blue-600"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {tab}
-                {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Filters Section */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {/* Search */}
-              <div className="lg:col-span-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by vendor, reference, or purpose summary"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setPage(1);
-                    }}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Date Range */}
-              <div>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => {
-                    setDateFrom(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="From"
-                />
-              </div>
-              <div>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => {
-                    setDateTo(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="To"
-                />
-              </div>
-
-              {/* Clear Filters */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setDateFrom("");
-                    setDateTo("");
-                    setPage(1);
-                  }}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Bills Table */}
-          {isLoading ? (
-            <div className="bg-white rounded-lg border border-gray-200 py-16 text-center">
-              <p className="text-gray-600">Loading bills...</p>
-            </div>
-          ) : errorMessage ? (
-            <div className="bg-white rounded-lg border border-gray-200 py-16 text-center">
-              <p className="text-red-600">{errorMessage}</p>
-            </div>
-          ) : bills.length > 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Reference No.
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Payee / Vendor
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Purpose Summary
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Payment Method
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Priority
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Total Amount
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Requested By
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {bills.map((bill, index) => (
-                      <tr
-                        key={bill.id}
-                        className={`hover:bg-gray-50 transition-colors ${
-                          index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                        }`}
-                      >
-                        <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.request_date}
-                        </td>
-                        <td className="px-4 py-4 text-sm text-gray-900 font-medium">
-                          {bill.reference_no}
-                        </td>
-                        <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.vendor?.name || "—"}
-                        </td>
-                        <td className="px-4 py-4 text-sm text-gray-600">
-                          {bill.remarks || "—"}
-                        </td>
-                        <td className="px-4 py-4 text-sm text-gray-900">
-                          {renderPaymentMethods(
-                            bill.payment_methods?.length
-                              ? bill.payment_methods
-                              : bill.payment_method
-                              ? [bill.payment_method]
-                              : []
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-sm text-gray-900">
-                          {renderCategories(bill.categories)}
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
-                              bill.priority_level
-                            )}`}
-                          >
-                            {formatPriority(bill.priority_level)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-sm text-gray-900 font-semibold text-right">
-                          ₱{Number(bill.total_amount).toLocaleString("en-PH", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              bill.status
-                            )}`}
-                          >
-                            {formatStatus(bill.status)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.created_by === user?.id ? currentUserDisplayName : bill.created_by}
-                        </td>
-                        <td className="px-4 py-4">
-                          <button
-                            onClick={() => router.push(`/bills/${bill.id}`)}
-                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Showing {startItem}-{endItem} of {totalCount} results
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                    disabled={page <= 1}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-
-                  <div className="flex items-center gap-1">
-                    {windowStart > 1 && (
-                      <>
-                        <button
-                          onClick={() => setPage(1)}
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          1
-                        </button>
-                        {windowStart > 2 && (
-                          <span className="px-2 text-sm text-gray-500">...</span>
-                        )}
-                      </>
-                    )}
-
-                    {visiblePages.map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setPage(p)}
-                        className={`px-3 py-1 rounded-md text-sm ${
-                          p === page
-                            ? "bg-blue-600 text-white"
-                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-
-                    {windowEnd < totalPages && (
-                      <>
-                        {windowEnd < totalPages - 1 && (
-                          <span className="px-2 text-sm text-gray-500">...</span>
-                        )}
-                        <button
-                          onClick={() => setPage(totalPages)}
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                    disabled={page >= totalPages}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Empty State */
-            <div className="bg-white rounded-lg border border-gray-200 py-16 text-center">
-              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No payment requests found
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Try adjusting your filters or create a new bill
-              </p>
-              <button
-                onClick={() => router.push("/bills/new")}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md inline-flex items-center gap-2 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Create New Bill
-              </button>
-            </div>
-          )}
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Payment Requests</h1>
+          <p className="text-sm text-muted-foreground">View and manage payment requests</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport("csv")}
+            disabled={exporting !== null}
+          >
+            {exporting === "csv" ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Exporting…
+              </>
+            ) : (
+              "CSV"
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport("xlsx")}
+            disabled={exporting !== null}
+          >
+            {exporting === "xlsx" ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Exporting…
+              </>
+            ) : (
+              "Excel"
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport("pdf")}
+            disabled={exporting !== null}
+          >
+            {exporting === "pdf" ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Exporting…
+              </>
+            ) : (
+              "PDF"
+            )}
+          </Button>
+          <Button onClick={() => router.push("/bills/new")}>
+            <Plus className="h-4 w-4" />
+            New Bill
+          </Button>
         </div>
       </div>
+
+      {/* Status Tabs */}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          setActiveTab(value);
+          setPage(1);
+        }}
+      >
+        <TabsList className="flex flex-wrap">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab} value={tab}>
+              {tab}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+            <div className="relative lg:col-span-2">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Search by vendor, reference, or purpose summary"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setPage(1);
+              }}
+            />
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setPage(1);
+              }}
+            />
+            <div className="flex items-center">
+              <Button
+                variant="link"
+                className="px-0"
+                onClick={() => {
+                  setSearchQuery("");
+                  setDateFrom("");
+                  setDateTo("");
+                  setPage(1);
+                }}
+              >
+                Clear filters
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bills Table */}
+      {isLoading ? (
+        <Card>
+          <CardContent className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading bills…
+          </CardContent>
+        </Card>
+      ) : errorMessage ? (
+        <Card>
+          <CardContent className="py-16 text-center text-sm text-destructive">
+            {errorMessage}
+          </CardContent>
+        </Card>
+      ) : bills.length > 0 ? (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Reference No.</TableHead>
+                    <TableHead>Payee / Vendor</TableHead>
+                    <TableHead>Purpose Summary</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead className="text-right">Total Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Requested By</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bills.map((bill) => (
+                    <TableRow key={bill.id}>
+                      <TableCell className="whitespace-nowrap text-sm">{bill.request_date}</TableCell>
+                      <TableCell className="font-medium">{bill.reference_no}</TableCell>
+                      <TableCell>{bill.vendor?.name || "—"}</TableCell>
+                      <TableCell className="max-w-xs text-sm text-muted-foreground">
+                        <span className="line-clamp-2">{bill.remarks || "—"}</span>
+                      </TableCell>
+                      <TableCell>
+                        {renderPaymentMethods(
+                          bill.payment_methods?.length
+                            ? bill.payment_methods
+                            : bill.payment_method
+                              ? [bill.payment_method]
+                              : [],
+                        )}
+                      </TableCell>
+                      <TableCell>{renderCategories(bill.categories)}</TableCell>
+                      <TableCell>
+                        <Badge variant={getPriorityVariant(bill.priority_level)}>
+                          {formatPriority(bill.priority_level)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-right font-semibold">
+                        ₱
+                        {Number(bill.total_amount).toLocaleString("en-PH", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusVariant(bill.status)}>
+                          {formatStatus(bill.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {bill.created_by === user?.id
+                          ? currentUserDisplayName
+                          : bill.created_by}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="link"
+                          className="px-0"
+                          onClick={() => router.push(`/bills/${bill.id}`)}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing {startItem}–{endItem} of {totalCount} results
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={page <= 1}
+                >
+                  Previous
+                </Button>
+
+                {windowStart > 1 && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => setPage(1)}>
+                      1
+                    </Button>
+                    {windowStart > 2 && (
+                      <span className="px-2 text-sm text-muted-foreground">…</span>
+                    )}
+                  </>
+                )}
+
+                {visiblePages.map((p) => (
+                  <Button
+                    key={p}
+                    variant={p === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPage(p)}
+                  >
+                    {p}
+                  </Button>
+                ))}
+
+                {windowEnd < totalPages && (
+                  <>
+                    {windowEnd < totalPages - 1 && (
+                      <span className="px-2 text-sm text-muted-foreground">…</span>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => setPage(totalPages)}>
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
+            <FileText className="h-12 w-12 text-muted-foreground/40" />
+            <div className="space-y-1">
+              <h3 className="text-lg font-medium">No payment requests found</h3>
+              <p className="text-sm text-muted-foreground">
+                Try adjusting your filters or create a new bill
+              </p>
+            </div>
+            <Button onClick={() => router.push("/bills/new")}>
+              <Plus className="h-4 w-4" />
+              Create New Bill
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
