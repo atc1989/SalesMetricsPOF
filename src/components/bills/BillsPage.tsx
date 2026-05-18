@@ -18,6 +18,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
   Table,
   TableBody,
   TableCell,
@@ -323,7 +337,7 @@ export function BillsPage() {
           >
             {exporting === "csv" ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 data-icon="inline-start" className="animate-spin" />
                 Exporting…
               </>
             ) : (
@@ -338,7 +352,7 @@ export function BillsPage() {
           >
             {exporting === "xlsx" ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 data-icon="inline-start" className="animate-spin" />
                 Exporting…
               </>
             ) : (
@@ -353,7 +367,7 @@ export function BillsPage() {
           >
             {exporting === "pdf" ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 data-icon="inline-start" className="animate-spin" />
                 Exporting…
               </>
             ) : (
@@ -361,7 +375,7 @@ export function BillsPage() {
             )}
           </Button>
           <Button onClick={() => router.push("/bills/new")}>
-            <Plus className="h-4 w-4" />
+            <Plus data-icon="inline-start" />
             New Bill
           </Button>
         </div>
@@ -388,17 +402,20 @@ export function BillsPage() {
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-            <div className="relative lg:col-span-2">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                placeholder="Search by vendor, reference, or purpose summary"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(1);
-                }}
-              />
+            <div className="lg:col-span-2">
+              <InputGroup>
+                <InputGroupAddon>
+                  <Search />
+                </InputGroupAddon>
+                <InputGroupInput
+                  placeholder="Search by vendor, reference, or purpose summary"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </InputGroup>
             </div>
             <Input
               type="date"
@@ -437,9 +454,12 @@ export function BillsPage() {
       {/* Bills Table */}
       {isLoading ? (
         <Card>
-          <CardContent className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading bills…
+          <CardContent className="space-y-3 p-4">
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
           </CardContent>
         </Card>
       ) : errorMessage ? (
@@ -585,21 +605,23 @@ export function BillsPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground/40" />
-            <div className="space-y-1">
-              <h3 className="text-lg font-medium">No payment requests found</h3>
-              <p className="text-sm text-muted-foreground">
-                Try adjusting your filters or create a new bill
-              </p>
-            </div>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileText />
+            </EmptyMedia>
+            <EmptyTitle>No payment requests found</EmptyTitle>
+            <EmptyDescription>
+              Try adjusting your filters or create a new bill.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
             <Button onClick={() => router.push("/bills/new")}>
-              <Plus className="h-4 w-4" />
+              <Plus data-icon="inline-start" />
               Create New Bill
             </Button>
-          </CardContent>
-        </Card>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   );
