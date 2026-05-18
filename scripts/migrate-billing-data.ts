@@ -107,20 +107,60 @@ async function withRetry<T>(label: string, fn: () => Promise<T>, attempts = 4): 
   throw lastErr;
 }
 
+async function listExistingTargetFiles(target: SupabaseClient, bucket: string): Promise<Set<string>> {
+  const seen = new Set<string>();
+  const queue: string[] = [""];
+  while (queue.length) {
+    const prefix = queue.shift()!;
+    try {
+      const data = await withRetry(`list-target:${prefix || "/"}`, async () => {
+        const { data, error } = await target.storage.from(bucket).list(prefix, { limit: 1000 });
+        if (error) throw error;
+        return data;
+      });
+      if (!data) continue;
+      for (const entry of data) {
+        const fullPath = prefix ? `${prefix}/${entry.name}` : entry.name;
+        if (entry.id === null) queue.push(fullPath);
+        else seen.add(fullPath);
+      }
+    } catch (err) {
+      console.warn(`    couldn't list target prefix ${prefix || "/"}: ${(err as Error).message} — will re-attempt those files`);
+    }
+  }
+  return seen;
+}
+
 async function copyBillAttachments(source: SupabaseClient, target: SupabaseClient, apply: boolean) {
   // List all objects in the source bucket and re-upload to target.
   const bucket = "bill_attachments";
+  let existing = new Set<string>();
+  if (apply) {
+    console.log("  scanning target bucket for already-copied files…");
+    existing = await listExistingTargetFiles(target, bucket);
+    console.log(`    ${existing.size} files already in target — will skip those`);
+  }
+
   const queue: string[] = [""];
   let copied = 0;
+  let skipped = 0;
   let failed = 0;
+  const failedPaths: string[] = [];
 
   while (queue.length) {
     const prefix = queue.shift()!;
-    const data = await withRetry(`list:${prefix || "/"}`, async () => {
-      const { data, error } = await source.storage.from(bucket).list(prefix, { limit: 1000 });
-      if (error) throw error;
-      return data;
-    });
+    let data: { name: string; id: string | null }[] | null = null;
+    try {
+      data = await withRetry(`list:${prefix || "/"}`, async () => {
+        const { data, error } = await source.storage.from(bucket).list(prefix, { limit: 1000 });
+        if (error) throw error;
+        return data;
+      });
+    } catch (err) {
+      console.warn(`    couldn't list source prefix ${prefix || "/"}: ${(err as Error).message} — skipping this prefix, re-run to pick it up`);
+      failed += 1;
+      continue;
+    }
     if (!data) continue;
     for (const entry of data) {
       const fullPath = prefix ? `${prefix}/${entry.name}` : entry.name;
@@ -130,6 +170,10 @@ async function copyBillAttachments(source: SupabaseClient, target: SupabaseClien
       }
       if (!apply) {
         copied += 1;
+        continue;
+      }
+      if (existing.has(fullPath)) {
+        skipped += 1;
         continue;
       }
       try {
@@ -146,10 +190,18 @@ async function copyBillAttachments(source: SupabaseClient, target: SupabaseClien
       } catch (err) {
         console.warn(`    gave up on ${fullPath}: ${(err as Error).message}`);
         failed += 1;
+        failedPaths.push(fullPath);
       }
     }
   }
-  if (failed) console.log(`  ${failed} file(s) failed after retries — re-run --apply to pick them up.`);
+  if (skipped) console.log(`  ${skipped} file(s) skipped (already in target)`);
+  if (failed) {
+    console.log(`  ${failed} item(s) failed after retries — re-run --apply to pick them up.`);
+    if (failedPaths.length) {
+      console.log(`  first few failed paths:`);
+      for (const p of failedPaths.slice(0, 5)) console.log(`    - ${p}`);
+    }
+  }
   return copied;
 }
 
