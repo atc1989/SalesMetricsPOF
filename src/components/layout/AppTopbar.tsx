@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { appNavLinks, isNavLinkActive } from "@/components/layout/navigation";
+import { UserMenu } from "@/components/layout/UserMenu";
 
 export function AppTopbar() {
   const pathname = usePathname();
@@ -16,7 +17,7 @@ export function AppTopbar() {
           </Link>
         </div>
 
-        <nav aria-label="Main navigation" className="-mx-1 overflow-x-auto pb-1 lg:mx-0 lg:pb-0">
+        <nav aria-label="Main navigation" className="-mx-1 overflow-x-auto pb-1 lg:mx-0 lg:pb-0 lg:flex-1">
           <ul className="flex min-w-max items-center gap-1 px-1">
             {appNavLinks.map((link) => {
               const isActive = isNavLinkActive(pathname, link.href);
@@ -39,6 +40,9 @@ export function AppTopbar() {
           </ul>
         </nav>
 
+        <div className="shrink-0">
+          <UserMenu />
+        </div>
       </div>
     </header>
   );

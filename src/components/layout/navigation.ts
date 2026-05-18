@@ -9,6 +9,9 @@ export const appNavLinks: NavLink[] = [
   { href: "/daily-sales", label: "Daily Sales" },
   { href: "/encoder", label: "Encoder" },
   { href: "/inventory-movement", label: "Inventory Movement" },
+  { href: "/bills", label: "Bills" },
+  { href: "/pcf", label: "PCF" },
+  { href: "/event-forms", label: "Event Forms" },
 ];
 
 export function isNavLinkActive(pathname: string, href: string) {
