@@ -1,8 +1,13 @@
 "use client";
 
+// @deprecated — use shadcn Dialog directly: import { Dialog, DialogContent,
+// DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog".
+//
 // Compat wrapper over shadcn Dialog. Preserves the legacy isOpen/title/onClose/footer
-// API used by ~16 existing call sites. Future cleanup: migrate call sites to use
-// <Dialog> + <DialogContent> directly from "@/components/ui/dialog" and delete this file.
+// API used by ~20 existing call sites in salesmetrics. This wrapper already renders a
+// real shadcn Dialog — there is no behavioral difference between using it and using
+// Dialog directly. Migrate call sites incrementally; once all are migrated, delete
+// this file.
 
 import { ReactNode } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";

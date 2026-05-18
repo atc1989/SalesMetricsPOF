@@ -1,6 +1,13 @@
+// @deprecated — use shadcn Table primitives directly: import { Table, TableBody,
+// TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table".
+// For complex data tables consider pairing with @tanstack/react-table (already
+// installed).
+//
 // Compat wrapper over shadcn Table. Preserves the legacy columns/data/emptyMessage
-// API used by 3 existing call sites. Future cleanup: migrate to shadcn <Table> primitives
-// (or @tanstack/react-table for the heavier ones) and delete this file.
+// API used by 3 existing call sites in salesmetrics. This wrapper already renders the
+// real shadcn Table primitives — no behavioral difference between using it and using
+// Table directly. Migrate call sites incrementally; once all are migrated, delete
+// this file.
 
 import { ReactNode } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
