@@ -1,6 +1,6 @@
 import React from "react";
 import type { FormType, RecentPrintRow } from "@/services/formPrintTracking.service";
-import { FormActionButton } from "@/components/billing-ui/FormActionButton";
+import { FormActionButton } from "@/components/ui/FormActionButton";
 
 type RecentPrintsTableProps = {
   formType: FormType;

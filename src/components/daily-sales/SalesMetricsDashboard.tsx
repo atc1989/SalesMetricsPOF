@@ -5,7 +5,7 @@ import { AgentCardGrid } from "@/components/dashboard/AgentCardGrid";
 import { AgentDetailsModal } from "@/components/dashboard/AgentDetailsModal";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 import { AgentPerformance, TimeRange } from "@/types/dashboard";
 
 export function SalesMetricsDashboard() {

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import type { PaymentMode, RecentSale } from '@/types/dailySales';
 

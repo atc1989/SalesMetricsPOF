@@ -1,7 +1,7 @@
 "use client";
 
 import { KeyboardEvent, useRef } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 
 type ModifyRow = {

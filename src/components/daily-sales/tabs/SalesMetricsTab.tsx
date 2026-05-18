@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { AgentCardGrid } from '@/components/dashboard/AgentCardGrid';
 import { AgentDetailsModal } from '@/components/dashboard/AgentDetailsModal';
 import { SummaryCardGrid } from '@/components/dashboard/SummaryCardGrid';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import type { AgentPerformance, TimeRange } from '@/types/dashboard';
 import type { SalesDataset } from '@/types/sales';
 
@@ -122,16 +122,16 @@ export function SalesMetricsTab() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-slate-900">Sales Metrics</h2>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button id="btnDaily" size="sm" variant={range === 'daily' ? 'primary' : 'secondary'} onClick={() => setRange('daily')}>
+            <Button id="btnDaily" size="sm" variant={range === 'daily' ? 'default' : 'secondary'} onClick={() => setRange('daily')}>
               Daily
             </Button>
-            <Button id="btnWeekly" size="sm" variant={range === 'weekly' ? 'primary' : 'secondary'} onClick={() => setRange('weekly')}>
+            <Button id="btnWeekly" size="sm" variant={range === 'weekly' ? 'default' : 'secondary'} onClick={() => setRange('weekly')}>
               Weekly
             </Button>
-            <Button id="btnMonthly" size="sm" variant={range === 'monthly' ? 'primary' : 'secondary'} onClick={() => setRange('monthly')}>
+            <Button id="btnMonthly" size="sm" variant={range === 'monthly' ? 'default' : 'secondary'} onClick={() => setRange('monthly')}>
               Monthly
             </Button>
-            <Button id="btnCustom" size="sm" variant={range === 'custom' ? 'primary' : 'secondary'} onClick={() => setRange('custom')}>
+            <Button id="btnCustom" size="sm" variant={range === 'custom' ? 'default' : 'secondary'} onClick={() => setRange('custom')}>
               Custom
             </Button>
             <div className="h-9 overflow-hidden">

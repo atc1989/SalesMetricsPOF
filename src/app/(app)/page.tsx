@@ -6,7 +6,7 @@ import { AgentDetailsModal } from "@/components/dashboard/AgentDetailsModal";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
 import { PageShell } from "@/components/layout/PageShell";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 import { AgentPerformance, TimeRange } from "@/types/dashboard";
 import { SalesDataset } from "@/types/sales";

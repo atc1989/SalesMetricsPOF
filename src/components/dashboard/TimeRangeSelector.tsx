@@ -1,7 +1,7 @@
 "use client";
 
 import { TimeRange } from "@/types/dashboard";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 type TimeRangeSelectorProps = {
   value: TimeRange;
@@ -33,7 +33,7 @@ export function TimeRangeSelector({
     <div className="w-full lg:w-auto">
       <div className="flex flex-wrap items-center justify-center gap-2">
         {ranges.map((range) => (
-          <Button key={range.value} variant={range.value === value ? "primary" : "secondary"} size="sm" onClick={() => onChange(range.value)}>
+          <Button key={range.value} variant={range.value === value ? "default" : "secondary"} size="sm" onClick={() => onChange(range.value)}>
             {range.label}
           </Button>
         ))}

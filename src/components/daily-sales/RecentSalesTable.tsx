@@ -1,5 +1,5 @@
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { RecentSale } from '@/types/dailySales';
 
 type RecentSalesTableProps = {
@@ -81,7 +81,7 @@ export default function RecentSalesTable({
                       <Button size="sm" variant="secondary" onClick={() => onEditTransNo(row.id)}>
                         Edit Trans No
                       </Button>
-                      <Button size="sm" variant="danger" onClick={() => onRemove(row.id)}>
+                      <Button size="sm" variant="destructive" onClick={() => onRemove(row.id)}>
                         Remove
                       </Button>
                     </div>

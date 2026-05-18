@@ -2,8 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { Expense } from "@/types/encoder";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 
 type ExpensesFormProps = {

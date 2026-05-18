@@ -1,6 +1,6 @@
 import { SummaryStat } from "@/types/dashboard";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 type SummaryCardGridProps = {
   stats: SummaryStat[];

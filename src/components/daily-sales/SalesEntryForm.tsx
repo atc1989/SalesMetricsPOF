@@ -1,9 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 
 export function SalesEntryForm() {
   const [invoice, setInvoice] = useState("");

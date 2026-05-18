@@ -1,6 +1,6 @@
 import React from "react";
 import { Download, Printer, Save, Trash2 } from "lucide-react";
-import { FormActionButton } from "@/components/billing-ui/FormActionButton";
+import { FormActionButton } from "@/components/ui/FormActionButton";
 
 type EventFormsToolbarProps = {
   onSave: () => void;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 import { buildPrintHtmlDocument, openPrintWindow } from "@/lib/printWindow";
 import type { PrintLineItem, PrintTransaction } from "@/types/dailySales";

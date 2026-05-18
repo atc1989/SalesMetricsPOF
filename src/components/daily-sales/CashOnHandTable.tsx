@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { CashOnHandRow } from "@/types/dailySales";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 
 type CashOnHandTableProps = {
   rows: CashOnHandRow[];

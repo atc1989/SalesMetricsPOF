@@ -1,5 +1,5 @@
 import { SalesMetricKpi } from "@/types/dailySales";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 
 type SalesOverviewKPIsProps = {
   kpis: SalesMetricKpi[];

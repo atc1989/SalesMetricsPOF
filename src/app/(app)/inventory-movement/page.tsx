@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/Modal";
 import {
   INITIAL_BLISTER_STOCK,

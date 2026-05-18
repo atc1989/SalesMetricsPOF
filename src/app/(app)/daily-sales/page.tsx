@@ -9,7 +9,7 @@ import { ReportsTab } from "@/components/daily-sales/tabs/ReportsTab";
 import { SalesReportTab } from "@/components/daily-sales/tabs/SalesReportTab";
 import { SalesMetricsTab } from "@/components/daily-sales/tabs/SalesMetricsTab";
 import { UsersTab } from "@/components/daily-sales/tabs/UsersTab";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 
 export default function DailySalesPage() {
   const [activeTab, setActiveTab] = useState('dashboard');

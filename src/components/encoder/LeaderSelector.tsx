@@ -2,9 +2,9 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { Leader } from "@/types/encoder";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 
 type LeaderSelectorProps = {

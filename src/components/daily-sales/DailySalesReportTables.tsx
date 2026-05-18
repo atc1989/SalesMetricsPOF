@@ -1,5 +1,5 @@
 import { BreakdownRow } from "@/types/dailySales";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/DataTable";
 
 type DailySalesReportTablesProps = {

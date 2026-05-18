@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ModifyGgTransNoModal } from '@/components/daily-sales/ModifyGgTransNoModal';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/Modal';
 import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import { buildPofPrintHtml } from '@/lib/print/buildPofPrintHtml';
@@ -883,7 +883,7 @@ export function ReportsTab() {
                         <Button size="sm" variant="secondary" onClick={() => onPrintRow(row)}>
                           Print
                         </Button>
-                        <Button size="sm" variant="danger" onClick={() => onOpenRemoveRow(row)}>
+                        <Button size="sm" variant="destructive" onClick={() => onOpenRemoveRow(row)}>
                           Remove
                         </Button>
                       </div>
@@ -937,7 +937,7 @@ export function ReportsTab() {
             <Button variant="secondary" onClick={onCloseRemoveModal} disabled={isRemovingRow}>
               Cancel
             </Button>
-            <Button variant="danger" onClick={onConfirmRemoveRow} disabled={isRemovingRow}>
+            <Button variant="destructive" onClick={onConfirmRemoveRow} disabled={isRemovingRow}>
               {isRemovingRow ? 'Removing...' : 'Remove'}
             </Button>
           </>
