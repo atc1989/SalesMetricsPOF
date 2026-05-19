@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Modal } from '@/components/ui/Modal';
+import { Separator } from '@/components/ui/separator';
 import {
   dailySalesDiscountMatrix,
   encoderPackageOptions,
@@ -678,8 +679,15 @@ export function EncoderTab() {
             {submitError ? (
               <p className="mb-3 text-sm text-destructive">{submitError}</p>
             ) : null}
-            <form id="salesForm" className="space-y-6" onSubmit={onSubmit} onReset={onReset}>
-            <div className="grid gap-3 md:grid-cols-3">
+            <form id="salesForm" onSubmit={onSubmit} onReset={onReset}>
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Sale Info</h2>
+                <p className="text-muted-foreground text-sm">
+                  Identification, member, and event for this entry.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Event
                 <input
@@ -748,9 +756,19 @@ export function EncoderTab() {
                   <option value="0">No</option>
                 </select>
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Package & Pricing</h2>
+                <p className="text-muted-foreground text-sm">
+                  Member tier, package selection, pricing, and computed totals.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Member Type
                 <select id="memberType" value={form.memberType} onChange={(event) => onMemberTypeChange(event.target.value as EncoderMemberTypeOption)} className="h-10 rounded-md border border-input px-3">
@@ -879,9 +897,19 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input bg-muted/50 px-3"
                 />
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-4">
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Marketing Items</h2>
+                <p className="text-muted-foreground text-sm">
+                  Bags and marketing tools attached to this sale.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Bag Type
                 <select
@@ -936,9 +964,19 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50"
                 />
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-4">
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Payment</h2>
+                <p className="text-muted-foreground text-sm">
+                  Primary and optional secondary payment mode with references.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Mode of Payment
                 <select id="paymentMode" value={form.paymentMode} onChange={(event) => onPaymentModeChange(event.target.value as Exclude<EncoderPaymentModeOption, 'N/A'>)} className="h-10 rounded-md border border-input px-3">
@@ -1023,9 +1061,19 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3"
                 />
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-4">
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Release Tracking</h2>
+                <p className="text-muted-foreground text-sm">
+                  Released vs. to-follow quantities for bottle and blister stock.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Released (Bottle)
                 <input
@@ -1070,10 +1118,20 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3"
                 />
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground md:col-span-2">
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Remarks & Handoff</h2>
+                <p className="text-muted-foreground text-sm">
+                  Notes about this entry and who received / collected the items.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground sm:col-span-2">
                 Remarks
                 <textarea
                   id="remarks"
@@ -1101,10 +1159,13 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3"
                 />
               </label>
+              </div>
             </div>
 
+            <Separator className="my-10" />
+
             <div className="flex flex-wrap justify-end gap-2">
-              <Button type="reset" variant="secondary">
+              <Button type="reset" variant="outline">
                 Clear Form
               </Button>
               <Button type="submit">Save Entry</Button>
