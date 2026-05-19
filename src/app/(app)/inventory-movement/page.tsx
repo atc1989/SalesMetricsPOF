@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Modal } from "@/components/ui/Modal";
 import {
   INITIAL_BLISTER_STOCK,
@@ -359,12 +360,11 @@ export default function InventoryMovementPage() {
               >
                 FROM
               </label>
-              <input
+              <DatePicker
                 id="inventory-from"
-                type="date"
                 value={dateFrom}
-                onChange={(event) => setDateFrom(event.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs"
+                onChange={setDateFrom}
+                placeholder="From"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -374,12 +374,11 @@ export default function InventoryMovementPage() {
               >
                 TO
               </label>
-              <input
+              <DatePicker
                 id="inventory-to"
-                type="date"
                 value={dateTo}
-                onChange={(event) => setDateTo(event.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs"
+                onChange={setDateTo}
+                placeholder="To"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -580,15 +579,15 @@ export default function InventoryMovementPage() {
         }
       >
         <div className="grid gap-3">
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            DATE
-            <input
-              type="date"
+          <div className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
+            <label htmlFor="stock-in-date">DATE</label>
+            <DatePicker
+              id="stock-in-date"
               value={movementDate}
-              onChange={(event) => setMovementDate(event.target.value)}
-              className="mt-1 rounded border border-input px-3 py-2 text-sm"
+              onChange={setMovementDate}
+              placeholder="Pick a date"
             />
-          </label>
+          </div>
           <label className="flex flex-col text-xs font-medium text-muted-foreground">
             BOTTLE IN
             <input
