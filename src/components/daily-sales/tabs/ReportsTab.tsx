@@ -833,7 +833,7 @@ export function ReportsTab() {
         </div>
       </Card>
 
-      <Card className="p-0">
+      <Card className="overflow-hidden p-0">
         <div className="flex items-center justify-end px-4 py-3">
           <Button id="exportSalesReport" size="sm" onClick={onExportCsv}>
             Excel

@@ -2,7 +2,13 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Modal } from '@/components/ui/Modal';
 import {
   dailySalesDiscountMatrix,
@@ -664,9 +670,15 @@ export function EncoderTab() {
     <>
       <section id="encoder" className="mt-4">
         <Card>
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Encoder</h2>
-          {submitError ? <p className="mb-3 text-sm text-red-600">{submitError}</p> : null}
-          <form id="salesForm" className="space-y-6" onSubmit={onSubmit} onReset={onReset}>
+          <CardHeader>
+            <CardTitle className="text-lg">Encoder</CardTitle>
+            <CardDescription>Capture a new sale or member entry.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {submitError ? (
+              <p className="mb-3 text-sm text-destructive">{submitError}</p>
+            ) : null}
+            <form id="salesForm" className="space-y-6" onSubmit={onSubmit} onReset={onReset}>
             <div className="grid gap-3 md:grid-cols-3">
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Event
@@ -1098,6 +1110,7 @@ export function EncoderTab() {
               <Button type="submit">Save Entry</Button>
             </div>
           </form>
+          </CardContent>
         </Card>
       </section>
 

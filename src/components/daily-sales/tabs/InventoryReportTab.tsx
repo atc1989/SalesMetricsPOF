@@ -536,7 +536,7 @@ export function InventoryReportTab() {
         </div>
       </Card>
 
-      <Card id="cntnrDailyInventory" className="p-0">
+      <Card id="cntnrDailyInventory" className="overflow-hidden p-0">
         <div className="flex items-center justify-between px-4 py-3">
           <span id="spnTransDate" className="text-sm text-muted-foreground">
             {displayDateRange}

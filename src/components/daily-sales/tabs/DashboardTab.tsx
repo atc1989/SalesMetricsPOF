@@ -354,7 +354,7 @@ export function DashboardTab() {
             Excel
           </Button>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="overflow-hidden p-0">
           {errorMessage ? (
             <div className="px-4 pb-4">
               <Alert variant="destructive">

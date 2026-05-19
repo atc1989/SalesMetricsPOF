@@ -399,11 +399,11 @@ export function UsersTab() {
   return (
     <>
       <section id="users" className="mt-4 space-y-4">
-        {errorMessage ? <p className="text-xs text-amber-700">{errorMessage}</p> : null}
+        {errorMessage ? <p className="text-xs text-amber-500">{errorMessage}</p> : null}
         <Card className="p-3">
-          <h2 className="mb-3 text-sm font-semibold text-slate-900">Users</h2>
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Users</h2>
           <form id="usersForm" className="grid gap-2 md:grid-cols-5" onSubmit={onUsersFormSubmit} onReset={onUsersFormReset}>
-            <label className="flex flex-col text-xs font-medium text-slate-700">
+            <label className="flex flex-col text-xs font-medium text-muted-foreground">
               Full Name
               <input
                 id="fullName"
@@ -411,17 +411,17 @@ export function UsersTab() {
                 value={fullName}
                 readOnly
                 required
-                className="mt-1 h-10 rounded border border-slate-300 bg-slate-50 px-3 text-sm"
+                className="mt-1 h-10 rounded border border-input bg-muted/50 px-3 text-sm"
               />
             </label>
-            <label className="flex flex-col text-xs font-medium text-slate-700">
+            <label className="flex flex-col text-xs font-medium text-muted-foreground">
               Zero One
               <select
                 id="zeroOne"
                 value={zeroOne}
                 required
                 onChange={(event) => setZeroOne(event.target.value)}
-                className="mt-1 h-10 rounded border border-slate-300 px-3 text-sm"
+                className="mt-1 h-10 rounded border border-input px-3 text-sm"
               >
                 <option value="">Select zero one</option>
                 {zeroOneOptions.map((option) => (
@@ -431,14 +431,14 @@ export function UsersTab() {
                 ))}
               </select>
             </label>
-            <label className="flex flex-col text-xs font-medium text-slate-700">
+            <label className="flex flex-col text-xs font-medium text-muted-foreground">
               Code Payment
               <select
                 id="codePayment"
                 value={codePayment}
                 required
                 onChange={(event) => setCodePayment(event.target.value as 'PD' | 'FS')}
-                className="mt-1 h-10 rounded border border-slate-300 px-3 text-sm"
+                className="mt-1 h-10 rounded border border-input px-3 text-sm"
               >
                 {defaultCodePaymentOptions.map((option) => (
                   <option key={option} value={option}>
@@ -474,21 +474,21 @@ export function UsersTab() {
           </form>
         </Card>
 
-        <Card className="p-0">
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-            <h3 className="text-sm font-semibold text-slate-900">Users With No Zero One</h3>
+        <Card className="overflow-hidden p-0">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <h3 className="text-sm font-semibold text-foreground">Users With No Zero One</h3>
             <input
               id="tblUsersSearch"
               type="text"
               value={usersSearchQuery}
               onChange={(event) => setUsersSearchQuery(event.target.value)}
               placeholder="Search table..."
-              className="h-9 w-full max-w-xs rounded border border-slate-300 px-3 text-sm"
+              className="h-9 w-full max-w-xs rounded border border-input px-3 text-sm"
             />
           </div>
           <div className="app-table-scroll">
             <table id="tblUsers" className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
+              <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2">username</th>
                   <th className="px-3 py-2">name</th>
@@ -500,13 +500,13 @@ export function UsersTab() {
               <tbody>
                 {filteredUsersRows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
+                    <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
                       No user rows found.
                     </td>
                   </tr>
                 ) : (
                   filteredUsersRows.map((row) => (
-                    <tr key={row.id} className="border-t border-slate-100">
+                    <tr key={row.id} className="border-t border-border">
                       <td className="px-3 py-2">{row.username}</td>
                       <td className="px-3 py-2">{row.fullName}</td>
                       <td className="px-3 py-2">{row.zeroOne}</td>
@@ -524,9 +524,9 @@ export function UsersTab() {
           </div>
         </Card>
 
-        <Card className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
-            <h3 className="text-sm font-semibold text-slate-900">User Accounts</h3>
+        <Card className="overflow-hidden p-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+            <h3 className="text-sm font-semibold text-foreground">User Accounts</h3>
             <div className="flex w-full max-w-xl items-center gap-2">
               <input
                 id="tblUserAccountSearch"
@@ -534,7 +534,7 @@ export function UsersTab() {
                 value={userAccountSearchQuery}
                 onChange={(event) => setUserAccountSearchQuery(event.target.value)}
                 placeholder="Search table..."
-                className="h-9 flex-1 rounded border border-slate-300 px-3 text-sm"
+                className="h-9 flex-1 rounded border border-input px-3 text-sm"
               />
               <Button id="exportUserAccount" type="button" size="sm" onClick={exportUserAccount}>
                 CSV
@@ -543,7 +543,7 @@ export function UsersTab() {
           </div>
           <div className="app-table-scroll">
             <table id="tblUserAccount" className="min-w-[1400px] text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
+              <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2">Full Name</th>
                   <th className="px-3 py-2">username</th>
@@ -564,19 +564,19 @@ export function UsersTab() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={14} className="px-3 py-6 text-center text-slate-500">
+                    <td colSpan={14} className="px-3 py-6 text-center text-muted-foreground">
                       Loading user accounts...
                     </td>
                   </tr>
                 ) : filteredUserAccountRows.length === 0 ? (
                   <tr>
-                    <td colSpan={14} className="px-3 py-6 text-center text-slate-500">
+                    <td colSpan={14} className="px-3 py-6 text-center text-muted-foreground">
                       No user account rows found.
                     </td>
                   </tr>
                 ) : (
                   filteredUserAccountRows.map((row) => (
-                    <tr key={row.id} className="border-t border-slate-100">
+                    <tr key={row.id} className="border-t border-border">
                       <td className="px-3 py-2">{row.fullName}</td>
                       <td className="px-3 py-2">{row.username}</td>
                       <td className="px-3 py-2">{row.sponsor}</td>
