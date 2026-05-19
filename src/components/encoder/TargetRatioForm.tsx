@@ -1,10 +1,24 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { TargetRatio } from "@/types/encoder";
-import { Card } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/Modal";
+import { TargetRatio } from "@/types/encoder";
 
 type TargetRatioFormProps = {
   initialValue: TargetRatio;
@@ -24,50 +38,70 @@ export function TargetRatioForm({ initialValue }: TargetRatioFormProps) {
   return (
     <>
       <Card>
-        <h3 className="mb-3 text-lg font-semibold text-slate-900">Target Ratio</h3>
-        <form className="grid gap-3 sm:grid-cols-4" onSubmit={onSubmit}>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Global Target Ratio
-            <input
-              type="number"
-              min="0"
-              value={value.globalTargetRatio}
-              onChange={(event) =>
-                setValue((prev) => ({ ...prev, globalTargetRatio: Number(event.target.value) }))
-              }
-              className="h-10 rounded-md border border-slate-300 px-3"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Package %
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={value.package}
-              onChange={(event) => setValue((prev) => ({ ...prev, package: Number(event.target.value) }))}
-              className="h-10 rounded-md border border-slate-300 px-3"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Retail %
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={value.retail}
-              onChange={(event) => setValue((prev) => ({ ...prev, retail: Number(event.target.value) }))}
-              className="h-10 rounded-md border border-slate-300 px-3"
-            />
-          </label>
-          <div className="flex items-end">
-            <Button type="submit">Save Ratio</Button>
-          </div>
-        </form>
-        <p className="mt-3 text-sm text-slate-600">
-          Saved: Global {savedValue.globalTargetRatio}% | Package {savedValue.package}% | Retail{" "}
-          {savedValue.retail}%
-        </p>
+        <CardHeader>
+          <CardTitle className="text-lg">Target Ratio</CardTitle>
+          <CardDescription>
+            Set the global, package, and retail target ratios used in encoder calculations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-4 sm:flex-row sm:items-end" onSubmit={onSubmit}>
+            <FieldGroup className="flex-1">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field>
+                  <FieldLabel htmlFor="globalTargetRatio">Global Target Ratio</FieldLabel>
+                  <Input
+                    id="globalTargetRatio"
+                    type="number"
+                    min="0"
+                    value={value.globalTargetRatio}
+                    onChange={(event) =>
+                      setValue((prev) => ({
+                        ...prev,
+                        globalTargetRatio: Number(event.target.value),
+                      }))
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="packagePercent">Package %</FieldLabel>
+                  <Input
+                    id="packagePercent"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={value.package}
+                    onChange={(event) =>
+                      setValue((prev) => ({ ...prev, package: Number(event.target.value) }))
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="retailPercent">Retail %</FieldLabel>
+                  <Input
+                    id="retailPercent"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={value.retail}
+                    onChange={(event) =>
+                      setValue((prev) => ({ ...prev, retail: Number(event.target.value) }))
+                    }
+                  />
+                </Field>
+              </div>
+            </FieldGroup>
+            <div>
+              <Button type="submit">Save Ratio</Button>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter>
+          <p className="text-sm text-muted-foreground">
+            Saved: Global {savedValue.globalTargetRatio}% · Package {savedValue.package}% · Retail{" "}
+            {savedValue.retail}%
+          </p>
+        </CardFooter>
       </Card>
       <Modal isOpen={isSuccessOpen} title="Saved" onClose={() => setIsSuccessOpen(false)}>
         Target ratio saved successfully (mock).
