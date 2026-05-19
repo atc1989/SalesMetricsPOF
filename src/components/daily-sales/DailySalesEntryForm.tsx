@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/Modal";
 
 type YesNo = "yes" | "no";
@@ -128,64 +128,64 @@ export function DailySalesEntryForm() {
   return (
     <>
       <Card>
-        <h3 className="mb-3 text-lg font-semibold text-slate-900">Daily Sales Entry</h3>
+        <h3 className="mb-3 text-lg font-semibold text-foreground">Daily Sales Entry</h3>
         <form className="space-y-5" onSubmit={onSubmit}>
           <section className="space-y-3">
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Basic Info</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Basic Info</h4>
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Event
                 <input
                   id="event"
                   value={form.event}
                   onChange={(event) => setForm((prev) => ({ ...prev, event: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Date
                 <input
                   id="date"
                   type="date"
                   value={form.date}
                   onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 POF Number
                 <input
                   id="pof-number"
                   value={form.pofNumber}
                   onChange={(event) => setForm((prev) => ({ ...prev, pofNumber: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Member Name
                 <input
                   id="member-name"
                   value={form.memberName}
                   onChange={(event) => setForm((prev) => ({ ...prev, memberName: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Username
                 <input
                   id="username"
                   value={form.username}
                   onChange={(event) => setForm((prev) => ({ ...prev, username: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 New Member
                 <select
                   id="new-member"
                   value={form.newMember}
                   onChange={(event) => setForm((prev) => ({ ...prev, newMember: event.target.value as YesNo }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
@@ -195,51 +195,51 @@ export function DailySalesEntryForm() {
           </section>
 
           <section className="space-y-3">
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Order Details</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Order Details</h4>
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Member Type
                 <select
                   id="member-type"
                   value={form.memberType}
                   onChange={(event) => setForm((prev) => ({ ...prev, memberType: event.target.value as MemberType }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   <option value="guest">Guest</option>
                   <option value="member">Member</option>
                   <option value="vip">VIP</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Package Type
                 <select
                   id="package-type"
                   value={form.packageType}
                   onChange={(event) => setForm((prev) => ({ ...prev, packageType: event.target.value as PackageType }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   <option value="starter">Starter</option>
                   <option value="growth">Growth</option>
                   <option value="premium">Premium</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 To Blister
                 <select
                   id="to-blister"
                   value={form.toBlister}
                   onChange={(event) => setForm((prev) => ({ ...prev, toBlister: event.target.value as YesNo }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Original Price
-                <input id="original-price" type="number" value={originalPrice} readOnly className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3" />
+                <input id="original-price" type="number" value={originalPrice} readOnly className="h-10 rounded-md border border-input bg-muted/50 px-3" />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Quantity
                 <input
                   id="quantity"
@@ -247,31 +247,31 @@ export function DailySalesEntryForm() {
                   min="0"
                   value={form.quantity}
                   onChange={(event) => setForm((prev) => ({ ...prev, quantity: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Blister Count
-                <input id="blister-count" type="number" value={blisterCount} readOnly className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3" />
+                <input id="blister-count" type="number" value={blisterCount} readOnly className="h-10 rounded-md border border-input bg-muted/50 px-3" />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Discount
                 <select
                   id="discount"
                   value={form.discount}
                   onChange={(event) => setForm((prev) => ({ ...prev, discount: event.target.value as DiscountType }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 >
                   <option value="none">None</option>
                   <option value="senior-5">Senior 5%</option>
                   <option value="promo-10">Promo 10%</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Price
-                <input id="price" type="number" value={Number(price.toFixed(2))} readOnly className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3" />
+                <input id="price" type="number" value={Number(price.toFixed(2))} readOnly className="h-10 rounded-md border border-input bg-muted/50 px-3" />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 One Time Discount
                 <input
                   id="one-time-discount"
@@ -280,38 +280,38 @@ export function DailySalesEntryForm() {
                   step="0.01"
                   value={form.oneTimeDiscount}
                   onChange={(event) => setForm((prev) => ({ ...prev, oneTimeDiscount: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 No. of Bottles
-                <input id="no-of-bottles" type="number" value={bottleCount} readOnly className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3" />
+                <input id="no-of-bottles" type="number" value={bottleCount} readOnly className="h-10 rounded-md border border-input bg-muted/50 px-3" />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Sales
-                <input id="sales" type="number" value={Number(sales.toFixed(2))} readOnly className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3" />
+                <input id="sales" type="number" value={Number(sales.toFixed(2))} readOnly className="h-10 rounded-md border border-input bg-muted/50 px-3" />
               </label>
             </div>
           </section>
 
           <section className="space-y-3">
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Payments</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Payments</h4>
             {[0, 1, 2].map((index) => {
               const payment = form.payments[index];
               const suffix = index === 0 ? "one" : index === 1 ? "two" : "three";
               const label = `Payment ${index + 1}`;
 
               return (
-                <div key={suffix} className="rounded-md border border-slate-200 p-3">
-                  <p className="mb-2 text-sm font-medium text-slate-800">{label}</p>
+                <div key={suffix} className="rounded-md border border-border p-3">
+                  <p className="mb-2 text-sm font-medium text-foreground">{label}</p>
                   <div className="grid gap-3 md:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-sm text-slate-700">
+                    <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                       Payment Mode
                       <select
                         id={`payment-${suffix}-mode`}
                         value={payment.paymentMode}
                         onChange={(event) => updatePayment(index, "paymentMode", event.target.value)}
-                        className="h-10 rounded-md border border-slate-300 px-3"
+                        className="h-10 rounded-md border border-input px-3"
                       >
                         <option value="">Select mode</option>
                         <option value="cash">Cash</option>
@@ -321,13 +321,13 @@ export function DailySalesEntryForm() {
                         <option value="maya">Maya</option>
                       </select>
                     </label>
-                    <label className="flex flex-col gap-1 text-sm text-slate-700">
+                    <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                       Payment Type
                       <select
                         id={`payment-${suffix}-type`}
                         value={payment.paymentType}
                         onChange={(event) => updatePayment(index, "paymentType", event.target.value)}
-                        className="h-10 rounded-md border border-slate-300 px-3"
+                        className="h-10 rounded-md border border-input px-3"
                       >
                         <option value="">Select type</option>
                         <option value="full">Full</option>
@@ -335,16 +335,16 @@ export function DailySalesEntryForm() {
                         <option value="deposit">Deposit</option>
                       </select>
                     </label>
-                    <label className="flex flex-col gap-1 text-sm text-slate-700">
+                    <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                       Reference No
                       <input
                         id={`payment-${suffix}-reference-no`}
                         value={payment.referenceNo}
                         onChange={(event) => updatePayment(index, "referenceNo", event.target.value)}
-                        className="h-10 rounded-md border border-slate-300 px-3"
+                        className="h-10 rounded-md border border-input px-3"
                       />
                     </label>
-                    <label className="flex flex-col gap-1 text-sm text-slate-700">
+                    <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                       Sales Amount
                       <input
                         id={`payment-${suffix}-sales-amount`}
@@ -353,7 +353,7 @@ export function DailySalesEntryForm() {
                         step="0.01"
                         value={payment.salesAmount}
                         onChange={(event) => updatePayment(index, "salesAmount", event.target.value)}
-                        className="h-10 rounded-md border border-slate-300 px-3"
+                        className="h-10 rounded-md border border-input px-3"
                       />
                     </label>
                   </div>
@@ -363,9 +363,9 @@ export function DailySalesEntryForm() {
           </section>
 
           <section className="space-y-3">
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Release / Follow-up</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Release / Follow-up</h4>
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Released bottle
                 <input
                   id="released-bottle"
@@ -373,10 +373,10 @@ export function DailySalesEntryForm() {
                   min="0"
                   value={form.releasedBottle}
                   onChange={(event) => setForm((prev) => ({ ...prev, releasedBottle: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Released blister
                 <input
                   id="released-blister"
@@ -384,10 +384,10 @@ export function DailySalesEntryForm() {
                   min="0"
                   value={form.releasedBlister}
                   onChange={(event) => setForm((prev) => ({ ...prev, releasedBlister: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 To Follow bottle
                 <input
                   id="to-follow-bottle"
@@ -395,10 +395,10 @@ export function DailySalesEntryForm() {
                   min="0"
                   value={form.toFollowBottle}
                   onChange={(event) => setForm((prev) => ({ ...prev, toFollowBottle: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 To Follow blister
                 <input
                   id="to-follow-blister"
@@ -406,41 +406,41 @@ export function DailySalesEntryForm() {
                   min="0"
                   value={form.toFollowBlister}
                   onChange={(event) => setForm((prev) => ({ ...prev, toFollowBlister: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
             </div>
           </section>
 
           <section className="space-y-3">
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Remarks / Staff</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Remarks / Staff</h4>
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="md:col-span-2 flex flex-col gap-1 text-sm text-slate-700">
+              <label className="md:col-span-2 flex flex-col gap-1 text-sm text-muted-foreground">
                 Remarks
                 <textarea
                   id="remarks"
                   rows={3}
                   value={form.remarks}
                   onChange={(event) => setForm((prev) => ({ ...prev, remarks: event.target.value }))}
-                  className="rounded-md border border-slate-300 px-3 py-2"
+                  className="rounded-md border border-input px-3 py-2"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Received By
                 <input
                   id="received-by"
                   value={form.receivedBy}
                   onChange={(event) => setForm((prev) => ({ ...prev, receivedBy: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-slate-700">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Collected By
                 <input
                   id="collected-by"
                   value={form.collectedBy}
                   onChange={(event) => setForm((prev) => ({ ...prev, collectedBy: event.target.value }))}
-                  className="h-10 rounded-md border border-slate-300 px-3"
+                  className="h-10 rounded-md border border-input px-3"
                 />
               </label>
             </div>

@@ -1,9 +1,42 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
 import { createPcfTransaction } from "@/services/pcf.service";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Textarea } from "@/components/ui/textarea";
 
 type NewPcfDraft = {
   date: string;
@@ -24,14 +57,12 @@ const initialDraft: NewPcfDraft = {
   invoiceNo: "",
   description: "",
   amountIn: "",
-  amountOut: ""
+  amountOut: "",
 };
 
 const normalizeDraft = (value: unknown): NewPcfDraft => {
   if (!value || typeof value !== "object") return initialDraft;
-
   const parsed = value as Partial<NewPcfDraft>;
-
   return {
     date: typeof parsed.date === "string" ? parsed.date : "",
     pcvNo: typeof parsed.pcvNo === "string" ? parsed.pcvNo : "",
@@ -39,13 +70,12 @@ const normalizeDraft = (value: unknown): NewPcfDraft => {
     invoiceNo: typeof parsed.invoiceNo === "string" ? parsed.invoiceNo : "",
     description: typeof parsed.description === "string" ? parsed.description : "",
     amountIn: typeof parsed.amountIn === "string" ? parsed.amountIn : "",
-    amountOut: typeof parsed.amountOut === "string" ? parsed.amountOut : ""
+    amountOut: typeof parsed.amountOut === "string" ? parsed.amountOut : "",
   };
 };
 
 const loadDraft = (): NewPcfDraft => {
   if (typeof window === "undefined") return initialDraft;
-
   try {
     const savedDraft = window.sessionStorage.getItem(draftStorageKey);
     if (!savedDraft) return initialDraft;
@@ -91,7 +121,7 @@ export function NewPcfPage() {
         invoice_no: draft.invoiceNo,
         description: draft.description,
         amount_in: Number(draft.amountIn || 0),
-        amount_out: Number(draft.amountOut || 0)
+        amount_out: Number(draft.amountOut || 0),
       });
 
       if (result.error || !result.data) {
@@ -108,156 +138,159 @@ export function NewPcfPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="pt-16">
-        <div className="max-w-[1600px] mx-auto px-6 py-8">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <button onClick={() => router.push("/pcf")} className="hover:text-blue-600">
-              Petty Cash Fund
-            </button>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-gray-900">New PCV Entry</span>
-          </div>
+    <form onSubmit={handleSave} className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/pcf">Petty Cash Fund</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>New PCV Entry</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">New PCV Entry</h1>
-            <p className="text-gray-600 mt-1">Create a new petty cash voucher entry</p>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">New PCV Entry</h1>
+          <p className="text-sm text-muted-foreground">
+            Create a new petty cash voucher entry.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving && <Loader2 data-icon="inline-start" className="animate-spin" />}
+            {isSaving ? "Saving…" : "Save"}
+          </Button>
+        </div>
+      </div>
 
-          <form onSubmit={handleSave}>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Entry Details</h2>
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertTitle>Cannot save PCV</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
 
-              {errorMessage && (
-                <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {errorMessage}
-                </div>
-              )}
+      {/* Entry Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Entry Details</CardTitle>
+          <CardDescription>
+            Identification, payee, and amounts for this voucher.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="date">Date</FieldLabel>
+                <Input
+                  id="date"
+                  type="date"
+                  value={draft.date}
+                  onChange={(e) => updateDraftField("date", e.target.value)}
+                />
+              </Field>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Date
-                  </label>
-                  <input
-                    id="date"
-                    type="date"
-                    value={draft.date}
-                    onChange={(e) => updateDraftField("date", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+              <Field>
+                <FieldLabel htmlFor="pcvNo">PCV No.</FieldLabel>
+                <Input
+                  id="pcvNo"
+                  value={draft.pcvNo}
+                  onChange={(e) => updateDraftField("pcvNo", e.target.value)}
+                  placeholder="Enter PCV number"
+                />
+                <FieldDescription>Leave blank to auto-generate on save.</FieldDescription>
+              </Field>
 
-                <div>
-                  <label htmlFor="pcvNo" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    PCV No.
-                  </label>
-                  <input
-                    id="pcvNo"
-                    type="text"
-                    value={draft.pcvNo}
-                    onChange={(e) => updateDraftField("pcvNo", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter PCV number"
-                  />
-                </div>
+              <Field>
+                <FieldLabel htmlFor="payee">Payee</FieldLabel>
+                <Input
+                  id="payee"
+                  value={draft.payee}
+                  onChange={(e) => updateDraftField("payee", e.target.value)}
+                  placeholder="Enter payee"
+                />
+              </Field>
 
-                <div>
-                  <label htmlFor="payee" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Payee
-                  </label>
-                  <input
-                    id="payee"
-                    type="text"
-                    value={draft.payee}
-                    onChange={(e) => updateDraftField("payee", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter payee"
-                  />
-                </div>
+              <Field>
+                <FieldLabel htmlFor="invoiceNo">Invoice No.</FieldLabel>
+                <Input
+                  id="invoiceNo"
+                  value={draft.invoiceNo}
+                  onChange={(e) => updateDraftField("invoiceNo", e.target.value)}
+                  placeholder="Enter invoice number"
+                />
+              </Field>
 
-                <div>
-                  <label htmlFor="invoiceNo" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Invoice No.
-                  </label>
-                  <input
-                    id="invoiceNo"
-                    type="text"
-                    value={draft.invoiceNo}
-                    onChange={(e) => updateDraftField("invoiceNo", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter invoice number"
-                  />
-                </div>
+              <Field className="md:col-span-2">
+                <FieldLabel htmlFor="description">Description</FieldLabel>
+                <Textarea
+                  id="description"
+                  value={draft.description}
+                  onChange={(e) => updateDraftField("description", e.target.value)}
+                  rows={4}
+                  placeholder="Enter description"
+                />
+              </Field>
 
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 mb-1.5"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    id="description"
-                    value={draft.description}
-                    onChange={(e) => updateDraftField("description", e.target.value)}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    placeholder="Enter description"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="amountIn" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Amount In
-                  </label>
-                  <input
+              <Field>
+                <FieldLabel htmlFor="amountIn">Amount In</FieldLabel>
+                <InputGroup>
+                  <InputGroupAddon>₱</InputGroupAddon>
+                  <InputGroupInput
                     id="amountIn"
                     type="number"
                     step="0.01"
                     value={draft.amountIn}
                     onChange={(e) => updateDraftField("amountIn", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-right"
                     placeholder="0.00"
+                    className="text-right tabular-nums"
                   />
-                </div>
+                </InputGroup>
+                <FieldDescription>Replenishment or starting balance.</FieldDescription>
+              </Field>
 
-                <div>
-                  <label htmlFor="amountOut" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Amount Out
-                  </label>
-                  <input
+              <Field>
+                <FieldLabel htmlFor="amountOut">Amount Out</FieldLabel>
+                <InputGroup>
+                  <InputGroupAddon>₱</InputGroupAddon>
+                  <InputGroupInput
                     id="amountOut"
                     type="number"
                     step="0.01"
                     value={draft.amountOut}
                     onChange={(e) => updateDraftField("amountOut", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-right"
                     placeholder="0.00"
+                    className="text-right tabular-nums"
                   />
-                </div>
-              </div>
+                </InputGroup>
+                <FieldDescription>Expense paid from the fund.</FieldDescription>
+              </Field>
             </div>
+          </FieldGroup>
+        </CardContent>
+      </Card>
 
-            <div className="mt-8 flex items-center justify-end gap-3 pb-8">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </form>
-        </div>
+      {/* Footer */}
+      <div className="flex flex-wrap items-center justify-end gap-2 pb-4">
+        <Button type="button" variant="outline" onClick={handleCancel} disabled={isSaving}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSaving}>
+          {isSaving && <Loader2 data-icon="inline-start" className="animate-spin" />}
+          {isSaving ? "Saving…" : "Save"}
+        </Button>
       </div>
-    </div>
+    </form>
   );
 }

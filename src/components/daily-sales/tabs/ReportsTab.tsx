@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ModifyGgTransNoModal } from '@/components/daily-sales/ModifyGgTransNoModal';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/Modal';
 import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import { buildPofPrintHtml } from '@/lib/print/buildPofPrintHtml';
@@ -731,13 +731,13 @@ export function ReportsTab() {
     <section id="reports" className="mt-4 space-y-4">
       <Card className="p-3">
         <div className="grid gap-2 md:grid-cols-6">
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             Report Type
             <select
               id="reportType"
               value={pendingType}
               onChange={(event) => onReportTypeChange(event.target.value as ReportRangeType)}
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 rounded border border-input px-2 py-1 text-sm"
             >
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
@@ -745,7 +745,7 @@ export function ReportsTab() {
               <option value="custom">Custom Range</option>
             </select>
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             Start Date
             <input
               id="startDate"
@@ -753,10 +753,10 @@ export function ReportsTab() {
               value={pendingStartDate}
               onChange={(event) => setPendingStartDate(event.target.value)}
               readOnly={dateInputsReadOnly}
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 rounded border border-input px-2 py-1 text-sm"
             />
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             End Date
             <input
               id="endDate"
@@ -764,7 +764,7 @@ export function ReportsTab() {
               value={pendingEndDate}
               onChange={(event) => setPendingEndDate(event.target.value)}
               readOnly={dateInputsReadOnly}
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 rounded border border-input px-2 py-1 text-sm"
             />
           </label>
           <div className="flex items-end">
@@ -777,7 +777,7 @@ export function ReportsTab() {
               Generate Report
             </Button>
           </div>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             Search
             <input
               id="tblSalesReportSearch"
@@ -785,20 +785,20 @@ export function ReportsTab() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search table..."
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 rounded border border-input px-2 py-1 text-sm"
             />
           </label>
-          <div className="relative flex flex-col text-xs font-medium text-slate-700">
+          <div className="relative flex flex-col text-xs font-medium text-muted-foreground">
             <span>Exclude Payment Methods</span>
             <details className="group mt-1">
-              <summary className="list-none cursor-pointer rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700">
+              <summary className="list-none cursor-pointer rounded border border-input bg-card px-2 py-1 text-sm text-muted-foreground">
                 <span className="block">
                   {selectedPaymentMethods.length === 0
                     ? 'None excluded'
                     : `${selectedPaymentMethods.length} excluded`}
                 </span>
               </summary>
-              <div className="absolute left-0 right-0 top-full z-50 mt-1 space-y-1 rounded border border-slate-300 bg-white px-2 py-2 shadow-lg">
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 space-y-1 rounded border border-input bg-card px-2 py-2 shadow-lg">
                 <div className="flex items-center gap-2 text-[11px]">
                   <button
                     type="button"
@@ -809,7 +809,7 @@ export function ReportsTab() {
                   </button>
                   <button
                     type="button"
-                    className="text-slate-600 hover:underline"
+                    className="text-muted-foreground hover:underline"
                     onClick={() => setSelectedPaymentMethods([])}
                   >
                     Include All
@@ -817,7 +817,7 @@ export function ReportsTab() {
                 </div>
                 <div className="max-h-24 space-y-1 overflow-y-auto">
                   {paymentMethodOptions.map((method) => (
-                    <label key={method} className="flex items-center gap-2 text-xs font-normal text-slate-700">
+                    <label key={method} className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
                       <input
                         type="checkbox"
                         checked={selectedPaymentMethods.includes(method)}
@@ -833,20 +833,20 @@ export function ReportsTab() {
         </div>
       </Card>
 
-      <Card className="p-0">
+      <Card className="overflow-hidden p-0">
         <div className="flex items-center justify-end px-4 py-3">
           <Button id="exportSalesReport" size="sm" onClick={onExportCsv}>
             Excel
           </Button>
         </div>
-        {isLoading ? <p className="px-4 pb-2 text-xs text-slate-500">Loading sales report...</p> : null}
-        {errorMessage ? <p className="px-4 pb-2 text-xs text-amber-600">{errorMessage}</p> : null}
+        {isLoading ? <p className="px-4 pb-2 text-xs text-muted-foreground">Loading sales report...</p> : null}
+        {errorMessage ? <p className="px-4 pb-2 text-xs text-amber-500">{errorMessage}</p> : null}
         {!isLoading && !errorMessage && hasGenerated && filteredRows.length === 0 ? (
-          <p className="px-4 pb-2 text-xs text-slate-500">No results for selected date range</p>
+          <p className="px-4 pb-2 text-xs text-muted-foreground">No results for selected date range</p>
         ) : null}
         <div className="app-table-scroll">
           <table id="tblSalesReport" className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
+            <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-3 py-2">Date</th>
                 <th className="px-3 py-2">POF Number</th>
@@ -861,13 +861,13 @@ export function ReportsTab() {
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
+                  <td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">
                     No report rows found for the selected filters.
                   </td>
                 </tr>
               ) : (
                 filteredRows.map((row) => (
-                  <tr key={row.id} className="border-t border-slate-100">
+                  <tr key={row.id} className="border-t border-border">
                     <td className="px-3 py-2">{row.date}</td>
                     <td className="px-3 py-2">{row.pofNumber}</td>
                     <td className="px-3 py-2">{row.ggTransNo}</td>
@@ -883,7 +883,7 @@ export function ReportsTab() {
                         <Button size="sm" variant="secondary" onClick={() => onPrintRow(row)}>
                           Print
                         </Button>
-                        <Button size="sm" variant="danger" onClick={() => onOpenRemoveRow(row)}>
+                        <Button size="sm" variant="destructive" onClick={() => onOpenRemoveRow(row)}>
                           Remove
                         </Button>
                       </div>
@@ -893,7 +893,7 @@ export function ReportsTab() {
               )}
             </tbody>
             <tfoot>
-              <tr className="border-t border-slate-200 bg-slate-50 font-semibold text-slate-700">
+              <tr className="border-t border-border bg-muted/50 font-semibold text-muted-foreground">
                 <td className="px-3 py-2" colSpan={3}>
                   Total:
                 </td>
@@ -937,14 +937,14 @@ export function ReportsTab() {
             <Button variant="secondary" onClick={onCloseRemoveModal} disabled={isRemovingRow}>
               Cancel
             </Button>
-            <Button variant="danger" onClick={onConfirmRemoveRow} disabled={isRemovingRow}>
+            <Button variant="destructive" onClick={onConfirmRemoveRow} disabled={isRemovingRow}>
               {isRemovingRow ? 'Removing...' : 'Remove'}
             </Button>
           </>
         }
       >
         <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-900">
+          <p className="text-sm font-medium text-foreground">
             Delete POF <span className="text-red-600">{selectedRemoveRow?.pofNumber}</span>?
           </p>
           <p>

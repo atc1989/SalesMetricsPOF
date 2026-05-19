@@ -1,11 +1,33 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { Leader } from "@/types/encoder";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/Modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Leader } from "@/types/encoder";
 
 type LeaderSelectorProps = {
   leaders: Leader[];
@@ -25,11 +47,11 @@ export function LeaderSelector({ leaders, availableLeaders }: LeaderSelectorProp
 
   const selectedLeader = useMemo(
     () => leaders.find((leader) => leader.id === savedSelection.leaderNameId),
-    [leaders, savedSelection.leaderNameId]
+    [leaders, savedSelection.leaderNameId],
   );
   const selectedAvailableLeader = useMemo(
     () => availableLeaders.find((leader) => leader.id === savedSelection.availableLeaderId),
-    [availableLeaders, savedSelection.availableLeaderId]
+    [availableLeaders, savedSelection.availableLeaderId],
   );
 
   const onLeaderNameChange = (nextLeaderId: string) => {
@@ -49,62 +71,73 @@ export function LeaderSelector({ leaders, availableLeaders }: LeaderSelectorProp
   return (
     <>
       <Card>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">Leader Section</h3>
-          {selectedLeader ? <Badge variant="success">Leader: {selectedLeader.name}</Badge> : null}
-        </div>
+        <CardHeader>
+          <CardTitle className="text-lg">Leader Section</CardTitle>
+          <CardDescription>Assign a leader and their available bench for encoder routing.</CardDescription>
+          {selectedLeader ? (
+            <CardAction>
+              <Badge variant="success">Leader: {selectedLeader.name}</Badge>
+            </CardAction>
+          ) : null}
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-4 sm:flex-row sm:items-end" onSubmit={onSubmit}>
+            <FieldGroup className="flex-1">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field>
+                  <FieldLabel htmlFor="leaderName">Leader Name</FieldLabel>
+                  <Select value={leaderNameId} onValueChange={onLeaderNameChange}>
+                    <SelectTrigger id="leaderName" className="w-full">
+                      <SelectValue placeholder="Select a leader" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leaders.map((leader) => (
+                        <SelectItem key={leader.id} value={leader.id}>
+                          {leader.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
 
-        <form className="grid gap-3 sm:grid-cols-4" onSubmit={onSubmit}>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Leader Name
-            <select
-              value={leaderNameId}
-              onChange={(event) => onLeaderNameChange(event.target.value)}
-              className="h-10 rounded-md border border-slate-300 px-3"
-            >
-              {leaders.map((leader) => (
-                <option key={leader.id} value={leader.id}>
-                  {leader.name}
-                </option>
-              ))}
-            </select>
-          </label>
+                <Field>
+                  <FieldLabel htmlFor="agent-avatar">Zero One</FieldLabel>
+                  <Input
+                    id="agent-avatar"
+                    type="text"
+                    value={zeroOne}
+                    onChange={(event) => setZeroOne(event.target.value)}
+                  />
+                </Field>
 
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Zero One
-            <input
-              id="agent-avatar"
-              type="text"
-              value={zeroOne}
-              onChange={(event) => setZeroOne(event.target.value)}
-              className="h-10 rounded-md border border-slate-300 px-3"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Available Leaders
-            <select
-              value={availableLeaderId}
-              onChange={(event) => setAvailableLeaderId(event.target.value)}
-              className="h-10 rounded-md border border-slate-300 px-3"
-            >
-              {availableLeaders.map((leader) => (
-                <option key={leader.id} value={leader.id}>
-                  {leader.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="flex items-end">
-            <Button type="submit">Save Leader</Button>
-          </div>
-        </form>
-
-        <p className="mt-3 text-sm text-slate-600">
-          Saved selection: {selectedLeader?.name ?? "N/A"} ({savedSelection.zeroOne}) | Available:{" "}
-          {selectedAvailableLeader?.name ?? "N/A"}
-        </p>
+                <Field>
+                  <FieldLabel htmlFor="availableLeader">Available Leaders</FieldLabel>
+                  <Select value={availableLeaderId} onValueChange={setAvailableLeaderId}>
+                    <SelectTrigger id="availableLeader" className="w-full">
+                      <SelectValue placeholder="Select an available leader" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableLeaders.map((leader) => (
+                        <SelectItem key={leader.id} value={leader.id}>
+                          {leader.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+            </FieldGroup>
+            <div>
+              <Button type="submit">Save Leader</Button>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter>
+          <p className="text-sm text-muted-foreground">
+            Saved selection: {selectedLeader?.name ?? "N/A"} ({savedSelection.zeroOne || "—"}) ·
+            Available: {selectedAvailableLeader?.name ?? "N/A"}
+          </p>
+        </CardFooter>
       </Card>
       <Modal isOpen={isSuccessOpen} title="Saved" onClose={() => setIsSuccessOpen(false)}>
         Leader settings saved successfully (mock).

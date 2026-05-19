@@ -6,8 +6,12 @@ import { AgentDetailsModal } from "@/components/dashboard/AgentDetailsModal";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
 import { PageShell } from "@/components/layout/PageShell";
-import { Button } from "@/components/ui/Button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Modal } from "@/components/ui/Modal";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AgentPerformance, TimeRange } from "@/types/dashboard";
 import { SalesDataset } from "@/types/sales";
 
@@ -118,13 +122,34 @@ export default function HomePage() {
         }
         actions={<Button onClick={() => setIsSyncOpen(true)}>Sync All</Button>}
       >
-        {isLoading ? <p className="text-sm text-slate-500">Loading latest dashboard overview...</p> : null}
-        {errorMessage ? <p className="text-sm text-amber-600">{errorMessage}</p> : null}
-        {!isLoading && !errorMessage && dataset.agents.length === 0 ? (
-          <p className="text-sm text-slate-500">No data for selected range.</p>
+        {isLoading ? (
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-2/5" />
+            </CardContent>
+          </Card>
+        ) : null}
+        {errorMessage ? (
+          <Alert variant="destructive">
+            <AlertTitle>Could not load dashboard</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         ) : null}
         <SummaryCardGrid stats={dataset.summary} />
-        <AgentCardGrid agents={dataset.agents} onAgentSelect={setSelectedAgent} />
+        {!isLoading && !errorMessage && dataset.agents.length === 0 ? (
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyTitle>No data for selected range</EmptyTitle>
+              <EmptyDescription>
+                Try a different time range or run a sync to populate this view.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <AgentCardGrid agents={dataset.agents} onAgentSelect={setSelectedAgent} />
+        )}
       </PageShell>
 
       <AgentDetailsModal agent={selectedAgent} onClose={() => setSelectedAgent(null)} />

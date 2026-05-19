@@ -5,7 +5,7 @@ import { AgentCardGrid } from "@/components/dashboard/AgentCardGrid";
 import { AgentDetailsModal } from "@/components/dashboard/AgentDetailsModal";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 import { AgentPerformance, TimeRange } from "@/types/dashboard";
 
 export function SalesMetricsDashboard() {
@@ -20,7 +20,7 @@ export function SalesMetricsDashboard() {
     <>
       <Card>
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-slate-900">Sales Metrics</h3>
+          <h3 className="text-lg font-semibold text-foreground">Sales Metrics</h3>
           <TimeRangeSelector
             value={range}
             onChange={setRange}

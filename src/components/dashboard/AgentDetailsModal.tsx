@@ -60,49 +60,49 @@ export function AgentDetailsModal({ agent, rank, onClose }: AgentDetailsModalPro
       title="Overall Summary"
       onClose={onClose}
       panelClassName="max-w-3xl"
-      headerClassName="bg-slate-900"
+      headerClassName="bg-foreground"
       titleClassName="text-white"
       closeButtonContent="×"
-      closeButtonClassName="text-xl text-white hover:bg-slate-800"
+      closeButtonClassName="text-xl text-white hover:bg-foreground"
       closeButtonAriaLabel="Close agent details"
     >
       {agent ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Rank Number</p>
-            <p className="mt-1 font-semibold text-slate-900">#{rank ?? "-"}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Rank Number</p>
+            <p className="mt-1 font-semibold text-foreground">#{rank ?? "-"}</p>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Name</p>
-            <p className="mt-1 font-semibold text-slate-900">{agent.name}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</p>
+            <p className="mt-1 font-semibold text-foreground">{agent.name}</p>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total Sales</p>
-            <p className="mt-1 font-semibold text-slate-900">{formatPeso(agent.sales)}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Sales</p>
+            <p className="mt-1 font-semibold text-foreground">{formatPeso(agent.sales)}</p>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Expenses</p>
-            <p className="mt-1 font-semibold text-slate-900">{agentSummary?.expenses ?? "₱0.0"}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Expenses</p>
+            <p className="mt-1 font-semibold text-foreground">{agentSummary?.expenses ?? "₱0.0"}</p>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Target Ratio</p>
-            <p className="mt-1 font-semibold text-slate-900">{agentSummary?.targetRatio ?? "30:1"}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Target Ratio</p>
+            <p className="mt-1 font-semibold text-foreground">{agentSummary?.targetRatio ?? "30:1"}</p>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Actual Ratio</p>
-            <p className="mt-1 font-semibold text-slate-900">{agentSummary?.actualRatio ?? "0.0:1"}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Actual Ratio</p>
+            <p className="mt-1 font-semibold text-foreground">{agentSummary?.actualRatio ?? "0.0:1"}</p>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Bottles Sold</p>
-            <p className="mt-1 font-semibold text-slate-900">{agentSummary?.bottlesSold ?? "0"}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bottles Sold</p>
+            <p className="mt-1 font-semibold text-foreground">{agentSummary?.bottlesSold ?? "0"}</p>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Member Count</p>
-            <p className="mt-1 font-semibold text-slate-900">{agentSummary?.memberCount ?? "0"}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Member Count</p>
+            <p className="mt-1 font-semibold text-foreground">{agentSummary?.memberCount ?? "0"}</p>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Active Members</p>
-            <p className="mt-1 font-semibold text-slate-900">{agentSummary?.activeMembers ?? "0"}</p>
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Active Members</p>
+            <p className="mt-1 font-semibold text-foreground">{agentSummary?.activeMembers ?? "0"}</p>
           </div>
           <div className="rounded-md border border-emerald-200 bg-emerald-100 p-3 md:col-span-2">
             <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Performance</p>

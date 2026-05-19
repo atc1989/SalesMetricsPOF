@@ -1,4 +1,16 @@
+// @deprecated — use shadcn Table primitives directly: import { Table, TableBody,
+// TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table".
+// For complex data tables consider pairing with @tanstack/react-table (already
+// installed).
+//
+// Compat wrapper over shadcn Table. Preserves the legacy columns/data/emptyMessage
+// API used by 3 existing call sites in salesmetrics. This wrapper already renders the
+// real shadcn Table primitives — no behavioral difference between using it and using
+// Table directly. Migrate call sites incrementally; once all are migrated, delete
+// this file.
+
 import { ReactNode } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export type ColumnDef<T> = {
   key: keyof T;
@@ -19,38 +31,38 @@ export function DataTable<T extends { id: string | number }>({
   emptyMessage = "No records found.",
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="app-table-scroll">
-        <table className="min-w-full border-collapse text-sm">
-          <thead className="bg-slate-50">
-            <tr>
+        <Table>
+          <TableHeader className="bg-muted/50">
+            <TableRow>
               {columns.map((column) => (
-                <th key={String(column.key)} className={`border-b border-slate-200 px-4 py-3 text-left font-semibold text-slate-700 ${column.className ?? ""}`}>
+                <TableHead key={String(column.key)} className={column.className}>
                   {column.header}
-                </th>
+                </TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="px-4 py-8 text-center text-slate-500">
+              <TableRow>
+                <TableCell colSpan={columns.length} className="py-8 text-center text-muted-foreground">
                   {emptyMessage}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               data.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50">
+                <TableRow key={row.id}>
                   {columns.map((column) => (
-                    <td key={`${String(row.id)}-${String(column.key)}`} className={`border-b border-slate-100 px-4 py-3 text-slate-700 ${column.className ?? ""}`}>
+                    <TableCell key={`${String(row.id)}-${String(column.key)}`} className={column.className}>
                       {column.render ? column.render(row[column.key], row) : String(row[column.key])}
-                    </td>
+                    </TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

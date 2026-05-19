@@ -2,30 +2,61 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ChevronRight, Edit2 } from "lucide-react";
+import { Edit2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
 import { PcfApproveRejectModal } from "./PcfApproveRejectModal";
 import { PcfVoidModal } from "./PcfVoidModal";
 import {
   getPcfTransactionById,
   setPcfLiquidationState,
-  updatePcfTransactionStatus
+  updatePcfTransactionStatus,
 } from "@/services/pcf.service";
 import type {
   PcfTransaction,
   PcfTransactionStatus,
-  PcfTransactionType
+  PcfTransactionType,
 } from "@/types/billing";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type BadgeVariant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "success"
+  | "warning"
+  | "neutral";
+
 const formatPeso = (amount: number) =>
-  `\u20b1${amount.toLocaleString("en-PH", {
+  `₱${amount.toLocaleString("en-PH", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   })}`;
 
 const getDisplayValue = (value?: string | null) => {
   const normalized = (value ?? "").trim();
-  return normalized || "-";
+  return normalized || "—";
 };
 
 const formatTransactionType = (value?: PcfTransactionType) => {
@@ -37,7 +68,7 @@ const formatTransactionType = (value?: PcfTransactionType) => {
     case "expense":
       return "Expense";
     default:
-      return value || "-";
+      return value || "—";
   }
 };
 
@@ -56,44 +87,45 @@ const formatStatus = (value?: PcfTransactionStatus) => {
     case "void":
       return "Void";
     default:
-      return value || "-";
+      return value || "—";
   }
 };
 
-const getStatusColor = (status?: PcfTransactionStatus) => {
+const getStatusVariant = (status?: PcfTransactionStatus): BadgeVariant => {
   switch (status) {
     case "draft":
-      return "bg-gray-100 text-gray-700";
+      return "neutral";
     case "awaiting_approval":
-      return "bg-yellow-100 text-yellow-700";
+      return "warning";
     case "rejected":
-      return "bg-orange-100 text-orange-700";
+      return "destructive";
     case "approved":
-      return "bg-blue-100 text-blue-700";
+      return "secondary";
     case "paid":
-      return "bg-green-100 text-green-700";
+      return "success";
     case "void":
-      return "bg-red-100 text-red-700";
+      return "outline";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "neutral";
   }
 };
 
-const getTypeColor = (value?: PcfTransactionType) => {
+const getTypeVariant = (value?: PcfTransactionType): BadgeVariant => {
   switch (value) {
     case "beginning_balance":
-      return "bg-gray-100 text-gray-700";
+      return "outline";
     case "replenishment":
-      return "bg-blue-100 text-blue-700";
+      return "secondary";
     case "expense":
-      return "bg-orange-100 text-orange-700";
+      return "warning";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "neutral";
   }
 };
 
 export function ViewPcfPage() {
-  const params = useParams(); const id = Array.isArray(params?.id) ? params.id[0] : (params?.id as string | undefined);
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : (params?.id as string | undefined);
   const router = useRouter();
   const [transaction, setTransaction] = useState<PcfTransaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,12 +135,11 @@ export function ViewPcfPage() {
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [approveRejectModal, setApproveRejectModal] = useState({
     isOpen: false,
-    action: "approve" as "approve" | "reject"
+    action: "approve" as "approve" | "reject",
   });
 
   useEffect(() => {
     let isMounted = true;
-
     if (!id) {
       setIsLoading(false);
       setErrorMessage("PCV not found.");
@@ -119,7 +150,6 @@ export function ViewPcfPage() {
     getPcfTransactionById(id)
       .then((result) => {
         if (!isMounted) return;
-
         if (result.error || !result.data) {
           setTransaction(null);
           setErrorMessage(result.error || "PCV not found.");
@@ -148,90 +178,68 @@ export function ViewPcfPage() {
       document.title = `${transaction.pcv_number} | GuildLedger`;
       return;
     }
-
     document.title = "PCV Details | GuildLedger";
   }, [transaction?.pcv_number]);
 
   const handleStatusChange = async (status: PcfTransactionStatus) => {
     if (!transaction || isUpdating) return;
-
     setActionError(null);
     setIsUpdating(true);
     const result = await updatePcfTransactionStatus(transaction.id, status);
     setIsUpdating(false);
-
     if (result.error || !result.data) {
       setActionError(result.error || "Failed to update petty cash status.");
       return;
     }
-
     setTransaction(result.data);
     toast.success(`PCV marked as ${formatStatus(status).toLowerCase()}`);
   };
 
   const handleLiquidationToggle = async (isLiquidated: boolean) => {
     if (!transaction || isUpdating) return;
-
     setActionError(null);
     setIsUpdating(true);
     const result = await setPcfLiquidationState(transaction.id, isLiquidated);
     setIsUpdating(false);
-
     if (result.error || !result.data) {
       setActionError(result.error || "Failed to update liquidation state.");
       return;
     }
-
     setTransaction(result.data);
     toast.success(isLiquidated ? "PCV liquidated" : "PCV unliquidated");
   };
 
-  const handleOpenApprove = () => {
-    setApproveRejectModal({ isOpen: true, action: "approve" });
-  };
-
-  const handleOpenReject = () => {
-    setApproveRejectModal({ isOpen: true, action: "reject" });
-  };
+  const handleOpenApprove = () => setApproveRejectModal({ isOpen: true, action: "approve" });
+  const handleOpenReject = () => setApproveRejectModal({ isOpen: true, action: "reject" });
+  const handleOpenVoid = () => setIsVoidModalOpen(true);
 
   const handleConfirmApproveReject = async () => {
     if (!transaction || isUpdating) return;
-
     const nextStatus =
       approveRejectModal.action === "approve" ? "approved" : "rejected";
-
     setActionError(null);
     setIsUpdating(true);
     const result = await updatePcfTransactionStatus(transaction.id, nextStatus);
     setIsUpdating(false);
-
     if (result.error || !result.data) {
       setActionError(result.error || "Failed to update petty cash status.");
       return;
     }
-
     setTransaction(result.data);
     setApproveRejectModal({ isOpen: false, action: "approve" });
     toast.success(`PCV marked as ${formatStatus(nextStatus).toLowerCase()}`);
   };
 
-  const handleOpenVoid = () => {
-    setIsVoidModalOpen(true);
-  };
-
   const handleConfirmVoid = async () => {
     if (!transaction || isUpdating) return;
-
     setActionError(null);
     setIsUpdating(true);
     const result = await updatePcfTransactionStatus(transaction.id, "void");
     setIsUpdating(false);
-
     if (result.error || !result.data) {
       setActionError(result.error || "Failed to update petty cash status.");
       return;
     }
-
     setTransaction(result.data);
     setIsVoidModalOpen(false);
     toast.success("PCV marked as void");
@@ -239,252 +247,231 @@ export function ViewPcfPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1600px] mx-auto px-6 py-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 text-gray-600">
-            Loading petty cash transaction...
-          </div>
-        </div>
+      <div className="space-y-6">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-10 w-80" />
+        <Card>
+          <CardContent className="space-y-3 p-6">
+            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (errorMessage || !transaction) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1600px] mx-auto px-6 py-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">PCV not found</h1>
-            <p className="text-gray-600 mb-4">
+      <div className="space-y-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/pcf">Petty Cash</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Not found</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyTitle>PCV not found</EmptyTitle>
+            <EmptyDescription>
               {errorMessage || "The petty cash transaction you are looking for does not exist."}
-            </p>
-            <Link href="/pcf" className="text-blue-600 hover:text-blue-700 font-medium">
-              Back to Petty Cash
-            </Link>
-          </div>
-        </div>
+            </EmptyDescription>
+          </EmptyHeader>
+          <Button onClick={() => router.push("/pcf")}>Back to Petty Cash</Button>
+        </Empty>
       </div>
     );
   }
 
-  const topRightActions = (
-    <div className="flex items-center gap-3 flex-wrap justify-end">
-      {transaction.transaction_type !== "beginning_balance" && transaction.status !== "void" && (
-        <button
-          onClick={() => router.push(`/pcf/${transaction.id}/edit`)}
-          className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors font-medium flex items-center gap-2"
-        >
-          <Edit2 className="w-4 h-4" />
-          Edit
-        </button>
-      )}
-      {transaction.status !== "paid" && transaction.status !== "void" && (
-        <button
-          onClick={handleOpenVoid}
-          disabled={isUpdating}
-          className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 transition-colors font-medium disabled:opacity-60"
-        >
-          Void
-        </button>
-      )}
-    </div>
-  );
-
-  const footerActions = (
-    <div className="mt-8 flex items-center justify-end gap-3 pb-8 flex-wrap">
-      <button
-        onClick={() => router.push("/pcf")}
-        className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-      >
-        Back to List
-      </button>
-
-      {transaction.status === "draft" && (
-        <button
-          onClick={() => handleStatusChange("awaiting_approval")}
-          disabled={isUpdating}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium disabled:opacity-60"
-        >
-          Submit
-        </button>
-      )}
-
-      {transaction.status === "awaiting_approval" && (
-        <>
-          <button
-            onClick={handleOpenReject}
-            disabled={isUpdating}
-            className="px-5 py-2.5 border border-orange-600 text-orange-600 rounded-md hover:bg-orange-50 transition-colors font-medium disabled:opacity-60"
-          >
-            Reject
-          </button>
-          <button
-            onClick={handleOpenApprove}
-            disabled={isUpdating}
-            className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors font-medium disabled:opacity-60"
-          >
-            Approve
-          </button>
-        </>
-      )}
-
-      {transaction.status === "rejected" && (
-        <button
-          onClick={() => handleStatusChange("awaiting_approval")}
-          disabled={isUpdating}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium disabled:opacity-60"
-        >
-          Resubmit
-        </button>
-      )}
-
-      {transaction.status === "approved" && (
-        <>
-          <button
-            onClick={() => handleLiquidationToggle(!transaction.is_liquidated)}
-            disabled={isUpdating}
-            className="px-5 py-2.5 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors font-medium disabled:opacity-60"
-          >
-            {transaction.is_liquidated ? "Unliquidate" : "Liquidate"}
-          </button>
-          <button
-            onClick={() => handleStatusChange("paid")}
-            disabled={isUpdating}
-            className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors font-medium disabled:opacity-60"
-          >
-            Mark as Paid
-          </button>
-        </>
-      )}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="pt-16">
-        <div className="max-w-[1600px] mx-auto px-6 py-8">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <button onClick={() => router.push("/pcf")} className="hover:text-blue-600">
-              Petty Cash
-            </button>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-gray-900">PCV Details</span>
+    <div className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/pcf">Petty Cash</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{getDisplayValue(transaction.pcv_number)}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      {/* Header */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">Petty Cash Voucher</h1>
+            <Badge variant={getStatusVariant(transaction.status)}>
+              {formatStatus(transaction.status)}
+            </Badge>
+            {transaction.status === "approved" && transaction.is_liquidated && (
+              <Badge variant="success">Liquidated</Badge>
+            )}
           </div>
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">
+              {getDisplayValue(transaction.pcv_number)}
+            </span>{" "}
+            · {getDisplayValue(transaction.payee)} · {getDisplayValue(transaction.date)}
+          </p>
+        </div>
 
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h1 className="text-2xl font-semibold text-gray-900">Petty Cash Voucher</h1>
-                <span
-                  className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                    transaction.status
-                  )}`}
-                >
-                  {formatStatus(transaction.status)}
-                </span>
-                {transaction.status === "approved" && transaction.is_liquidated && (
-                  <span className="inline-flex px-3 py-1 text-sm font-medium rounded-full bg-emerald-100 text-emerald-700">
-                    Liquidated
-                  </span>
-                )}
-                <span className="text-lg text-gray-600 font-medium">
-                  {getDisplayValue(transaction.pcv_number)}
-                </span>
-              </div>
-            </div>
-
-            {topRightActions}
-          </div>
-
-          {actionError && (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {actionError}
-            </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {transaction.transaction_type !== "beginning_balance" &&
+            transaction.status !== "void" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/pcf/${transaction.id}/edit`)}
+              >
+                <Edit2 data-icon="inline-start" />
+                Edit
+              </Button>
+            )}
+          {transaction.status !== "paid" && transaction.status !== "void" && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleOpenVoid}
+              disabled={isUpdating}
+            >
+              Void
+            </Button>
           )}
-
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Entry Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">Date</div>
-                  <div className="text-base text-gray-900">{getDisplayValue(transaction.date)}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">PCV No.</div>
-                  <div className="text-base text-gray-900 font-medium">
-                    {getDisplayValue(transaction.pcv_number)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">Payee</div>
-                  <div className="text-base text-gray-900">{getDisplayValue(transaction.payee)}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">Invoice No.</div>
-                  <div className="text-base text-gray-900">
-                    {getDisplayValue(transaction.invoice_no)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">Type</div>
-                  <div>
-                    <span
-                      className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${getTypeColor(
-                        transaction.transaction_type
-                      )}`}
-                    >
-                      {formatTransactionType(transaction.transaction_type)}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">Liquidated At</div>
-                  <div className="text-base text-gray-900">
-                    {getDisplayValue(transaction.liquidated_at)}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Description</h2>
-              <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
-                <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                  {transaction.description?.trim() || "No description provided"}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Amounts</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">Amount In</div>
-                  <div className="text-xl font-semibold text-gray-900">
-                    {formatPeso(Number(transaction.amount_in ?? 0))}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">Amount Out</div>
-                  <div className="text-xl font-semibold text-gray-900">
-                    {formatPeso(Number(transaction.amount_out ?? 0))}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-500 mb-1">Balance</div>
-                  <div className="text-xl font-semibold text-gray-900">
-                    {formatPeso(Number(transaction.balance ?? 0))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {footerActions}
         </div>
       </div>
 
+      {/* Action error */}
+      {actionError && (
+        <Alert variant="destructive">
+          <AlertTitle>Action failed</AlertTitle>
+          <AlertDescription>{actionError}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Entry Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Entry Details</CardTitle>
+          <CardDescription>Voucher reference and transaction metadata.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <DetailRow label="Date" value={getDisplayValue(transaction.date)} />
+            <DetailRow label="PCV No." value={getDisplayValue(transaction.pcv_number)} mono />
+            <DetailRow label="Payee" value={getDisplayValue(transaction.payee)} />
+            <DetailRow label="Invoice No." value={getDisplayValue(transaction.invoice_no)} />
+            <DetailRow
+              label="Type"
+              value={
+                <Badge variant={getTypeVariant(transaction.transaction_type)}>
+                  {formatTransactionType(transaction.transaction_type)}
+                </Badge>
+              }
+            />
+            <DetailRow
+              label="Liquidated At"
+              value={getDisplayValue(transaction.liquidated_at)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Description */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Description</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border bg-muted/30 p-4">
+            <p className="whitespace-pre-wrap text-sm">
+              {transaction.description?.trim() || "No description provided."}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Amounts */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Amounts</CardTitle>
+          <CardDescription>Cash in, cash out, and running balance.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <AmountRow label="Amount In" value={Number(transaction.amount_in ?? 0)} />
+            <AmountRow label="Amount Out" value={Number(transaction.amount_out ?? 0)} />
+            <AmountRow label="Balance" value={Number(transaction.balance ?? 0)} strong />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Footer actions */}
+      <div className="flex flex-wrap items-center justify-end gap-2 pb-4">
+        <Button variant="outline" onClick={() => router.push("/pcf")}>
+          Back to list
+        </Button>
+
+        {transaction.status === "draft" && (
+          <Button
+            onClick={() => handleStatusChange("awaiting_approval")}
+            disabled={isUpdating}
+          >
+            {isUpdating && <Loader2 data-icon="inline-start" className="animate-spin" />}
+            Submit
+          </Button>
+        )}
+
+        {transaction.status === "awaiting_approval" && (
+          <>
+            <Button variant="destructive" onClick={handleOpenReject} disabled={isUpdating}>
+              Reject
+            </Button>
+            <Button onClick={handleOpenApprove} disabled={isUpdating}>
+              {isUpdating && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              Approve
+            </Button>
+          </>
+        )}
+
+        {transaction.status === "rejected" && (
+          <Button
+            onClick={() => handleStatusChange("awaiting_approval")}
+            disabled={isUpdating}
+          >
+            Resubmit
+          </Button>
+        )}
+
+        {transaction.status === "approved" && (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => handleLiquidationToggle(!transaction.is_liquidated)}
+              disabled={isUpdating}
+            >
+              {transaction.is_liquidated ? "Unliquidate" : "Liquidate"}
+            </Button>
+            <Button onClick={() => handleStatusChange("paid")} disabled={isUpdating}>
+              {isUpdating && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              Mark as Paid
+            </Button>
+          </>
+        )}
+      </div>
+
+      {/* Modals */}
       <PcfVoidModal
         isOpen={isVoidModalOpen}
         onClose={() => setIsVoidModalOpen(false)}
@@ -503,6 +490,52 @@ export function ViewPcfPage() {
         payee={getDisplayValue(transaction.payee)}
         amount={Number(transaction.amount_out || transaction.amount_in || 0)}
       />
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={mono ? "font-mono text-sm" : "text-sm"}>{value}</div>
+    </div>
+  );
+}
+
+function AmountRow({
+  label,
+  value,
+  strong,
+}: {
+  label: string;
+  value: number;
+  strong?: boolean;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div
+        className={
+          strong
+            ? "text-2xl font-semibold tabular-nums"
+            : "text-xl font-medium tabular-nums"
+        }
+      >
+        ₱
+        {value.toLocaleString("en-PH", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
+      </div>
     </div>
   );
 }

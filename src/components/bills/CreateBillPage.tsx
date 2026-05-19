@@ -1,16 +1,63 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Plus, X, Upload } from "lucide-react";
+import Link from "next/link";
+import { Loader2, Plus, Trash2, Upload, X } from "lucide-react";
+
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   createBill,
   isReferenceNoTaken,
-  type ServiceError
+  type ServiceError,
 } from "@/services/bills.service";
 import { uploadBillAttachments } from "@/services/billAttachments.service";
 import { createVendor, listVendors } from "@/services/vendors.service";
 import type { PaymentMethod, PriorityLevel, Vendor } from "@/types/billing";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
+
 interface PaymentBreakdown {
   id: string;
   payment_method: PaymentMethod;
@@ -21,11 +68,35 @@ interface PaymentBreakdown {
   bank_account_name: string;
   bank_account_no: string;
 }
+
+const PRIORITY_OPTIONS = [
+  { value: "Urgent", label: "Urgent" },
+  { value: "High", label: "High" },
+  { value: "Standard", label: "Standard" },
+  { value: "Low", label: "Low" },
+] as const;
+
+const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  bank_transfer: "Bank Transfer",
+  check: "Check",
+  cash: "Cash",
+  other: "Other",
+};
+
+function roundMoney(value: unknown) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
+}
+
 export function CreateBillPage() {
   const [vendorInput, setVendorInput] = useState("");
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [vendorOptions, setVendorOptions] = useState<Vendor[]>([]);
   const [isVendorLoading, setIsVendorLoading] = useState(false);
+  const [showVendorMenu, setShowVendorMenu] = useState(false);
+  const vendorBoxRef = useRef<HTMLDivElement | null>(null);
+
   const [referenceNumber, setReferenceNumber] = useState("");
   const [referenceError, setReferenceError] = useState<string | null>(null);
   const [isCheckingReference, setIsCheckingReference] = useState(false);
@@ -39,6 +110,7 @@ export function CreateBillPage() {
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+
   const [breakdowns, setBreakdowns] = useState<PaymentBreakdown[]>([
     {
       id: "1",
@@ -48,33 +120,24 @@ export function CreateBillPage() {
       amount: "",
       bank_name: "",
       bank_account_name: "",
-      bank_account_no: ""
-    }
+      bank_account_no: "",
+    },
   ]);
+
   const priorityMap: Record<string, PriorityLevel> = useMemo(
     () => ({
       Urgent: "urgent",
       High: "high",
       Standard: "standard",
-      Low: "low"
+      Low: "low",
     }),
-    []
+    [],
   );
+
   useEffect(() => {
     document.title = "Create New Bill | GuildLedger";
   }, []);
-  const formatPaymentMethod = (method: PaymentMethod) => {
-    switch (method) {
-      case "bank_transfer":
-        return "Bank Transfer";
-      case "check":
-        return "Check";
-      case "cash":
-        return "Cash";
-      default:
-        return "Other";
-    }
-  };
+
   useEffect(() => {
     let isMounted = true;
     if (!vendorInput.trim()) {
@@ -85,11 +148,8 @@ export function CreateBillPage() {
     listVendors(vendorInput)
       .then((result) => {
         if (!isMounted) return;
-        if (result.error) {
-          setVendorOptions([]);
-        } else {
-          setVendorOptions(result.data);
-        }
+        if (result.error) setVendorOptions([]);
+        else setVendorOptions(result.data);
       })
       .finally(() => {
         if (!isMounted) return;
@@ -101,18 +161,25 @@ export function CreateBillPage() {
   }, [vendorInput]);
 
   useEffect(() => {
-    const trimmedReference = referenceNumber.trim();
+    const handleClickOutside = (e: MouseEvent) => {
+      if (vendorBoxRef.current && !vendorBoxRef.current.contains(e.target as Node)) {
+        setShowVendorMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
+  useEffect(() => {
+    const trimmedReference = referenceNumber.trim();
     if (!trimmedReference) {
       setReferenceError(null);
       setIsReferenceTaken(false);
       setIsCheckingReference(false);
       return;
     }
-
     let isMounted = true;
     setIsCheckingReference(true);
-
     const timeoutId = window.setTimeout(() => {
       isReferenceNoTaken(trimmedReference)
         .then((taken) => {
@@ -120,8 +187,8 @@ export function CreateBillPage() {
           setIsReferenceTaken(taken);
           setReferenceError(
             taken
-              ? "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
-              : null
+              ? "PRF already exists. Choose another or leave blank to auto-generate."
+              : null,
           );
         })
         .finally(() => {
@@ -129,7 +196,6 @@ export function CreateBillPage() {
           setIsCheckingReference(false);
         });
     }, 350);
-
     return () => {
       isMounted = false;
       window.clearTimeout(timeoutId);
@@ -138,6 +204,7 @@ export function CreateBillPage() {
 
   const isDuplicatePrfError = (error: string | ServiceError | null | undefined) =>
     typeof error === "object" && error?.code === "DUPLICATE_PRF";
+
   const addBreakdownLine = () => {
     setBreakdowns([
       ...breakdowns,
@@ -149,16 +216,20 @@ export function CreateBillPage() {
         amount: "",
         bank_name: "",
         bank_account_name: "",
-        bank_account_no: ""
-      }
+        bank_account_no: "",
+      },
     ]);
   };
+
   const removeBreakdownLine = (id: string) => {
-    if (breakdowns.length > 1) {
-      setBreakdowns(breakdowns.filter((b) => b.id !== id));
-    }
+    if (breakdowns.length > 1) setBreakdowns(breakdowns.filter((b) => b.id !== id));
   };
-  const updateBreakdown = (id: string, field: keyof PaymentBreakdown, value: string) => {
+
+  const updateBreakdown = (
+    id: string,
+    field: keyof PaymentBreakdown,
+    value: string,
+  ) => {
     setBreakdowns(
       breakdowns.map((b) => {
         if (b.id !== id) return b;
@@ -168,31 +239,29 @@ export function CreateBillPage() {
             payment_method: value as PaymentMethod,
             bank_name: "",
             bank_account_name: "",
-            bank_account_no: ""
+            bank_account_no: "",
           };
         }
         return { ...b, [field]: value };
-      })
+      }),
     );
   };
-  const calculateTotal = () => {
-    return roundMoney(
-      breakdowns.reduce((sum, b) => {
-        const amount = roundMoney(b.amount);
-        return sum + amount;
-      }, 0)
-    );
-  };
+
+  const calculateTotal = () =>
+    roundMoney(breakdowns.reduce((sum, b) => sum + roundMoney(b.amount), 0));
+
   const addFiles = (files: FileList | File[]) => {
     const nextFiles = Array.from(files);
     if (nextFiles.length === 0) return;
     setAttachments((prev) => [...prev, ...nextFiles]);
   };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     addFiles(e.target.files);
     e.target.value = "";
   };
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragActive(true);
@@ -207,9 +276,11 @@ export function CreateBillPage() {
     if (!e.dataTransfer.files) return;
     addFiles(e.dataTransfer.files);
   };
+
   const removeAttachment = (index: number) => {
     setAttachments(attachments.filter((_, i) => i !== index));
   };
+
   const createBillRecord = async (status: "draft" | "awaiting_approval") => {
     setErrorMessage(null);
     setReferenceError(null);
@@ -230,7 +301,7 @@ export function CreateBillPage() {
       setIsReferenceTaken(referenceTaken);
       if (referenceTaken) {
         setReferenceError(
-          "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
+          "PRF already exists. Choose another or leave blank to auto-generate.",
         );
         return;
       }
@@ -242,10 +313,12 @@ export function CreateBillPage() {
     const missingBankDetails = breakdowns.some(
       (b) =>
         b.payment_method === "bank_transfer" &&
-        (!b.bank_name.trim() || !b.bank_account_name.trim() || !b.bank_account_no.trim())
+        (!b.bank_name.trim() || !b.bank_account_name.trim() || !b.bank_account_no.trim()),
     );
     if (missingBankDetails) {
-      setErrorMessage("Bank name, account holder, and account number are required for Bank Transfer lines.");
+      setErrorMessage(
+        "Bank name, account holder, and account number are required for Bank Transfer lines.",
+      );
       return;
     }
     const hasInvalidAmount = breakdowns.some((b) => {
@@ -261,6 +334,7 @@ export function CreateBillPage() {
       setErrorMessage("Total amount must be greater than 0.");
       return;
     }
+
     setIsSaving(true);
     let vendorId = selectedVendor?.id;
     if (!vendorId) {
@@ -286,7 +360,7 @@ export function CreateBillPage() {
         status,
         remarks: reasonForPayment || null,
         total_amount: totalAmount,
-        created_by: user.id
+        created_by: user.id,
       },
       breakdowns: breakdowns.map((b) => ({
         payment_method: b.payment_method,
@@ -294,16 +368,18 @@ export function CreateBillPage() {
         description: b.description ? b.description : "",
         amount: roundMoney(b.amount),
         bank_name: b.payment_method === "bank_transfer" ? b.bank_name || null : null,
-        bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name || null : null,
-        bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no || null : null
-      }))
+        bank_account_name:
+          b.payment_method === "bank_transfer" ? b.bank_account_name || null : null,
+        bank_account_no:
+          b.payment_method === "bank_transfer" ? b.bank_account_no || null : null,
+      })),
     };
     const result = await createBill(payload);
     if (result.error || !result.data) {
       setIsSaving(false);
       if (isDuplicatePrfError(result.error)) {
         setReferenceError(
-          "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
+          "PRF already exists. Choose another or leave blank to auto-generate.",
         );
         return;
       }
@@ -313,7 +389,11 @@ export function CreateBillPage() {
     }
 
     if (attachments.length > 0) {
-      const attachmentResult = await uploadBillAttachments(result.data.id, attachments, user.id);
+      const attachmentResult = await uploadBillAttachments(
+        result.data.id,
+        attachments,
+        user.id,
+      );
       if (attachmentResult.error) {
         setIsSaving(false);
         if (typeof window !== "undefined") {
@@ -330,6 +410,7 @@ export function CreateBillPage() {
     setIsSaving(false);
     router.push(`/bills/${result.data.id}`);
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await createBillRecord("awaiting_approval");
@@ -337,431 +418,476 @@ export function CreateBillPage() {
   const handleSaveDraft = async () => {
     await createBillRecord("draft");
   };
+
+  const totalAmount = calculateTotal();
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="pt-16">
-        <div className="max-w-[1600px] mx-auto px-6 py-8">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <button onClick={() => router.push("/bills")} className="hover:text-blue-600">
-              Bills
-            </button>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-gray-900">New Bill</span>
-          </div>
-          {/* Page Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Create New Bill</h1>
-            <p className="text-gray-600 mt-1">Create a new payment request for approval</p>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-6">
-              {/* SECTION 1 — Payee & Reference */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Payee & Reference</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="vendor" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Vendor / Payee <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="vendor"
-                      value={vendorInput}
-                      onChange={(e) => {
-                        setVendorInput(e.target.value);
-                        setSelectedVendor(null);
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Select or type vendor name"
-                      required
-                    />
-                    {isVendorLoading && (
-                      <div className="text-xs text-gray-500 mt-1">Searching vendors...</div>
-                    )}
-                    {vendorOptions.length > 0 && !selectedVendor && (
-                      <div className="mt-2 border border-gray-200 rounded-md bg-white shadow-sm max-h-40 overflow-auto">
-                        {vendorOptions.map((vendor) => (
-                          <button
-                            type="button"
-                            key={vendor.id}
-                            onClick={() => {
-                              setSelectedVendor(vendor);
-                              setVendorInput(vendor.name);
-                              setVendorOptions([]);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                          >
-                            {vendor.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="reference" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Reference Number
-                    </label>
-                    <input
-                      type="text"
-                      id="reference"
-                      value={referenceNumber}
-                      onChange={(e) => {
-                        setReferenceNumber(e.target.value);
-                      }}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent ${
-                        isReferenceTaken
-                          ? "border-amber-400 focus:ring-amber-500"
-                          : "border-gray-300 focus:ring-blue-500"
-                      }`}
-                      placeholder="Optional"
-                    />
-                    {referenceError ? (
-                      <p className="text-xs text-amber-700 mt-1">{referenceError}</p>
-                    ) : isCheckingReference ? (
-                      <p className="text-xs text-gray-500 mt-1">Checking PRF number...</p>
-                    ) : (
-                      <p className="text-xs text-gray-500 mt-1">Leave blank to auto-generate.</p>
-                    )}
-                    <p className="text-xs text-gray-400 mt-1">Format hint: MMDDYY-###</p>
-                  </div>
-                  <div>
-                    <label htmlFor="requestDate" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Request Date <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id="requestDate"
-                      value={requestDate}
-                      onChange={(e) => setRequestDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Priority Level
-                    </label>
-                    <select
-                      id="priority"
-                      value={priority}
-                      onChange={(e) => setPriority(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="Urgent">Urgent</option>
-                      <option value="High">High</option>
-                      <option value="Standard">Standard</option>
-                      <option value="Low">Low</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              {/* SECTION 2 -- Payment Breakdown */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Breakdown</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                          Payment Method
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                          Category
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                          Description
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
-                          Amount (PHP)
-                        </th>
-                        <th className="px-4 py-3 w-12"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {breakdowns.map((breakdown) => (
-                        <React.Fragment key={breakdown.id}>
-                          <tr>
-                            <td className="px-4 py-3">
-                              <select
-                                value={breakdown.payment_method}
-                                onChange={(e) =>
-                                  updateBreakdown(breakdown.id, "payment_method", e.target.value)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                              >
-                                {(["bank_transfer", "check", "cash", "other"] as PaymentMethod[]).map((method) => (
-                                  <option key={method} value={method}>
-                                    {formatPaymentMethod(method)}
-                                  </option>
-                                ))}
-                              </select>
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
-                                type="text"
-                                value={breakdown.category}
-                                onChange={(e) => updateBreakdown(breakdown.id, "category", e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                placeholder="e.g., Food"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
-                                type="text"
-                                value={breakdown.description}
-                                onChange={(e) => updateBreakdown(breakdown.id, "description", e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                placeholder="Brief description"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={breakdown.amount}
-                                onChange={(e) => updateBreakdown(breakdown.id, "amount", e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-right"
-                                placeholder="0.00"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <button
-                                type="button"
-                                onClick={() => removeBreakdownLine(breakdown.id)}
-                                disabled={breakdowns.length === 1}
-                                className="text-red-600 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed"
-                              >
-                                <X className="w-5 h-5" />
-                              </button>
-                            </td>
-                          </tr>
-                          {breakdown.payment_method === "bank_transfer" && (
-                            <tr>
-                              <td colSpan={5} className="px-4 pb-4">
-                                <div className="mt-4 pt-4 border-t border-gray-200">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                        Bank Name
-                                      </label>
-                                      <input
-                                        type="text"
-                                        value={breakdown.bank_name}
-                                        onChange={(e) =>
-                                          updateBreakdown(breakdown.id, "bank_name", e.target.value)
-                                        }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="e.g., BDO, BPI, Metrobank"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                        Account Holder Name
-                                      </label>
-                                      <input
-                                        type="text"
-                                        value={breakdown.bank_account_name}
-                                        onChange={(e) =>
-                                          updateBreakdown(breakdown.id, "bank_account_name", e.target.value)
-                                        }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Full name as registered"
-                                      />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                        Bank Account Number
-                                      </label>
-                                      <input
-                                        type="text"
-                                        value={breakdown.bank_account_no}
-                                        onChange={(e) =>
-                                          updateBreakdown(breakdown.id, "bank_account_no", e.target.value)
-                                        }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Account number"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <button
-                  type="button"
-                  onClick={addBreakdownLine}
-                  className="mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Breakdown Line
-                </button>
-                {/* Total Amount */}
-                <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end">
-                  <div className="text-right">
-                    <div className="text-sm text-gray-600 mb-1">Total Amount</div>
-                    <div className="text-2xl font-semibold text-gray-900">
-                      ₱{calculateTotal().toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* SECTION 3 -- Reason for Payment */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Reason for Payment</h2>
-                <div>
-                  <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Reason for Payment / Remarks
-                  </label>
-                  <textarea
-                    id="reason"
-                    value={reasonForPayment}
-                    onChange={(e) => setReasonForPayment(e.target.value)}
-                    rows={5}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    placeholder="Brief explanation or supporting details..."
-                  />
-                  <p className="text-sm text-gray-500 mt-1.5">Brief explanation or supporting details</p>
-                </div>
-              </div>
-              {/* SECTION 4 -- Attachments */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h2>
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                    isDragActive
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                  <div className="text-sm text-gray-600 mb-2">
-                    <label htmlFor="file-upload" className="text-blue-600 hover:text-blue-700 cursor-pointer font-medium">
-                      Click to upload
-                    </label>{" "}
-                    or drag and drop
-                  </div>
-                  <p className="text-xs text-gray-500">PDF, JPG, PNG (max 10MB each)</p>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </div>
-                {attachments.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {attachments.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                        <span className="text-sm text-gray-900">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeAttachment(index)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <p className="text-sm text-gray-500 mt-3">Attach scanned forms or proof</p>
-              </div>
-              {/* SECTION 5 -- Request & Approval Info */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Request & Approval Info</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Requested By
-                    </label>
-                    <input
-                      type="text"
-                      value={user?.email || "Current User"}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Checked By
-                    </label>
-                    <input
-                      type="text"
-                      value="—"
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Approved By
-                    </label>
-                    <input
-                      type="text"
-                      value="—"
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-400"
-                    />
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mt-3">
-                  Approval fields will be populated after submission
-                </p>
-              </div>
-            </div>
-            {/* Footer Actions */}
-            {errorMessage && (
-              <div className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {errorMessage}
-              </div>
-            )}
-            <div className="mt-8 flex items-center justify-end gap-3 pb-8">
-              <button
-                type="button"
-                onClick={() => router.push("/bills")}
-                className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveDraft}
-                disabled={isSaving}
-                className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                Save as Draft
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isSaving ? "Saving..." : "Submit for Approval"}
-              </button>
-            </div>
-          </form>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/bills">Bills</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>New Bill</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      {/* Header */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Create New Bill</h1>
+          <p className="text-sm text-muted-foreground">
+            Create a new payment request for approval.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/bills")}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isSaving}
+          >
+            Save as Draft
+          </Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving && <Loader2 data-icon="inline-start" className="animate-spin" />}
+            {isSaving ? "Saving…" : "Submit for Approval"}
+          </Button>
         </div>
       </div>
-    </div>
-  );
-}
 
-function roundMoney(value: unknown) {
-  const amount = Number(value ?? 0);
-  if (!Number.isFinite(amount)) return 0;
-  return Math.round((amount + Number.EPSILON) * 100) / 100;
+      {/* Error */}
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertTitle>Cannot save bill</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Payee & Reference */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Payee & Reference</CardTitle>
+          <CardDescription>Vendor, reference number, request date, and priority.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <Field data-invalid={!vendorInput.trim() ? undefined : undefined}>
+                <FieldLabel htmlFor="vendor">
+                  Vendor / Payee<span className="text-destructive"> *</span>
+                </FieldLabel>
+                <div ref={vendorBoxRef} className="relative">
+                  <Input
+                    id="vendor"
+                    value={vendorInput}
+                    onChange={(e) => {
+                      setVendorInput(e.target.value);
+                      setSelectedVendor(null);
+                      setShowVendorMenu(true);
+                    }}
+                    onFocus={() => setShowVendorMenu(true)}
+                    placeholder="Select or type vendor name"
+                    autoComplete="off"
+                    required
+                  />
+                  {showVendorMenu && !selectedVendor && vendorOptions.length > 0 && (
+                    <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-popover p-1 shadow-md">
+                      {vendorOptions.map((vendor) => (
+                        <button
+                          type="button"
+                          key={vendor.id}
+                          onClick={() => {
+                            setSelectedVendor(vendor);
+                            setVendorInput(vendor.name);
+                            setVendorOptions([]);
+                            setShowVendorMenu(false);
+                          }}
+                          className="w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                        >
+                          {vendor.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <FieldDescription>
+                  {isVendorLoading
+                    ? "Searching vendors…"
+                    : "Existing match will be linked. New names create a vendor on save."}
+                </FieldDescription>
+              </Field>
+
+              <Field data-invalid={isReferenceTaken ? true : undefined}>
+                <FieldLabel htmlFor="reference">Reference Number</FieldLabel>
+                <Input
+                  id="reference"
+                  value={referenceNumber}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  placeholder="Optional"
+                  aria-invalid={isReferenceTaken || undefined}
+                />
+                <FieldDescription
+                  className={cn(isReferenceTaken && "text-destructive")}
+                >
+                  {referenceError
+                    ? referenceError
+                    : isCheckingReference
+                      ? "Checking PRF number…"
+                      : "Leave blank to auto-generate. Hint: MMDDYY-###"}
+                </FieldDescription>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="requestDate">
+                  Request Date<span className="text-destructive"> *</span>
+                </FieldLabel>
+                <Input
+                  id="requestDate"
+                  type="date"
+                  value={requestDate}
+                  onChange={(e) => setRequestDate(e.target.value)}
+                  required
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel>Priority Level</FieldLabel>
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
+                  value={priority}
+                  onValueChange={(value) => value && setPriority(value)}
+                  className="justify-start"
+                >
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <ToggleGroupItem key={option.value} value={option.value}>
+                      {option.label}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </Field>
+            </div>
+          </FieldGroup>
+        </CardContent>
+      </Card>
+
+      {/* Payment Breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment Breakdown</CardTitle>
+          <CardDescription>One line per payment method or category.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-48">Payment Method</TableHead>
+                  <TableHead className="w-40">Category</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="w-40 text-right">Amount (PHP)</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {breakdowns.map((breakdown) => (
+                  <React.Fragment key={breakdown.id}>
+                    <TableRow>
+                      <TableCell>
+                        <Select
+                          value={breakdown.payment_method}
+                          onValueChange={(value) =>
+                            updateBreakdown(breakdown.id, "payment_method", value)
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(Object.keys(PAYMENT_METHOD_LABEL) as PaymentMethod[]).map(
+                              (method) => (
+                                <SelectItem key={method} value={method}>
+                                  {PAYMENT_METHOD_LABEL[method]}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={breakdown.category}
+                          onChange={(e) =>
+                            updateBreakdown(breakdown.id, "category", e.target.value)
+                          }
+                          placeholder="e.g., Food"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={breakdown.description}
+                          onChange={(e) =>
+                            updateBreakdown(breakdown.id, "description", e.target.value)
+                          }
+                          placeholder="Brief description"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={breakdown.amount}
+                          onChange={(e) =>
+                            updateBreakdown(breakdown.id, "amount", e.target.value)
+                          }
+                          placeholder="0.00"
+                          className="text-right tabular-nums"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeBreakdownLine(breakdown.id)}
+                          disabled={breakdowns.length === 1}
+                          aria-label="Remove line"
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    {breakdown.payment_method === "bank_transfer" && (
+                      <TableRow className="bg-muted/30 hover:bg-muted/30">
+                        <TableCell colSpan={5}>
+                          <FieldGroup>
+                            <div className="grid grid-cols-1 gap-4 px-2 py-2 md:grid-cols-3">
+                              <Field>
+                                <FieldLabel>Bank Name</FieldLabel>
+                                <Input
+                                  value={breakdown.bank_name}
+                                  onChange={(e) =>
+                                    updateBreakdown(
+                                      breakdown.id,
+                                      "bank_name",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="BDO / BPI / Metrobank…"
+                                />
+                              </Field>
+                              <Field>
+                                <FieldLabel>Account Holder</FieldLabel>
+                                <Input
+                                  value={breakdown.bank_account_name}
+                                  onChange={(e) =>
+                                    updateBreakdown(
+                                      breakdown.id,
+                                      "bank_account_name",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Full name as registered"
+                                />
+                              </Field>
+                              <Field>
+                                <FieldLabel>Account Number</FieldLabel>
+                                <Input
+                                  value={breakdown.bank_account_no}
+                                  onChange={(e) =>
+                                    updateBreakdown(
+                                      breakdown.id,
+                                      "bank_account_no",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Account number"
+                                />
+                              </Field>
+                            </div>
+                          </FieldGroup>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <Button type="button" variant="outline" size="sm" onClick={addBreakdownLine}>
+            <Plus data-icon="inline-start" />
+            Add Breakdown Line
+          </Button>
+
+          <Separator />
+
+          <div className="flex justify-end">
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground">Total Amount</div>
+              <div className="text-2xl font-semibold tabular-nums">
+                ₱
+                {totalAmount.toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Reason for Payment */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Reason for Payment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="reason">Reason / Remarks</FieldLabel>
+              <Textarea
+                id="reason"
+                value={reasonForPayment}
+                onChange={(e) => setReasonForPayment(e.target.value)}
+                rows={5}
+                placeholder="Brief explanation or supporting details…"
+              />
+              <FieldDescription>Optional. Visible on the printed receipt.</FieldDescription>
+            </Field>
+          </FieldGroup>
+        </CardContent>
+      </Card>
+
+      {/* Attachments */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Attachments</CardTitle>
+          <CardDescription>Attach scanned forms or proof. PDF, JPG, PNG (max 10MB each).</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              "flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center transition-colors",
+              isDragActive ? "border-primary bg-primary/5" : "bg-muted/30",
+            )}
+          >
+            <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">
+              <Upload className="size-4" />
+            </div>
+            <div className="text-sm">
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Click to upload
+              </label>{" "}
+              <span className="text-muted-foreground">or drag and drop</span>
+            </div>
+            <p className="text-xs text-muted-foreground">PDF, JPG, PNG (max 10MB each)</p>
+            <input
+              id="file-upload"
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </div>
+
+          {attachments.length > 0 && (
+            <ul className="flex flex-col gap-2">
+              {attachments.map((file, index) => (
+                <li
+                  key={index}
+                  className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm"
+                >
+                  <span className="truncate">{file.name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeAttachment(index)}
+                    aria-label="Remove attachment"
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <X />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Request & Approval Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Request & Approval</CardTitle>
+          <CardDescription>Populated after submission and review.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <Field data-disabled>
+                <FieldLabel>Requested By</FieldLabel>
+                <Input value={user?.email || "Current User"} disabled />
+              </Field>
+              <Field data-disabled>
+                <FieldLabel>Checked By</FieldLabel>
+                <Input value="—" disabled />
+              </Field>
+              <Field data-disabled>
+                <FieldLabel>Approved By</FieldLabel>
+                <Input value="—" disabled />
+              </Field>
+            </div>
+          </FieldGroup>
+        </CardContent>
+      </Card>
+
+      {/* Footer */}
+      <div className="flex flex-wrap items-center justify-end gap-2 pb-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/bills")}
+          disabled={isSaving}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleSaveDraft}
+          disabled={isSaving}
+        >
+          Save as Draft
+        </Button>
+        <Button type="submit" disabled={isSaving}>
+          {isSaving && <Loader2 data-icon="inline-start" className="animate-spin" />}
+          {isSaving ? "Saving…" : "Submit for Approval"}
+        </Button>
+      </div>
+    </form>
+  );
 }

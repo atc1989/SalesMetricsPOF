@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getUserDisplayName } from "@/lib/auth/userDisplayName";
+import { Button } from "@/components/ui/button";
 
 export function UserMenu() {
   const { user, signOut, isLoading } = useAuth();
@@ -23,16 +26,20 @@ export function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="hidden text-sm text-slate-600 sm:inline">{displayName}</span>
-      <button
-        type="button"
+    <div className="flex items-center gap-2">
+      <span className="hidden text-sm text-muted-foreground sm:inline">
+        {displayName}
+      </span>
+      <Button
+        variant="outline"
+        size="sm"
         onClick={handleSignOut}
         disabled={isSigningOut}
-        className="inline-flex h-9 items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        aria-label="Sign out"
       >
+        <LogOut data-icon="inline-start" />
         {isSigningOut ? "Signing out…" : "Sign out"}
-      </button>
+      </Button>
     </div>
   );
 }

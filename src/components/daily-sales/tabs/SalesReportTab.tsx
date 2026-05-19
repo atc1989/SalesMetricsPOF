@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/Modal';
 import {
   getDailySalesNetPrice,
@@ -287,44 +287,42 @@ function PackageTable({
   const total = rowAmounts.reduce((sum, amount) => sum + amount, 0);
 
   return (
-    <Card className="p-0">
-      <div className="app-table-scroll">
-        <table id={id} className="min-w-full text-xs">
-          <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-            <tr>
-              <th className="border border-slate-300 px-2 py-1">{title}</th>
-              <th className="border border-slate-300 px-2 py-1">QTY</th>
-              <th className="border border-slate-300 px-2 py-1">PRICE</th>
-              <th className="border border-slate-300 px-2 py-1">AMOUNT TOTAL</th>
+    <div className="app-table-scroll overflow-hidden rounded-md border border-border">
+      <table id={id} className="min-w-full border-collapse text-xs">
+        <thead className="bg-muted/50 text-left text-[10px] uppercase text-muted-foreground">
+          <tr>
+            <th className="border-b border-border px-2 py-1.5 font-medium">{title}</th>
+            <th className="border-b border-border px-2 py-1.5 font-medium">QTY</th>
+            <th className="border-b border-border px-2 py-1.5 font-medium">PRICE</th>
+            <th className="border-b border-border px-2 py-1.5 font-medium">AMOUNT TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedRows.map((row, index) => (
+            <tr key={`${id}-${row.label}`} className="border-b border-border last:border-0">
+              <td className="px-2 py-1.5">{row.label}</td>
+              <td className="px-2 py-1.5 tabular-nums">{row.qty}</td>
+              <td className="px-2 py-1.5 tabular-nums">{formatAmount(row.price)}</td>
+              <td className="px-2 py-1.5 tabular-nums">{formatAmount(rowAmounts[index])}</td>
             </tr>
-          </thead>
-          <tbody>
-            {sortedRows.map((row, index) => (
-              <tr key={`${id}-${row.label}`}>
-                <td className="border border-slate-300 px-2 py-1">{row.label}</td>
-                <td className="border border-slate-300 px-2 py-1">{row.qty}</td>
-                <td className="border border-slate-300 px-2 py-1">{formatAmount(row.price)}</td>
-                <td className="border border-slate-300 px-2 py-1">{formatAmount(rowAmounts[index])}</td>
-              </tr>
-            ))}
-            <tr className="font-semibold">
-              <td className="border border-slate-300 px-2 py-1" colSpan={3}>
-                {totalLabel}
+          ))}
+          <tr className="border-t border-border bg-muted/30 font-semibold">
+            <td className="px-2 py-1.5" colSpan={3}>
+              {totalLabel}
+            </td>
+            <td className="px-2 py-1.5 tabular-nums">{formatAmount(total)}</td>
+          </tr>
+          {includeGrandTotal ? (
+            <tr className="border-t border-border bg-muted/30 font-semibold">
+              <td className="px-2 py-1.5 text-center" colSpan={3}>
+                GRAND TOTAL
               </td>
-              <td className="border border-slate-300 px-2 py-1">{formatAmount(total)}</td>
+              <td className="px-2 py-1.5 tabular-nums">{formatAmount(total)}</td>
             </tr>
-            {includeGrandTotal ? (
-              <tr className="font-semibold">
-                <td className="border border-slate-300 px-2 py-1 text-center" colSpan={3}>
-                  GRAND TOTAL
-                </td>
-                <td className="border border-slate-300 px-2 py-1">{formatAmount(total)}</td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -333,31 +331,29 @@ function PaymentTable({ id, title, rows }: { id: string; title: string; rows: Am
   const total = sortedRows.reduce((sum, row) => sum + row.amount, 0);
 
   return (
-    <Card className="p-0">
-      <div className="app-table-scroll">
-        <table id={id} className="min-w-full text-xs">
-          <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-            <tr>
-              <th className="border border-slate-300 px-2 py-1" colSpan={2}>
-                {title}
-              </th>
+    <div className="app-table-scroll overflow-hidden rounded-md border border-border">
+      <table id={id} className="min-w-full border-collapse text-xs">
+        <thead className="bg-muted/50 text-left text-[10px] uppercase text-muted-foreground">
+          <tr>
+            <th className="border-b border-border px-2 py-1.5 font-medium" colSpan={2}>
+              {title}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedRows.map((row) => (
+            <tr key={`${id}-${row.label}`} className="border-b border-border last:border-0">
+              <td className="px-2 py-1.5">{row.label}</td>
+              <td className="px-2 py-1.5 tabular-nums">{formatAmount(row.amount)}</td>
             </tr>
-          </thead>
-          <tbody>
-            {sortedRows.map((row) => (
-              <tr key={`${id}-${row.label}`}>
-                <td className="border border-slate-300 px-2 py-1">{row.label}</td>
-                <td className="border border-slate-300 px-2 py-1">{formatAmount(row.amount)}</td>
-              </tr>
-            ))}
-            <tr className="font-semibold">
-              <td className="border border-slate-300 px-2 py-1 text-center">TOTAL</td>
-              <td className="border border-slate-300 px-2 py-1">{formatAmount(total)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </Card>
+          ))}
+          <tr className="border-t border-border bg-muted/30 font-semibold">
+            <td className="px-2 py-1.5 text-center">TOTAL</td>
+            <td className="px-2 py-1.5 tabular-nums">{formatAmount(total)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -721,14 +717,14 @@ export function SalesReportTab() {
       <section id="daily-sales" className="mt-4 space-y-4">
         <Card className="p-3">
           <div className="grid gap-2 md:grid-cols-5">
-            <label className="flex flex-col text-xs font-medium text-slate-700">
+            <label className="flex flex-col text-xs font-medium text-muted-foreground">
               DATE
               <input
                 id="transDateDailySales"
                 type="date"
                 value={transDateDailySales}
                 onChange={(event) => setTransDateDailySales(event.target.value)}
-                className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
+                className="mt-1 rounded border border-input px-2 py-1 text-sm"
               />
             </label>
             <div className="flex items-end">
@@ -758,7 +754,7 @@ export function SalesReportTab() {
                 Print
               </Button>
             </div>
-            <div className="flex items-end text-sm text-slate-700">
+            <div className="flex items-end text-sm text-muted-foreground">
               <span id="spnTransDateDailySales">{dateCaption}</span>
             </div>
           </div>
@@ -766,16 +762,16 @@ export function SalesReportTab() {
 
         <Card className="p-4">
           <div id="cntnrDailySales" className="space-y-4">
-            <div className="text-center text-sm font-semibold text-slate-900">
+            <div className="text-center text-sm font-semibold text-foreground">
               <p>Innovision Grand International</p>
               <p>Daily Sales Report</p>
               <p id="spnTransDate" className="font-normal">
                 {dateCaption}
               </p>
             </div>
-            {errorMessage ? <p className="text-xs text-amber-700">{errorMessage}</p> : null}
+            {errorMessage ? <p className="text-xs text-amber-500">{errorMessage}</p> : null}
             {!isLoading && hasGenerated && loadedFromBackend && packageTotals.length === 0 ? (
-              <p className="text-xs text-slate-500">No sales entries for selected date.</p>
+              <p className="text-xs text-muted-foreground">No sales entries for selected date.</p>
             ) : null}
 
             <div className="grid gap-3 xl:grid-cols-[1fr_1fr]">
@@ -800,104 +796,98 @@ export function SalesReportTab() {
               </div>
 
               <div className="space-y-3">
-                <Card className="p-0">
-                  <div className="app-table-scroll">
-                    <table id="tblCashOnHand" className="min-w-full text-xs">
-                      <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-                        <tr>
-                          <th className="border border-slate-300 px-2 py-1">Cash on Hand</th>
-                          <th className="border border-slate-300 px-2 py-1">Pieces</th>
-                          <th className="border border-slate-300 px-2 py-1">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {cashDenominations.map((entry) => (
-                          <tr key={entry.id}>
-                            <td className="border border-slate-300 px-2 py-1">{entry.label}</td>
-                            <td className="border border-slate-300 px-2 py-1">
-                              <input
-                                id={entry.id}
-                                type="number"
-                                min="0"
-                                value={cashPieces[entry.id]}
-                                onChange={(event) => onCashPieceChange(entry.id, event.target.value)}
-                                className="h-7 w-20 rounded border border-slate-300 px-2"
-                              />
-                            </td>
-                            <td className="border border-slate-300 px-2 py-1">
-                              <span id={entry.spanId}>{formatAmount(cashAmounts[entry.id])}</span>
-                            </td>
-                          </tr>
-                        ))}
-                        <tr className="font-semibold">
-                          <td className="border border-slate-300 px-2 py-1 text-center" colSpan={2}>
-                            TOTAL CASH ON HAND
+                <div className="app-table-scroll overflow-hidden rounded-md border border-border">
+                  <table id="tblCashOnHand" className="min-w-full border-collapse text-xs">
+                    <thead className="bg-muted/50 text-left text-[10px] uppercase text-muted-foreground">
+                      <tr>
+                        <th className="border-b border-border px-2 py-1.5 font-medium">Cash on Hand</th>
+                        <th className="border-b border-border px-2 py-1.5 font-medium">Pieces</th>
+                        <th className="border-b border-border px-2 py-1.5 font-medium">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cashDenominations.map((entry) => (
+                        <tr key={entry.id} className="border-b border-border last:border-0">
+                          <td className="px-2 py-1.5">{entry.label}</td>
+                          <td className="px-2 py-1.5">
+                            <input
+                              id={entry.id}
+                              type="number"
+                              min="0"
+                              value={cashPieces[entry.id]}
+                              onChange={(event) => onCashPieceChange(entry.id, event.target.value)}
+                              className="h-7 w-20 rounded border border-input bg-background px-2 text-foreground"
+                            />
                           </td>
-                          <td className="border border-slate-300 px-2 py-1">
-                            <span id="spnTotal">{formatAmount(displayedTotalCash)}</span>
+                          <td className="px-2 py-1.5 tabular-nums">
+                            <span id={entry.spanId}>{formatAmount(cashAmounts[entry.id])}</span>
                           </td>
                         </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </Card>
+                      ))}
+                      <tr className="border-t border-border bg-muted/30 font-semibold">
+                        <td className="px-2 py-1.5 text-center" colSpan={2}>
+                          TOTAL CASH ON HAND
+                        </td>
+                        <td className="px-2 py-1.5 tabular-nums">
+                          <span id="spnTotal">{formatAmount(displayedTotalCash)}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
 
                 <PaymentTable id="tblPaymentBreakdown" title="PAYMENT BREAKDOWN" rows={snapshot.paymentBreakdownRows} />
               </div>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <Card className="p-0">
-                <div className="app-table-scroll">
-                  <table id="tblNewAccounts" className="min-w-full text-xs">
-                    <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-                      <tr>
-                        <th className="border border-slate-300 px-2 py-1" colSpan={3}>
-                          New Accounts
-                        </th>
-                      </tr>
-                      <tr>
-                        <th className="border border-slate-300 px-2 py-1">Silver</th>
-                        <th className="border border-slate-300 px-2 py-1">Gold</th>
-                        <th className="border border-slate-300 px-2 py-1">Platinum</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.silver}</td>
-                        <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.gold}</td>
-                        <td className="border border-slate-300 px-2 py-1">{snapshot.newAccounts.platinum}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
+              <div className="app-table-scroll overflow-hidden rounded-md border border-border">
+                <table id="tblNewAccounts" className="min-w-full border-collapse text-xs">
+                  <thead className="bg-muted/50 text-left text-[10px] uppercase text-muted-foreground">
+                    <tr>
+                      <th className="border-b border-border px-2 py-1.5 font-medium" colSpan={3}>
+                        New Accounts
+                      </th>
+                    </tr>
+                    <tr>
+                      <th className="border-b border-border px-2 py-1.5 font-medium">Silver</th>
+                      <th className="border-b border-border px-2 py-1.5 font-medium">Gold</th>
+                      <th className="border-b border-border px-2 py-1.5 font-medium">Platinum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="px-2 py-1.5 tabular-nums">{snapshot.newAccounts.silver}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{snapshot.newAccounts.gold}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{snapshot.newAccounts.platinum}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-              <Card className="p-0">
-                <div className="app-table-scroll">
-                  <table id="tblUpgrades" className="min-w-full text-xs">
-                    <thead className="bg-slate-50 text-left text-[10px] uppercase text-slate-700">
-                      <tr>
-                        <th className="border border-slate-300 px-2 py-1" colSpan={3}>
-                          Upgrades
-                        </th>
-                      </tr>
-                      <tr>
-                        <th className="border border-slate-300 px-2 py-1">Silver</th>
-                        <th className="border border-slate-300 px-2 py-1">Gold</th>
-                        <th className="border border-slate-300 px-2 py-1">Platinum</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.silver}</td>
-                        <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.gold}</td>
-                        <td className="border border-slate-300 px-2 py-1">{snapshot.upgrades.platinum}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
+              <div className="app-table-scroll overflow-hidden rounded-md border border-border">
+                <table id="tblUpgrades" className="min-w-full border-collapse text-xs">
+                  <thead className="bg-muted/50 text-left text-[10px] uppercase text-muted-foreground">
+                    <tr>
+                      <th className="border-b border-border px-2 py-1.5 font-medium" colSpan={3}>
+                        Upgrades
+                      </th>
+                    </tr>
+                    <tr>
+                      <th className="border-b border-border px-2 py-1.5 font-medium">Silver</th>
+                      <th className="border-b border-border px-2 py-1.5 font-medium">Gold</th>
+                      <th className="border-b border-border px-2 py-1.5 font-medium">Platinum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="px-2 py-1.5 tabular-nums">{snapshot.upgrades.silver}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{snapshot.upgrades.gold}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{snapshot.upgrades.platinum}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -906,7 +896,7 @@ export function SalesReportTab() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 pt-2 text-center text-xs text-slate-700 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 pt-2 text-center text-xs text-muted-foreground md:grid-cols-3">
               <div>
                 <p>PREPARED BY:</p>
                 <p id="txtPreparedBy" className="font-semibold">

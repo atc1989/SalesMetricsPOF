@@ -25,13 +25,13 @@
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #111827;
+  color: var(--foreground);
 }
 
 .sce-title-sub {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--muted-foreground);
   margin-top: 2px;
 }
 
@@ -49,17 +49,17 @@
 
 .sce-field span {
   font-size: 13px;
-  color: #374151;
+  color: var(--muted-foreground);
   font-weight: 500;
 }
 
 .sce-field input,
 .sce-assigned-input {
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input);
   border-radius: 6px;
-  background: #ffffff;
-  color: #111827;
+  background: var(--background);
+  color: var(--foreground);
   padding: 8px 10px;
   font-size: 14px;
   line-height: 1.35;
@@ -77,8 +77,8 @@
   gap: 12px;
   font-size: 12.5px;
   font-weight: 700;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 6px;
 }
 
@@ -87,7 +87,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   padding: 6px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
 }
 
 .sce-step {
@@ -95,7 +95,7 @@
   align-items: flex-start;
   gap: 8px;
   font-size: 13px;
-  color: #111827;
+  color: var(--foreground);
 }
 
 .sce-step input[type="checkbox"] {
@@ -138,7 +138,7 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
-  border-bottom: 1px solid #111827;
+  border-bottom: 1px solid var(--foreground);
   min-height: 14px;
   margin-bottom: 3px;
   padding-bottom: 1px;
@@ -165,7 +165,7 @@
 
 .sce-print-table th,
 .sce-print-table td {
-  border: 1px solid #111827;
+  border: 1px solid var(--foreground);
   padding: 3px 4px;
   text-align: left;
   vertical-align: top;
@@ -194,7 +194,7 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
-  border-bottom: 1px solid #111827;
+  border-bottom: 1px solid var(--foreground);
   min-height: 14px;
   padding-bottom: 1px;
 }

@@ -1,6 +1,13 @@
 import { SummaryStat } from "@/types/dashboard";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 type SummaryCardGridProps = {
   stats: SummaryStat[];
@@ -21,14 +28,17 @@ export function SummaryCardGrid({ stats, onOverallOpen }: SummaryCardGridProps) 
       {stats.map((stat) => {
         const isOverallCard = stat.id === overallCardId;
 
-        const content = (
-          <>
-            <div className="flex items-start justify-between">
-              <p className="text-sm text-slate-500">{stat.label}</p>
-              <Badge variant={trendToVariant[stat.trend]}>{stat.trend}</Badge>
-            </div>
-            <p className="mt-3 text-3xl font-semibold text-slate-900">{stat.value}</p>
-          </>
+        const card = (
+          <Card className={cn("h-full", isOverallCard && onOverallOpen && "transition-colors hover:bg-accent")}>
+            <CardHeader>
+              <div className="flex items-start justify-between gap-2">
+                <CardDescription>{stat.label}</CardDescription>
+                <Badge variant={trendToVariant[stat.trend]}>{stat.trend}</Badge>
+              </div>
+              <CardTitle className="text-3xl tabular-nums">{stat.value}</CardTitle>
+            </CardHeader>
+            <CardContent />
+          </Card>
         );
 
         if (isOverallCard && onOverallOpen) {
@@ -38,14 +48,14 @@ export function SummaryCardGrid({ stats, onOverallOpen }: SummaryCardGridProps) 
               type="button"
               onClick={() => onOverallOpen(stat.value)}
               aria-label="Open overall summary"
-              className="text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
+              className="text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-xl"
             >
-              <Card className="h-full transition-colors hover:bg-slate-50">{content}</Card>
+              {card}
             </button>
           );
         }
 
-        return <Card key={stat.id}>{content}</Card>;
+        return <div key={stat.id}>{card}</div>;
       })}
     </div>
   );

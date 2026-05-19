@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
-import { FormActionButton } from "@/components/billing-ui/FormActionButton";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   fetchRecentPrints,
@@ -401,7 +401,7 @@ export function SpecialCompanyEventsForm({
   return (
     <div
       className={
-        embedded ? "sce-page form-page form-page--embedded" : "sce-page min-h-screen bg-gray-50 form-page form-page--standalone"
+        embedded ? "sce-page form-page form-page--embedded" : "sce-page min-h-screen bg-muted/50 form-page form-page--standalone"
       }
     >
       <div className={embedded ? "form-page-body" : "pt-16 form-page-body"}>
@@ -414,10 +414,10 @@ export function SpecialCompanyEventsForm({
             <div className="form-toolbar no-print">
               {showBackButton ? (
                 <div className="form-toolbar__left">
-                  <FormActionButton onClick={() => router.push("/event-forms")} className="form-action-back">
-                    <ArrowLeft className="form-btn__icon" />
+                  <Button variant="outline" size="sm" className="no-print" onClick={() => router.push("/event-forms")}>
+                    <ArrowLeft data-icon="inline-start" />
                     Back to Forms
-                  </FormActionButton>
+                  </Button>
                 </div>
               ) : (
                 <div />
@@ -529,22 +529,22 @@ export function SpecialCompanyEventsForm({
 
             {showActions ? (
               <div className="form-actions-bottom no-print">
-                <FormActionButton onClick={handleSave}>
+                <Button variant="outline" size="sm" className="no-print" onClick={handleSave}>
                   <Save className="form-btn__icon" />
                   Save
-                </FormActionButton>
-                <FormActionButton onClick={handleLoad}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" onClick={handleLoad}>
                   <Download className="form-btn__icon" />
                   Load
-                </FormActionButton>
-                <FormActionButton onClick={handleClear}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" onClick={handleClear}>
                   <Trash2 className="form-btn__icon" />
                   Clear
-                </FormActionButton>
-                <FormActionButton onClick={handlePrint} disabled={isPrinting}>
+                </Button>
+                <Button variant="outline" size="sm" className="no-print" onClick={handlePrint} disabled={isPrinting}>
                   <Printer className="form-btn__icon" />
                   Print
-                </FormActionButton>
+                </Button>
                 <span className="print-hint no-print">
                   Disable Headers and Footers in the print dialog for best results.
                 </span>

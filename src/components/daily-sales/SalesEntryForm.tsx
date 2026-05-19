@@ -1,9 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 
 export function SalesEntryForm() {
   const [invoice, setInvoice] = useState("");
@@ -20,18 +20,18 @@ export function SalesEntryForm() {
   return (
     <>
       <Card>
-        <h3 className="mb-3 text-lg font-semibold text-slate-900">Sales Entry</h3>
+        <h3 className="mb-3 text-lg font-semibold text-foreground">Sales Entry</h3>
         <form className="grid gap-3 sm:grid-cols-3" onSubmit={handleSubmit}>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
+          <label className="flex flex-col gap-1 text-sm text-muted-foreground">
             Invoice
             <input
               required
               value={invoice}
               onChange={(event) => setInvoice(event.target.value)}
-              className="h-10 rounded-md border border-slate-300 px-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              className="h-10 rounded-md border border-input px-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
+          <label className="flex flex-col gap-1 text-sm text-muted-foreground">
             Amount
             <input
               required
@@ -40,7 +40,7 @@ export function SalesEntryForm() {
               step="0.01"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
-              className="h-10 rounded-md border border-slate-300 px-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              className="h-10 rounded-md border border-input px-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
             />
           </label>
           <div className="flex items-end">

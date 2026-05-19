@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 import { buildPrintHtmlDocument, openPrintWindow } from "@/lib/printWindow";
 import type { PrintLineItem, PrintTransaction } from "@/types/dailySales";
@@ -54,63 +54,63 @@ export function PrintPreviewModal({ isOpen, transaction, lineItems, onClose }: P
         </>
       }
     >
-      <div id="print-preview-content" className="space-y-4 text-xs text-slate-700">
-        <header className="border-b border-slate-200 pb-3">
-          <h3 className="text-sm font-semibold text-slate-900">SalesMetrics</h3>
+      <div id="print-preview-content" className="space-y-4 text-xs text-muted-foreground">
+        <header className="border-b border-border pb-3">
+          <h3 className="text-sm font-semibold text-foreground">SalesMetrics</h3>
           <p>SalesMetrics Distribution Inc.</p>
           <p>123 Business Avenue, Metro Manila</p>
         </header>
 
         <section className="grid gap-2 sm:grid-cols-2">
           <p>
-            <span className="font-semibold text-slate-900">Date:</span> {transaction.date}
+            <span className="font-semibold text-foreground">Date:</span> {transaction.date}
           </p>
           <p>
-            <span className="font-semibold text-slate-900">POF No:</span> {transaction.pofNumber}
+            <span className="font-semibold text-foreground">POF No:</span> {transaction.pofNumber}
           </p>
           <p>
-            <span className="font-semibold text-slate-900">Customer:</span> {transaction.customer}
+            <span className="font-semibold text-foreground">Customer:</span> {transaction.customer}
           </p>
           <p>
-            <span className="font-semibold text-slate-900">GG Trans No:</span> {transaction.ggTransNo}
+            <span className="font-semibold text-foreground">GG Trans No:</span> {transaction.ggTransNo}
           </p>
           <p>
-            <span className="font-semibold text-slate-900">Mode of Payment:</span>{" "}
+            <span className="font-semibold text-foreground">Mode of Payment:</span>{" "}
             {transaction.modeOfPayment}
           </p>
           <p>
-            <span className="font-semibold text-slate-900">Encoder:</span> {transaction.encoder}
+            <span className="font-semibold text-foreground">Encoder:</span> {transaction.encoder}
           </p>
         </section>
 
         <div className="app-table-scroll">
           <table className="min-w-[1100px] border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50">
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">
+              <tr className="bg-muted/50">
+                <th className="border border-border px-2 py-2 text-left font-semibold">
                   PRODUCT/PACKAGE
                 </th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">SRP</th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">
+                <th className="border border-border px-2 py-2 text-left font-semibold">SRP</th>
+                <th className="border border-border px-2 py-2 text-left font-semibold">
                   DISCOUNT
                 </th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">
+                <th className="border border-border px-2 py-2 text-left font-semibold">
                   DISCOUNTED PRICE
                 </th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">
+                <th className="border border-border px-2 py-2 text-left font-semibold">
                   QUANTITY
                 </th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">AMOUNT</th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">
+                <th className="border border-border px-2 py-2 text-left font-semibold">AMOUNT</th>
+                <th className="border border-border px-2 py-2 text-left font-semibold">
                   RELEASED(BOTTLE)
                 </th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">
+                <th className="border border-border px-2 py-2 text-left font-semibold">
                   RELEASED(BLISTER)
                 </th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">
+                <th className="border border-border px-2 py-2 text-left font-semibold">
                   BALANCE(BOTTLE)
                 </th>
-                <th className="border border-slate-200 px-2 py-2 text-left font-semibold">
+                <th className="border border-border px-2 py-2 text-left font-semibold">
                   BALANCE(BLISTER)
                 </th>
               </tr>
@@ -118,20 +118,20 @@ export function PrintPreviewModal({ isOpen, transaction, lineItems, onClose }: P
             <tbody>
               {lineItems.map((item) => (
                 <tr key={item.id}>
-                  <td className="border border-slate-200 px-2 py-2">{item.productPackage}</td>
-                  <td className="border border-slate-200 px-2 py-2">PHP {item.srp.toLocaleString()}</td>
-                  <td className="border border-slate-200 px-2 py-2">
+                  <td className="border border-border px-2 py-2">{item.productPackage}</td>
+                  <td className="border border-border px-2 py-2">PHP {item.srp.toLocaleString()}</td>
+                  <td className="border border-border px-2 py-2">
                     PHP {item.discount.toLocaleString()}
                   </td>
-                  <td className="border border-slate-200 px-2 py-2">
+                  <td className="border border-border px-2 py-2">
                     PHP {item.discountedPrice.toLocaleString()}
                   </td>
-                  <td className="border border-slate-200 px-2 py-2">{item.quantity}</td>
-                  <td className="border border-slate-200 px-2 py-2">PHP {item.amount.toLocaleString()}</td>
-                  <td className="border border-slate-200 px-2 py-2">{item.releasedBottle}</td>
-                  <td className="border border-slate-200 px-2 py-2">{item.releasedBlister}</td>
-                  <td className="border border-slate-200 px-2 py-2">{item.balanceBottle}</td>
-                  <td className="border border-slate-200 px-2 py-2">{item.balanceBlister}</td>
+                  <td className="border border-border px-2 py-2">{item.quantity}</td>
+                  <td className="border border-border px-2 py-2">PHP {item.amount.toLocaleString()}</td>
+                  <td className="border border-border px-2 py-2">{item.releasedBottle}</td>
+                  <td className="border border-border px-2 py-2">{item.releasedBlister}</td>
+                  <td className="border border-border px-2 py-2">{item.balanceBottle}</td>
+                  <td className="border border-border px-2 py-2">{item.balanceBlister}</td>
                 </tr>
               ))}
             </tbody>

@@ -6,7 +6,7 @@ import { AgentDetailsModal } from "@/components/dashboard/AgentDetailsModal";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { TimeRangeSelector } from "@/components/dashboard/TimeRangeSelector";
 import { PageShell } from "@/components/layout/PageShell";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 import { AgentPerformance, TimeRange } from "@/types/dashboard";
 import { SalesDataset } from "@/types/sales";
@@ -186,10 +186,10 @@ export default function SalesPage() {
           </Button>
         }
       >
-        {isLoading ? <p className="text-sm text-slate-500">Loading latest sales performance...</p> : null}
-        {errorMessage ? <p className="text-sm text-amber-600">{errorMessage}</p> : null}
+        {isLoading ? <p className="text-sm text-muted-foreground">Loading latest sales performance...</p> : null}
+        {errorMessage ? <p className="text-sm text-amber-500">{errorMessage}</p> : null}
         {!isLoading && !errorMessage && dataset.agents.length === 0 ? (
-          <p className="text-sm text-slate-500">No data for selected range.</p>
+          <p className="text-sm text-muted-foreground">No data for selected range.</p>
         ) : null}
         <SummaryCardGrid key={`summary-${refreshTick}`} stats={dataset.summary} />
         <AgentCardGrid key={`agents-${refreshTick}`} agents={dataset.agents} onAgentSelect={setSelectedAgent} />

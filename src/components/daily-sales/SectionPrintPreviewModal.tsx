@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 import { buildPrintHtmlDocument, openPrintWindow } from "@/lib/printWindow";
 
@@ -61,7 +61,7 @@ export function SectionPrintPreviewModal({
       }
     >
       <div
-        className="max-h-[70vh] overflow-auto text-xs text-slate-700"
+        className="max-h-[70vh] overflow-auto text-xs text-muted-foreground"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </Modal>

@@ -1,51 +1,78 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
-import type { PaymentMode, RecentSale } from '@/types/dailySales';
+import { useEffect, useMemo, useState } from "react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatMemberName, formatPofNumber, formatZeroOne } from "@/lib/dailySalesDisplay";
+import type { PaymentMode, RecentSale } from "@/types/dailySales";
 
 const paymentModes: PaymentMode[] = [
-  'ALL',
-  'CASH',
-  'BANK',
-  'MAYA(IGI)',
-  'MAYA(ATC)',
-  'SBCOLLECT(IGI)',
-  'SBCOLLECT(ATC)',
-  'EWALLET',
-  'CHEQUE',
-  'EPOINTS',
-  'CONSIGNMENT',
-  'AR(CSA)',
+  "ALL",
+  "CASH",
+  "BANK",
+  "MAYA(IGI)",
+  "MAYA(ATC)",
+  "SBCOLLECT(IGI)",
+  "SBCOLLECT(ATC)",
+  "EWALLET",
+  "CHEQUE",
+  "EPOINTS",
+  "CONSIGNMENT",
+  "AR(CSA)",
 ];
 
-const validPaymentModes: Array<RecentSale['paymentMode']> = [
-  'CASH',
-  'BANK',
-  'MAYA(IGI)',
-  'MAYA(ATC)',
-  'SBCOLLECT(IGI)',
-  'SBCOLLECT(ATC)',
-  'EWALLET',
-  'CHEQUE',
-  'EPOINTS',
-  'CONSIGNMENT',
-  'AR(CSA)',
-  'AR(LEADERSUPPORT)',
+const validPaymentModes: Array<RecentSale["paymentMode"]> = [
+  "CASH",
+  "BANK",
+  "MAYA(IGI)",
+  "MAYA(ATC)",
+  "SBCOLLECT(IGI)",
+  "SBCOLLECT(ATC)",
+  "EWALLET",
+  "CHEQUE",
+  "EPOINTS",
+  "CONSIGNMENT",
+  "AR(CSA)",
+  "AR(LEADERSUPPORT)",
 ];
 
-function normalizePaymentMode(value: string | null): RecentSale['paymentMode'] {
-  if (!value) {
-    return 'CASH';
+function normalizePaymentMode(value: string | null): RecentSale["paymentMode"] {
+  if (!value) return "CASH";
+  if (validPaymentModes.includes(value as RecentSale["paymentMode"])) {
+    return value as RecentSale["paymentMode"];
   }
-
-  if (validPaymentModes.includes(value as RecentSale['paymentMode'])) {
-    return value as RecentSale['paymentMode'];
-  }
-
-  return 'CASH';
+  return "CASH";
 }
 
 const sortRecentSalesAscending = (input: RecentSale[]) =>
@@ -60,8 +87,8 @@ export function DashboardTab() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [pendingFromDate, setPendingFromDate] = useState(today);
   const [pendingToDate, setPendingToDate] = useState(today);
-  const [pendingPaymentMode, setPendingPaymentMode] = useState<PaymentMode>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [pendingPaymentMode, setPendingPaymentMode] = useState<PaymentMode>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rows, setRows] = useState<RecentSale[]>([]);
@@ -75,7 +102,7 @@ export function DashboardTab() {
 
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(today);
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>('ALL');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("ALL");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -118,34 +145,29 @@ export function DashboardTab() {
         };
 
         if (!response.ok || !payload.success || !payload.rows) {
-          throw new Error(payload.message ?? 'Failed to load daily sales.');
+          throw new Error(payload.message ?? "Failed to load daily sales.");
         }
 
         const mappedRows: RecentSale[] = payload.rows.map((row, index) => ({
           id: String(row.daily_sales_id ?? `daily-sales-${index + 1}`),
           pofNumber: formatPofNumber(row.pof_number),
           ggTransNo: formatZeroOne(row.username),
-          date: row.trans_date ?? '',
+          date: row.trans_date ?? "",
           memberName: formatMemberName(row.member_name),
           zeroOne: formatZeroOne(row.username),
-          packageType: row.package_type ?? '',
+          packageType: row.package_type ?? "",
           bottles: row.bottle_count ?? 0,
           blisters: row.blister_count ?? 0,
           sales: row.sales ?? 0,
           paymentMode: normalizePaymentMode(row.mode_of_payment),
-          status: 'Released',
+          status: "Released",
         }));
 
         setRows(mappedRows);
-        if (payload.totals) {
-          setTotals(payload.totals);
-        }
+        if (payload.totals) setTotals(payload.totals);
       } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          return;
-        }
-
-        setErrorMessage('Failed to load daily sales.');
+        if (error instanceof Error && error.name === "AbortError") return;
+        setErrorMessage("Failed to load daily sales.");
       } finally {
         setIsLoading(false);
       }
@@ -161,19 +183,20 @@ export function DashboardTab() {
   const filteredRows = useMemo(() => {
     const search = searchQuery.trim().toLowerCase();
 
-    return sortRecentSalesAscending(rows.filter((row) => {
-      if (
-        search &&
-        !row.pofNumber.toLowerCase().includes(search) &&
-        !row.memberName.toLowerCase().includes(search) &&
-        !row.ggTransNo.toLowerCase().includes(search) &&
-        !row.paymentMode.toLowerCase().includes(search)
-      ) {
-        return false;
-      }
-
-      return true;
-    }));
+    return sortRecentSalesAscending(
+      rows.filter((row) => {
+        if (
+          search &&
+          !row.pofNumber.toLowerCase().includes(search) &&
+          !row.memberName.toLowerCase().includes(search) &&
+          !row.ggTransNo.toLowerCase().includes(search) &&
+          !row.paymentMode.toLowerCase().includes(search)
+        ) {
+          return false;
+        }
+        return true;
+      }),
+    );
   }, [rows, searchQuery]);
 
   const totalSales = filteredRows.reduce((sum, row) => sum + row.sales, 0);
@@ -190,21 +213,20 @@ export function DashboardTab() {
 
   const onExportCsv = () => {
     const headers = [
-      'POF Number',
-      'Date',
-      'Member Name',
-      'Zero One',
-      'Package',
-      'Bottles',
-      'Blisters',
-      'Sales',
-      'Mode of Payment',
-      'Status',
+      "POF Number",
+      "Date",
+      "Member Name",
+      "Zero One",
+      "Package",
+      "Bottles",
+      "Blisters",
+      "Sales",
+      "Mode of Payment",
+      "Status",
     ];
-
     const toCsv = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
     const lines = [
-      headers.map((header) => toCsv(header)).join(','),
+      headers.map((header) => toCsv(header)).join(","),
       ...filteredRows.map((row) =>
         [
           row.pofNumber,
@@ -219,166 +241,186 @@ export function DashboardTab() {
           row.status,
         ]
           .map((value) => toCsv(value))
-          .join(',')
+          .join(","),
       ),
     ];
 
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.download = 'recent-sales.csv';
+    link.download = "recent-sales.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
+  const kpiCards = [
+    { label: "Total Sales", value: `PHP ${totalSales.toLocaleString()}` },
+    { label: "Total Orders", value: totalOrders.toLocaleString() },
+    { label: "New Members", value: totalNewMembers.toLocaleString() },
+    { label: "Total Bottles Sold", value: totalBottles.toLocaleString() },
+    { label: "Total Blister Sold", value: totalBlisters.toLocaleString() },
+  ];
+
   return (
-    <section id="dashboard" className="mt-4 space-y-4">
-      <Card className="p-3">
-        <div className="grid gap-2 md:grid-cols-5">
-          <label className="flex flex-col text-xs font-medium text-slate-700">
-            FROM
-            <input
-              id="db-start-date"
-              type="date"
-              value={pendingFromDate}
-              onChange={(event) => setPendingFromDate(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
-            />
-          </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
-            TO
-            <input
-              id="db-end-date"
-              type="date"
-              value={pendingToDate}
-              onChange={(event) => setPendingToDate(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
-            />
-          </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
-            MODE OF PAYMENT
-            <select
-              id="dbPaymentMode"
-              value={pendingPaymentMode}
-              onChange={(event) => setPendingPaymentMode(event.target.value as PaymentMode)}
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
-            >
-              {paymentModes.map((mode) => (
-                <option key={mode} value={mode}>
-                  {mode}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="flex items-end">
-            <Button
-              id="db-apply-custom-date"
-              variant="secondary"
-              className="w-full md:w-auto"
-              onClick={onApply}
-            >
-              Apply
-            </Button>
-          </div>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
-            SEARCH
-            <input
-              id="tblSalesTodaySearch"
-              type="text"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search table..."
-              className="mt-1 rounded border border-slate-300 px-2 py-1 text-sm"
-            />
-          </label>
-        </div>
+    <section className="space-y-4">
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <FieldGroup>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+              <Field>
+                <FieldLabel htmlFor="db-start-date">From</FieldLabel>
+                <Input
+                  id="db-start-date"
+                  type="date"
+                  value={pendingFromDate}
+                  onChange={(event) => setPendingFromDate(event.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="db-end-date">To</FieldLabel>
+                <Input
+                  id="db-end-date"
+                  type="date"
+                  value={pendingToDate}
+                  onChange={(event) => setPendingToDate(event.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="dbPaymentMode">Mode of Payment</FieldLabel>
+                <Select
+                  value={pendingPaymentMode}
+                  onValueChange={(value) => setPendingPaymentMode(value as PaymentMode)}
+                >
+                  <SelectTrigger id="dbPaymentMode" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentModes.map((mode) => (
+                      <SelectItem key={mode} value={mode}>
+                        {mode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel>&nbsp;</FieldLabel>
+                <Button
+                  id="db-apply-custom-date"
+                  variant="secondary"
+                  className="w-full md:w-auto"
+                  onClick={onApply}
+                >
+                  Apply
+                </Button>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="tblSalesTodaySearch">Search</FieldLabel>
+                <Input
+                  id="tblSalesTodaySearch"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search table…"
+                />
+              </Field>
+            </div>
+          </FieldGroup>
+        </CardContent>
       </Card>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Card className="p-3">
-          <p className="text-xs text-slate-600">Total Sales</p>
-          <p className="total-sales-today text-lg font-semibold text-slate-900">
-            PHP {totalSales.toLocaleString()}
-          </p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-xs text-slate-600">Total Orders</p>
-          <p className="total-orders-today text-lg font-semibold text-slate-900">{totalOrders}</p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-xs text-slate-600">New Members</p>
-          <p className="total-new-members-today text-lg font-semibold text-slate-900">
-            {totalNewMembers}
-          </p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-xs text-slate-600">Total Bottles Sold</p>
-          <p className="total-bottles-sold-today text-lg font-semibold text-slate-900">
-            {totalBottles}
-          </p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-xs text-slate-600">Total Blister Sold</p>
-          <p className="total-blister-sold-today text-lg font-semibold text-slate-900">
-            {totalBlisters}
-          </p>
-        </Card>
+      {/* KPI cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {kpiCards.map((card) => (
+          <Card key={card.label}>
+            <CardHeader>
+              <CardDescription>{card.label}</CardDescription>
+              <CardTitle className="text-2xl tabular-nums">{card.value}</CardTitle>
+            </CardHeader>
+            <CardContent />
+          </Card>
+        ))}
       </div>
 
-      <Card className="p-0">
-        <div className="flex items-center justify-between px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-900">Recent Sales</h2>
+      {/* Recent Sales */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle className="text-base">Recent Sales</CardTitle>
           <Button size="sm" onClick={onExportCsv}>
             Excel
           </Button>
-        </div>
-        {isLoading ? <p className="px-4 pb-2 text-xs text-slate-500">Loading daily sales...</p> : null}
-        {errorMessage ? <p className="px-4 pb-2 text-xs text-amber-600">{errorMessage}</p> : null}
-        <div className="app-table-scroll">
-          <table id="tblSalesToday" className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
-              <tr>
-                <th className="px-3 py-2">POF Number</th>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Member Name</th>
-                <th className="px-3 py-2">Zero One</th>
-                <th className="px-3 py-2">Package</th>
-                <th className="px-3 py-2">Bottles</th>
-                <th className="px-3 py-2">Blisters</th>
-                <th className="px-3 py-2">Sales</th>
-                <th className="px-3 py-2">Mode of Payment</th>
-                <th className="px-3 py-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRows.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="px-3 py-6 text-center text-slate-500">
+        </CardHeader>
+        <CardContent className="overflow-hidden p-0">
+          {errorMessage ? (
+            <div className="px-4 pb-4">
+              <Alert variant="destructive">
+                <AlertTitle>Could not load daily sales</AlertTitle>
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            </div>
+          ) : null}
+
+          {isLoading ? (
+            <div className="space-y-3 p-4">
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+          ) : filteredRows.length === 0 ? (
+            <div className="p-4">
+              <Empty className="border-0">
+                <EmptyHeader>
+                  <EmptyTitle>No recent sales</EmptyTitle>
+                  <EmptyDescription>
                     No recent sales found for the selected filters.
-                  </td>
-                </tr>
-              ) : (
-                filteredRows.map((row) => (
-                  <tr key={row.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2">{row.pofNumber}</td>
-                    <td className="px-3 py-2">{row.date}</td>
-                    <td className="px-3 py-2">{row.memberName}</td>
-                    <td className="px-3 py-2">{row.zeroOne}</td>
-                    <td className="px-3 py-2">{row.packageType}</td>
-                    <td className="px-3 py-2">{row.bottles}</td>
-                    <td className="px-3 py-2">{row.blisters}</td>
-                    <td className="px-3 py-2">PHP {row.sales.toLocaleString()}</td>
-                    <td className="px-3 py-2">{row.paymentMode}</td>
-                    <td className="px-3 py-2">{row.status}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>POF Number</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Member Name</TableHead>
+                    <TableHead>Zero One</TableHead>
+                    <TableHead>Package</TableHead>
+                    <TableHead className="text-right">Bottles</TableHead>
+                    <TableHead className="text-right">Blisters</TableHead>
+                    <TableHead className="text-right">Sales</TableHead>
+                    <TableHead>Mode of Payment</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="font-medium">{row.pofNumber}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm">{row.date}</TableCell>
+                      <TableCell>{row.memberName}</TableCell>
+                      <TableCell>{row.zeroOne}</TableCell>
+                      <TableCell>{row.packageType}</TableCell>
+                      <TableCell className="text-right tabular-nums">{row.bottles}</TableCell>
+                      <TableCell className="text-right tabular-nums">{row.blisters}</TableCell>
+                      <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums">
+                        PHP {row.sales.toLocaleString()}
+                      </TableCell>
+                      <TableCell>{row.paymentMode}</TableCell>
+                      <TableCell>{row.status}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
       </Card>
     </section>
   );

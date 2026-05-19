@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { CashOnHandRow } from "@/types/dailySales";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 
 type CashOnHandTableProps = {
   rows: CashOnHandRow[];
@@ -21,23 +21,23 @@ export function CashOnHandTable({ rows }: CashOnHandTableProps) {
   return (
     <>
       <Card>
-        <h3 className="mb-3 text-lg font-semibold text-slate-900">Cash On Hand</h3>
+        <h3 className="mb-3 text-lg font-semibold text-foreground">Cash On Hand</h3>
         <div className="app-table-scroll">
           <table className="min-w-full border-collapse text-sm">
             <thead>
-              <tr className="bg-slate-50">
-                <th className="border-b border-slate-200 px-4 py-2 text-left">Label</th>
-                <th className="border-b border-slate-200 px-4 py-2 text-left">Amount</th>
+              <tr className="bg-muted/50">
+                <th className="border-b border-border px-4 py-2 text-left">Label</th>
+                <th className="border-b border-border px-4 py-2 text-left">Amount</th>
               </tr>
             </thead>
             <tbody>
               {stateRows.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50">
-                  <td className="border-b border-slate-100 px-4 py-2">{row.label}</td>
-                  <td className="border-b border-slate-100 px-4 py-2">
+                <tr key={row.id} className="hover:bg-muted/50">
+                  <td className="border-b border-border px-4 py-2">{row.label}</td>
+                  <td className="border-b border-border px-4 py-2">
                     <input
                       type="number"
-                      className="h-9 w-full rounded-md border border-slate-300 px-2"
+                      className="h-9 w-full rounded-md border border-input px-2"
                       value={row.amount}
                       onChange={(event) => updateAmount(row.id, Number(event.target.value))}
                     />

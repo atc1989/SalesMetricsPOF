@@ -1,6 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { AlertTriangle, X } from 'lucide-react';
+"use client";
+
+import { useEffect, useState } from "react";
+import { AlertTriangle } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 
 interface VoidBillModalProps {
   isOpen: boolean;
@@ -17,149 +35,88 @@ export function VoidBillModal({
   onConfirm,
   billReference,
   billVendor,
-  billAmount
+  billAmount,
 }: VoidBillModalProps) {
-  const [voidReason, setVoidReason] = useState('');
+  const [voidReason, setVoidReason] = useState("");
 
-  // Reset reason when modal opens/closes
   useEffect(() => {
-    if (!isOpen) {
-      setVoidReason('');
-    }
+    if (!isOpen) setVoidReason("");
   }, [isOpen]);
 
-  // Handle escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
-
   const handleConfirm = () => {
-    if (voidReason.trim()) {
-      onConfirm(voidReason);
-      setVoidReason('');
-    }
+    if (!voidReason.trim()) return;
+    onConfirm(voidReason);
+    setVoidReason("");
   };
 
-  if (!isOpen) return null;
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="size-5" />
+            Void Payment Request
+          </DialogTitle>
+          <DialogDescription>
+            Voiding this payment request will permanently cancel it. This action cannot be undone and the request will no longer be payable.
+          </DialogDescription>
+        </DialogHeader>
 
-  return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black"
-        style={{ opacity: 0.5, backdropFilter: 'blur(2px)' }}
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative z-10 bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Close void modal"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        {/* Header */}
-        <div className="p-3 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+        <div className="rounded-md border bg-muted/40 p-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <div>
+              <div className="text-xs text-muted-foreground">Reference</div>
+              <div className="font-medium">{billReference}</div>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">Void Payment Request</h2>
+            <div>
+              <div className="text-xs text-muted-foreground">Total Amount</div>
+              <div className="font-semibold tabular-nums">
+                ₱
+                {billAmount.toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+            </div>
+            <div className="col-span-2">
+              <div className="text-xs text-muted-foreground">Vendor / Payee</div>
+              <div className="font-medium">{billVendor}</div>
+            </div>
           </div>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-5">
-          {/* Warning Message */}
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-sm text-red-800">
-              Voiding this payment request will permanently cancel it.
-              This action cannot be undone and the request will no longer be payable.
-            </p>
-          </div>
-
-          {/* Bill Details */}
-          <div className="bg-gray-50 rounded-md p-4 space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Payment Request Details</h3>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Reference Number</div>
-                <div className="text-sm font-medium text-gray-900">{billReference}</div>
-              </div>
-              
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Total Amount</div>
-                <div className="text-sm font-semibold text-gray-900">
-                  ₱{billAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Vendor / Payee</div>
-              <div className="text-sm font-medium text-gray-900">{billVendor}</div>
-            </div>
-          </div>
-
-          {/* Void Reason Input */}
-          <div>
-            <label htmlFor="voidReason" className="block text-sm font-medium text-gray-900 mb-1.5">
-              Reason for Voiding <span className="text-red-600">*</span>
-            </label>
-            <textarea
-              id="voidReason"
+        <FieldGroup>
+          <Field data-invalid={!voidReason.trim() ? true : undefined}>
+            <FieldLabel htmlFor="void-reason">
+              Reason for voiding<span className="text-destructive"> *</span>
+            </FieldLabel>
+            <Textarea
+              id="void-reason"
               value={voidReason}
               onChange={(e) => setVoidReason(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
-              placeholder="Enter the reason for voiding this payment request..."
               autoFocus
+              placeholder="Enter the reason for voiding this payment request…"
             />
-            <p className="text-xs text-gray-500 mt-1.5">
-              Please provide a reason for audit purposes.
-            </p>
-          </div>
+            <FieldDescription>
+              Required for audit history. Voided requests are retained but can no longer be paid.
+            </FieldDescription>
+          </Field>
+        </FieldGroup>
 
-          {/* Additional Warning */}
-          <div className="flex items-start gap-2 text-xs text-gray-600">
-            <AlertTriangle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
-            <p>
-              Voided requests are retained for audit history and can no longer be paid.
-            </p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-3 border-t border-gray-200 flex items-center justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-          >
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="destructive"
             onClick={handleConfirm}
             disabled={!voidReason.trim()}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
           >
             Confirm Void
-          </button>
-        </div>
-      </div>
-    </div>
-    ,
-    document.body
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

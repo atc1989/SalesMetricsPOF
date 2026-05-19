@@ -2,8 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Modal } from "@/components/ui/Modal";
 import {
   INITIAL_BLISTER_STOCK,
@@ -324,92 +330,155 @@ export default function InventoryMovementPage() {
   };
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6">
-      <Card className="space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Inventory Movement</h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Track bottle and blister opening, stock-in, released, and closing balances by date.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={handleExportExcel} disabled={isLoading}>
-              Export Excel
-            </Button>
-            <Button onClick={() => setIsStockInModalOpen(true)} disabled={stockInSetupRequired}>
-              Add Stock In
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <label className="flex flex-col text-xs font-medium text-slate-700">
-            FROM
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
-            TO
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-3 py-2 text-sm"
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Initial Bottle Stock</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">{formatNumber(summary.initialBottleStock)}</p>
+    <main className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle className="text-2xl">Inventory Movement</CardTitle>
+              <CardDescription>
+                Track bottle and blister opening, stock-in, released, and closing balances by date.
+              </CardDescription>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Initial Blister Stock</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">{formatNumber(summary.initialBlisterStock)}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={handleExportExcel} disabled={isLoading}>
+                Export Excel
+              </Button>
+              <Button onClick={() => setIsStockInModalOpen(true)} disabled={stockInSetupRequired}>
+                Add Stock In
+              </Button>
             </div>
           </div>
-        </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="inventory-from"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                FROM
+              </label>
+              <input
+                id="inventory-from"
+                type="date"
+                value={dateFrom}
+                onChange={(event) => setDateFrom(event.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="inventory-to"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                TO
+              </label>
+              <input
+                id="inventory-to"
+                type="date"
+                value={dateTo}
+                onChange={(event) => setDateTo(event.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-border bg-muted/50 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Initial Bottle Stock
+                </p>
+                <p className="mt-1 text-lg font-semibold tabular-nums">
+                  {formatNumber(summary.initialBottleStock)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/50 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Initial Blister Stock
+                </p>
+                <p className="mt-1 text-lg font-semibold tabular-nums">
+                  {formatNumber(summary.initialBlisterStock)}
+                </p>
+              </div>
+            </div>
+          </div>
 
-        {errorMessage ? <p className="text-sm text-amber-700">{errorMessage}</p> : null}
-        {noticeMessage ? <p className="text-sm text-emerald-700">{noticeMessage}</p> : null}
+          {errorMessage ? (
+            <p className="text-sm text-amber-500">{errorMessage}</p>
+          ) : null}
+          {noticeMessage ? (
+            <p className="text-sm text-emerald-500">{noticeMessage}</p>
+          ) : null}
+        </CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Bottle Range Opening</p>
-          <p className="text-2xl font-semibold text-slate-900">{formatNumber(summary.rangeOpeningBottleStock)}</p>
-          <p className="text-xs text-slate-500">Closing: {formatNumber(summary.rangeClosingBottleStock)}</p>
+        <Card>
+          <CardHeader>
+            <CardDescription>Bottle Range Opening</CardDescription>
+            <CardTitle className="text-2xl tabular-nums">
+              {formatNumber(summary.rangeOpeningBottleStock)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              Closing: {formatNumber(summary.rangeClosingBottleStock)}
+            </p>
+          </CardContent>
         </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Blister Range Opening</p>
-          <p className="text-2xl font-semibold text-slate-900">{formatNumber(summary.rangeOpeningBlisterStock)}</p>
-          <p className="text-xs text-slate-500">Closing: {formatNumber(summary.rangeClosingBlisterStock)}</p>
+        <Card>
+          <CardHeader>
+            <CardDescription>Blister Range Opening</CardDescription>
+            <CardTitle className="text-2xl tabular-nums">
+              {formatNumber(summary.rangeOpeningBlisterStock)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              Closing: {formatNumber(summary.rangeClosingBlisterStock)}
+            </p>
+          </CardContent>
         </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Bottle Movement</p>
-          <p className="text-sm text-slate-700">In: {formatNumber(totals.bottleIn)}</p>
-          <p className="text-sm text-slate-700">Out: {formatNumber(totals.bottleOut)}</p>
+        <Card>
+          <CardHeader>
+            <CardDescription>Bottle Movement</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-baseline gap-4 tabular-nums">
+            <div>
+              <p className="text-xs text-muted-foreground">In</p>
+              <p className="text-xl font-semibold">{formatNumber(totals.bottleIn)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Out</p>
+              <p className="text-xl font-semibold">{formatNumber(totals.bottleOut)}</p>
+            </div>
+          </CardContent>
         </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Blister Movement</p>
-          <p className="text-sm text-slate-700">In: {formatNumber(totals.blisterIn)}</p>
-          <p className="text-sm text-slate-700">Out: {formatNumber(totals.blisterOut)}</p>
+        <Card>
+          <CardHeader>
+            <CardDescription>Blister Movement</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-baseline gap-4 tabular-nums">
+            <div>
+              <p className="text-xs text-muted-foreground">In</p>
+              <p className="text-xl font-semibold">{formatNumber(totals.blisterIn)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Out</p>
+              <p className="text-xl font-semibold">{formatNumber(totals.blisterOut)}</p>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
-      <Card className="p-0">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">
+      <Card className="overflow-hidden p-0">
+        <div className="border-b border-border px-4 py-3">
+          <h2 className="text-base font-semibold text-foreground">
             Daily Movement Table ({formatDateLabel(dateFrom)} to {formatDateLabel(dateTo)})
           </h2>
         </div>
         <div className="max-h-[70vh] overflow-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-600">
+            <thead className="bg-muted/50 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-3 py-2">Date</th>
                 <th className="px-3 py-2">Bottle Opening</th>
@@ -425,28 +494,28 @@ export default function InventoryMovementPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-slate-500">
+                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                     Loading inventory movement...
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-slate-500">
+                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                     No inventory movement rows found for the selected date range.
                   </td>
                 </tr>
               ) : (
                 rows.map((row) => (
-                  <tr key={row.date} className="border-t border-slate-100">
-                    <td className="px-3 py-2 font-medium text-slate-900">{formatDateLabel(row.date)}</td>
+                  <tr key={row.date} className="border-t border-border">
+                    <td className="px-3 py-2 font-medium text-foreground">{formatDateLabel(row.date)}</td>
                     <td className="px-3 py-2">{formatNumber(row.bottleOpening)}</td>
                     <td className="px-3 py-2 text-emerald-700">{formatNumber(row.bottleIn)}</td>
                     <td className="px-3 py-2 text-rose-700">{formatNumber(row.bottleOut)}</td>
-                    <td className="px-3 py-2 font-semibold text-slate-900">{formatNumber(row.bottleClosing)}</td>
+                    <td className="px-3 py-2 font-semibold text-foreground">{formatNumber(row.bottleClosing)}</td>
                     <td className="px-3 py-2">{formatNumber(row.blisterOpening)}</td>
                     <td className="px-3 py-2 text-emerald-700">{formatNumber(row.blisterIn)}</td>
                     <td className="px-3 py-2 text-rose-700">{formatNumber(row.blisterOut)}</td>
-                    <td className="px-3 py-2 font-semibold text-slate-900">{formatNumber(row.blisterClosing)}</td>
+                    <td className="px-3 py-2 font-semibold text-foreground">{formatNumber(row.blisterClosing)}</td>
                   </tr>
                 ))
               )}
@@ -456,12 +525,12 @@ export default function InventoryMovementPage() {
       </Card>
 
       <Card className="p-0">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">Stock-In Entries In Selected Range</h2>
+        <div className="border-b border-border px-4 py-3">
+          <h2 className="text-base font-semibold text-foreground">Stock-In Entries In Selected Range</h2>
         </div>
         <div className="max-h-80 overflow-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-600">
+            <thead className="bg-muted/50 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-3 py-2">Date</th>
                 <th className="px-3 py-2">Bottle In</th>
@@ -473,13 +542,13 @@ export default function InventoryMovementPage() {
             <tbody>
               {stockIns.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-8 text-center text-slate-500">
+                  <td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">
                     No stock-in entries in this date range yet.
                   </td>
                 </tr>
               ) : (
                 stockIns.map((row) => (
-                  <tr key={row.id} className="border-t border-slate-100">
+                  <tr key={row.id} className="border-t border-border">
                     <td className="px-3 py-2">{formatDateLabel(row.movement_date)}</td>
                     <td className="px-3 py-2">{formatNumber(row.bottle_in)}</td>
                     <td className="px-3 py-2">{formatNumber(row.blister_in)}</td>
@@ -511,16 +580,16 @@ export default function InventoryMovementPage() {
         }
       >
         <div className="grid gap-3">
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             DATE
             <input
               type="date"
               value={movementDate}
               onChange={(event) => setMovementDate(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 rounded border border-input px-3 py-2 text-sm"
             />
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             BOTTLE IN
             <input
               type="number"
@@ -528,11 +597,11 @@ export default function InventoryMovementPage() {
               step="1"
               value={bottleIn}
               onChange={(event) => setBottleIn(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 rounded border border-input px-3 py-2 text-sm"
               placeholder="0"
             />
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             BLISTER IN
             <input
               type="number"
@@ -540,16 +609,16 @@ export default function InventoryMovementPage() {
               step="1"
               value={blisterIn}
               onChange={(event) => setBlisterIn(event.target.value)}
-              className="mt-1 rounded border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 rounded border border-input px-3 py-2 text-sm"
               placeholder="0"
             />
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex flex-col text-xs font-medium text-muted-foreground">
             NOTE
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              className="mt-1 min-h-24 rounded border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 min-h-24 rounded border border-input px-3 py-2 text-sm"
               placeholder="Optional note"
             />
           </label>

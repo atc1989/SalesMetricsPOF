@@ -69,7 +69,7 @@ export function BillsExportButtons({
           type="button"
           onClick={() => handleExport(option.key)}
           disabled={isExporting}
-          className="px-3 py-1.5 text-sm font-medium rounded-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-sm font-medium rounded-full border border-input text-muted-foreground bg-card hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {option.label}
         </button>

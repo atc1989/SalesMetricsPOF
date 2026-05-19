@@ -1,7 +1,7 @@
 "use client";
 
 import { KeyboardEvent, useRef } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 
 type ModifyRow = {
@@ -60,16 +60,16 @@ export function ModifyGgTransNoModal({
       }
     >
       <div className="space-y-3">
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
+        <label className="flex flex-col gap-1 text-sm text-muted-foreground">
           POF Number
           <input
             type="text"
             value={row?.pofNumber ?? ""}
             readOnly
-            className="h-10 rounded-md border border-slate-300 bg-slate-50 px-3 text-slate-600"
+            className="h-10 rounded-md border border-input bg-muted/50 px-3 text-muted-foreground"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
+        <label className="flex flex-col gap-1 text-sm text-muted-foreground">
           GG Transaction Number
           <input
             key={row?.id ?? "empty"}
@@ -79,7 +79,7 @@ export function ModifyGgTransNoModal({
             required
             onKeyDown={onInputKeyDown}
             disabled={isSaving}
-            className="h-10 rounded-md border border-slate-300 px-3"
+            className="h-10 rounded-md border border-input px-3"
           />
         </label>
       </div>

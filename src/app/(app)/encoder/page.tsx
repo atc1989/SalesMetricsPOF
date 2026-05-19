@@ -5,7 +5,7 @@ import { ExpensesForm } from "@/components/encoder/ExpensesForm";
 import { LeaderSelector } from "@/components/encoder/LeaderSelector";
 import { TargetRatioForm } from "@/components/encoder/TargetRatioForm";
 import { TopHeader } from "@/components/layout/TopHeader";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/Modal";
 import { Expense, Leader, TargetRatio } from "@/types/encoder";
 

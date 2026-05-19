@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/ui/DataTable";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ReportRow } from "@/types/dailySales";
 
 type ReportsTableProps = {

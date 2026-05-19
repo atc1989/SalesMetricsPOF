@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 
 type InventoryFiltersProps = {
   transDateFrom: string;
@@ -20,30 +20,30 @@ export default function InventoryFilters({
   onGenerateReport,
 }: InventoryFiltersProps) {
   return (
-    <div className="mb-4 grid gap-2 rounded-md border border-gray-200 bg-white p-3 md:grid-cols-4">
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+    <div className="mb-4 grid gap-2 rounded-md border border-border bg-card p-3 md:grid-cols-4">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         FROM
         <input
           id="inv-start-date"
           type="date"
           value={transDateFrom}
           onChange={(event) => onTransDateFromChange(event.target.value)}
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         TO
         <input
           id="inv-end-date"
           type="date"
           value={transDateTo}
           onChange={(event) => onTransDateToChange(event.target.value)}
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         SEARCH
         <input
           id="tblDailyInventorySearch"
@@ -51,7 +51,7 @@ export default function InventoryFilters({
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
           placeholder="Search inventory item"
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 

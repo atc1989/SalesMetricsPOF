@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { PaymentMode } from '@/types/dailySales';
 
 type DashboardFiltersProps = {
@@ -40,36 +40,36 @@ export default function DashboardFilters({
   onApply,
 }: DashboardFiltersProps) {
   return (
-    <div className="mb-4 grid gap-2 rounded-md border border-gray-200 bg-white p-3 md:grid-cols-5">
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+    <div className="mb-4 grid gap-2 rounded-md border border-border bg-card p-3 md:grid-cols-5">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         FROM
         <input
           id="db-start-date"
           type="date"
           value={fromDate}
           onChange={(event) => onFromDateChange(event.target.value)}
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         TO
         <input
           id="db-end-date"
           type="date"
           value={toDate}
           onChange={(event) => onToDateChange(event.target.value)}
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         MODE OF PAYMENT
         <select
           id="dbPaymentMode"
           value={paymentMode}
           onChange={(event) => onPaymentModeChange(event.target.value as PaymentMode)}
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         >
           {paymentModes.map((mode) => (
             <option key={mode} value={mode}>
@@ -79,7 +79,7 @@ export default function DashboardFilters({
         </select>
       </label>
 
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         SEARCH
         <input
           id="tblSalesTodaySearch"
@@ -87,7 +87,7 @@ export default function DashboardFilters({
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
           placeholder="Search POF, member, mode, GG Trans No"
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 

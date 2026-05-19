@@ -8,10 +8,10 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden border-r border-slate-200 bg-white md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-64 md:flex-col md:justify-between">
+    <aside className="hidden border-r border-border bg-card md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-64 md:flex-col md:justify-between">
       <div>
-        <div className="border-b border-slate-200 px-6 py-5">
-          <h1 className="text-lg font-semibold tracking-tight text-slate-900">SalesMetrics</h1>
+        <div className="border-b border-border px-6 py-5">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">SalesMetrics</h1>
         </div>
         <nav className="p-4">
           <ul className="space-y-1">
@@ -23,7 +23,7 @@ export function Sidebar() {
                   <Link
                     href={link.href}
                     className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                      isActive ? "bg-foreground text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     {link.label}
@@ -36,7 +36,7 @@ export function Sidebar() {
       </div>
 
       <div className="p-4">
-        <span className="inline-flex rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+        <span className="inline-flex rounded-full border border-input bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
           Mock Mode
         </span>
       </div>
