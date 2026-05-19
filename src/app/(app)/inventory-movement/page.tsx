@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Modal } from "@/components/ui/Modal";
 import {
   INITIAL_BLISTER_STOCK,
@@ -324,84 +330,147 @@ export default function InventoryMovementPage() {
   };
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6">
-      <Card className="space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Inventory Movement</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Track bottle and blister opening, stock-in, released, and closing balances by date.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={handleExportExcel} disabled={isLoading}>
-              Export Excel
-            </Button>
-            <Button onClick={() => setIsStockInModalOpen(true)} disabled={stockInSetupRequired}>
-              Add Stock In
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            FROM
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-              className="mt-1 rounded border border-input px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            TO
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-              className="mt-1 rounded border border-input px-3 py-2 text-sm"
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg border border-border bg-muted/50 p-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Initial Bottle Stock</p>
-              <p className="mt-1 text-lg font-semibold text-foreground">{formatNumber(summary.initialBottleStock)}</p>
+    <main className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle className="text-2xl">Inventory Movement</CardTitle>
+              <CardDescription>
+                Track bottle and blister opening, stock-in, released, and closing balances by date.
+              </CardDescription>
             </div>
-            <div className="rounded-lg border border-border bg-muted/50 p-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Initial Blister Stock</p>
-              <p className="mt-1 text-lg font-semibold text-foreground">{formatNumber(summary.initialBlisterStock)}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={handleExportExcel} disabled={isLoading}>
+                Export Excel
+              </Button>
+              <Button onClick={() => setIsStockInModalOpen(true)} disabled={stockInSetupRequired}>
+                Add Stock In
+              </Button>
             </div>
           </div>
-        </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="inventory-from"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                FROM
+              </label>
+              <input
+                id="inventory-from"
+                type="date"
+                value={dateFrom}
+                onChange={(event) => setDateFrom(event.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="inventory-to"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                TO
+              </label>
+              <input
+                id="inventory-to"
+                type="date"
+                value={dateTo}
+                onChange={(event) => setDateTo(event.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-border bg-muted/50 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Initial Bottle Stock
+                </p>
+                <p className="mt-1 text-lg font-semibold tabular-nums">
+                  {formatNumber(summary.initialBottleStock)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/50 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Initial Blister Stock
+                </p>
+                <p className="mt-1 text-lg font-semibold tabular-nums">
+                  {formatNumber(summary.initialBlisterStock)}
+                </p>
+              </div>
+            </div>
+          </div>
 
-        {errorMessage ? <p className="text-sm text-amber-500">{errorMessage}</p> : null}
-        {noticeMessage ? <p className="text-sm text-emerald-700">{noticeMessage}</p> : null}
+          {errorMessage ? (
+            <p className="text-sm text-amber-500">{errorMessage}</p>
+          ) : null}
+          {noticeMessage ? (
+            <p className="text-sm text-emerald-500">{noticeMessage}</p>
+          ) : null}
+        </CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Bottle Range Opening</p>
-          <p className="text-2xl font-semibold text-foreground">{formatNumber(summary.rangeOpeningBottleStock)}</p>
-          <p className="text-xs text-muted-foreground">Closing: {formatNumber(summary.rangeClosingBottleStock)}</p>
+        <Card>
+          <CardHeader>
+            <CardDescription>Bottle Range Opening</CardDescription>
+            <CardTitle className="text-2xl tabular-nums">
+              {formatNumber(summary.rangeOpeningBottleStock)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              Closing: {formatNumber(summary.rangeClosingBottleStock)}
+            </p>
+          </CardContent>
         </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Blister Range Opening</p>
-          <p className="text-2xl font-semibold text-foreground">{formatNumber(summary.rangeOpeningBlisterStock)}</p>
-          <p className="text-xs text-muted-foreground">Closing: {formatNumber(summary.rangeClosingBlisterStock)}</p>
+        <Card>
+          <CardHeader>
+            <CardDescription>Blister Range Opening</CardDescription>
+            <CardTitle className="text-2xl tabular-nums">
+              {formatNumber(summary.rangeOpeningBlisterStock)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              Closing: {formatNumber(summary.rangeClosingBlisterStock)}
+            </p>
+          </CardContent>
         </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Bottle Movement</p>
-          <p className="text-sm text-muted-foreground">In: {formatNumber(totals.bottleIn)}</p>
-          <p className="text-sm text-muted-foreground">Out: {formatNumber(totals.bottleOut)}</p>
+        <Card>
+          <CardHeader>
+            <CardDescription>Bottle Movement</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-baseline gap-4 tabular-nums">
+            <div>
+              <p className="text-xs text-muted-foreground">In</p>
+              <p className="text-xl font-semibold">{formatNumber(totals.bottleIn)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Out</p>
+              <p className="text-xl font-semibold">{formatNumber(totals.bottleOut)}</p>
+            </div>
+          </CardContent>
         </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Blister Movement</p>
-          <p className="text-sm text-muted-foreground">In: {formatNumber(totals.blisterIn)}</p>
-          <p className="text-sm text-muted-foreground">Out: {formatNumber(totals.blisterOut)}</p>
+        <Card>
+          <CardHeader>
+            <CardDescription>Blister Movement</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-baseline gap-4 tabular-nums">
+            <div>
+              <p className="text-xs text-muted-foreground">In</p>
+              <p className="text-xl font-semibold">{formatNumber(totals.blisterIn)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Out</p>
+              <p className="text-xl font-semibold">{formatNumber(totals.blisterOut)}</p>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
-      <Card className="p-0">
+      <Card className="overflow-hidden p-0">
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-base font-semibold text-foreground">
             Daily Movement Table ({formatDateLabel(dateFrom)} to {formatDateLabel(dateTo)})
