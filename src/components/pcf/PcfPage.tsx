@@ -11,7 +11,8 @@ import {
   Search,
   Wallet,
 } from "lucide-react";
-import { toast } from "sonner";
+import { AlertCircle, Download, SearchX } from "lucide-react";
+import { notify } from "@/lib/notify";
 import {
   getPcfSummary,
   listPcfTransactions,
@@ -319,7 +320,7 @@ export function PcfPage() {
     try {
       const exportTransactions = await fetchPcfForExport();
       if (!exportTransactions.length) {
-        toast.error("No rows to export");
+        notify(SearchX, "No rows to export");
         return;
       }
 
@@ -331,10 +332,10 @@ export function PcfPage() {
         });
       }
 
-      toast.success(`Exported ${exportTransactions.length} rows`);
+      notify(Download, `Exported ${exportTransactions.length} rows`);
     } catch (error) {
       console.error(error);
-      toast.error("Export failed");
+      notify(AlertCircle, "Export failed");
     } finally {
       setExporting(null);
     }

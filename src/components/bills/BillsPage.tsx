@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, FileText, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { AlertCircle, Download, FileText, Loader2, Plus, Search, SearchX } from "lucide-react";
+import { notify } from "@/lib/notify";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getUserDisplayName } from "@/lib/auth/userDisplayName";
 import { listBills, listBillsForExport } from "@/services/bills.service";
@@ -288,7 +288,7 @@ export function BillsPage() {
     try {
       const exportBills = await fetchBillsForExport();
       if (!exportBills.length) {
-        toast.error("No rows to export");
+        notify(SearchX, "No rows to export");
         return;
       }
 
@@ -296,10 +296,10 @@ export function BillsPage() {
       if (type === "xlsx") exportBillsToExcel(exportBills);
       if (type === "pdf") exportBillsToPDF(exportBills, { filters: getFilterSummary() });
 
-      toast.success(`Exported ${exportBills.length} rows`);
+      notify(Download, `Exported ${exportBills.length} rows`);
     } catch (error) {
       console.error(error);
-      toast.error("Export failed");
+      notify(AlertCircle, "Export failed");
     } finally {
       setExporting(null);
     }

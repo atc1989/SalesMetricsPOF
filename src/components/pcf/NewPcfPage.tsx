@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Loader2, Save } from "lucide-react";
+import { notify } from "@/lib/notify";
 
 import { createPcfTransaction } from "@/services/pcf.service";
 
@@ -130,7 +130,7 @@ export function NewPcfPage() {
       }
 
       window.sessionStorage.removeItem(draftStorageKey);
-      toast.success("PCV saved.");
+      notify(Save, "PCV saved.");
       router.push("/pcf");
     } finally {
       setIsSaving(false);
