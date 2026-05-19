@@ -55,6 +55,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DataPagination } from "@/components/ui/data-pagination";
 import {
   Table,
   TableBody,
@@ -271,24 +272,6 @@ export function PcfPage() {
   }, [dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const pageWindow = 5;
-  const halfWindow = Math.floor(pageWindow / 2);
-  let windowStart = Math.max(1, page - halfWindow);
-  let windowEnd = Math.min(totalPages, windowStart + pageWindow - 1);
-  if (windowEnd - windowStart + 1 < pageWindow) {
-    windowStart = Math.max(1, windowEnd - pageWindow + 1);
-  }
-
-  const visiblePages: number[] = [];
-  for (let p = windowStart; p <= windowEnd; p += 1) {
-    visiblePages.push(p);
-  }
-
-  const startItem = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
-  const endItem =
-    totalCount === 0
-      ? 0
-      : Math.min(totalCount, (page - 1) * pageSize + transactions.length);
 
   const fetchPcfForExport = async () => {
     const result = await listPcfTransactionsForExport({
@@ -664,66 +647,16 @@ export function PcfPage() {
             </div>
 
             {/* Pagination */}
-            <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm text-muted-foreground">
-                Showing {startItem}–{endItem} of {totalCount} results
-              </div>
-              <div className="flex flex-wrap items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page <= 1}
-                >
-                  Previous
-                </Button>
-
-                {windowStart > 1 && (
-                  <>
-                    <Button variant="outline" size="sm" onClick={() => setPage(1)}>
-                      1
-                    </Button>
-                    {windowStart > 2 && (
-                      <span className="px-2 text-sm text-muted-foreground">…</span>
-                    )}
-                  </>
-                )}
-
-                {visiblePages.map((p) => (
-                  <Button
-                    key={p}
-                    variant={p === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setPage(p)}
-                  >
-                    {p}
-                  </Button>
-                ))}
-
-                {windowEnd < totalPages && (
-                  <>
-                    {windowEnd < totalPages - 1 && (
-                      <span className="px-2 text-sm text-muted-foreground">…</span>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(totalPages)}
-                    >
-                      {totalPages}
-                    </Button>
-                  </>
-                )}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
-                >
-                  Next
-                </Button>
-              </div>
+            <div className="border-t px-4 py-3">
+              <DataPagination
+                page={page}
+                pageCount={totalPages}
+                onPageChange={setPage}
+                totalItems={totalCount}
+                pageSize={pageSize}
+                currentRangeCount={transactions.length}
+                itemLabel="results"
+              />
             </div>
           </CardContent>
         </Card>

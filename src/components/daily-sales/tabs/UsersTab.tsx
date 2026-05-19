@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DataPagination } from '@/components/ui/data-pagination';
 import { Modal } from '@/components/ui/Modal';
 
 type UsersNoZeroOneRow = {
@@ -106,7 +107,13 @@ export function UsersTab() {
 
   const [usersSearchQuery, setUsersSearchQuery] = useState('');
   const [userAccountSearchQuery, setUserAccountSearchQuery] = useState('');
+  const [userAccountPage, setUserAccountPage] = useState(1);
+  const userAccountPageSize = 25;
   const [notice, setNotice] = useState<ModalNotice | null>(null);
+
+  useEffect(() => {
+    setUserAccountPage(1);
+  }, [userAccountSearchQuery]);
 
   const filteredUsersRows = useMemo(() => {
     const search = usersSearchQuery.trim().toLowerCase();
@@ -148,6 +155,15 @@ export function UsersTab() {
       )
     );
   }, [rows, userAccountSearchQuery]);
+
+  const userAccountTotalPages = Math.max(
+    1,
+    Math.ceil(filteredUserAccountRows.length / userAccountPageSize),
+  );
+  const userAccountPageRows = useMemo(() => {
+    const start = (userAccountPage - 1) * userAccountPageSize;
+    return filteredUserAccountRows.slice(start, start + userAccountPageSize);
+  }, [filteredUserAccountRows, userAccountPage]);
 
   const loadUserAccounts = useCallback(async () => {
     setIsLoading(true);
@@ -575,7 +591,7 @@ export function UsersTab() {
                     </td>
                   </tr>
                 ) : (
-                  filteredUserAccountRows.map((row) => (
+                  userAccountPageRows.map((row) => (
                     <tr key={row.id} className="border-t border-border">
                       <td className="px-3 py-2">{row.fullName}</td>
                       <td className="px-3 py-2">{row.username}</td>
@@ -597,6 +613,19 @@ export function UsersTab() {
               </tbody>
             </table>
           </div>
+          {filteredUserAccountRows.length > 0 ? (
+            <div className="border-t border-border px-4 py-3">
+              <DataPagination
+                page={userAccountPage}
+                pageCount={userAccountTotalPages}
+                onPageChange={setUserAccountPage}
+                totalItems={filteredUserAccountRows.length}
+                pageSize={userAccountPageSize}
+                currentRangeCount={userAccountPageRows.length}
+                itemLabel="user accounts"
+              />
+            </div>
+          ) : null}
         </Card>
       </section>
 
