@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { Search } from "lucide-react";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +19,13 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -268,27 +276,33 @@ export function DashboardTab() {
     <section className="space-y-4">
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
+        <CardHeader>
+          <CardTitle>Filters</CardTitle>
+          <CardDescription>Narrow down the daily sales view.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <FieldGroup>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto_1.25fr] lg:items-end">
               <Field>
                 <FieldLabel htmlFor="db-start-date">From</FieldLabel>
-                <Input
+                <DatePicker
                   id="db-start-date"
-                  type="date"
                   value={pendingFromDate}
-                  onChange={(event) => setPendingFromDate(event.target.value)}
+                  onChange={setPendingFromDate}
+                  placeholder="Start date"
                 />
               </Field>
+
               <Field>
                 <FieldLabel htmlFor="db-end-date">To</FieldLabel>
-                <Input
+                <DatePicker
                   id="db-end-date"
-                  type="date"
                   value={pendingToDate}
-                  onChange={(event) => setPendingToDate(event.target.value)}
+                  onChange={setPendingToDate}
+                  placeholder="End date"
                 />
               </Field>
+
               <Field>
                 <FieldLabel htmlFor="dbPaymentMode">Mode of Payment</FieldLabel>
                 <Select
@@ -307,26 +321,31 @@ export function DashboardTab() {
                   </SelectContent>
                 </Select>
               </Field>
+
               <Field>
-                <FieldLabel>&nbsp;</FieldLabel>
                 <Button
                   id="db-apply-custom-date"
-                  variant="secondary"
-                  className="w-full md:w-auto"
+                  className="w-full lg:w-auto"
                   onClick={onApply}
                 >
                   Apply
                 </Button>
               </Field>
+
               <Field>
                 <FieldLabel htmlFor="tblSalesTodaySearch">Search</FieldLabel>
-                <Input
-                  id="tblSalesTodaySearch"
-                  type="text"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search table…"
-                />
+                <InputGroup>
+                  <InputGroupAddon>
+                    <Search />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="tblSalesTodaySearch"
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search table…"
+                  />
+                </InputGroup>
               </Field>
             </div>
           </FieldGroup>

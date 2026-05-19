@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ModifyGgTransNoModal } from '@/components/daily-sales/ModifyGgTransNoModal';
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/Modal';
 import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
@@ -745,32 +746,29 @@ export function ReportsTab() {
               <option value="custom">Custom Range</option>
             </select>
           </label>
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            Start Date
-            <input
+          <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+            <label htmlFor="startDate">Start Date</label>
+            <DatePicker
               id="startDate"
-              type="date"
               value={pendingStartDate}
-              onChange={(event) => setPendingStartDate(event.target.value)}
-              readOnly={dateInputsReadOnly}
-              className="mt-1 rounded border border-input px-2 py-1 text-sm"
+              onChange={setPendingStartDate}
+              placeholder="Start date"
+              disabled={dateInputsReadOnly}
             />
-          </label>
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            End Date
-            <input
+          </div>
+          <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+            <label htmlFor="endDate">End Date</label>
+            <DatePicker
               id="endDate"
-              type="date"
               value={pendingEndDate}
-              onChange={(event) => setPendingEndDate(event.target.value)}
-              readOnly={dateInputsReadOnly}
-              className="mt-1 rounded border border-input px-2 py-1 text-sm"
+              onChange={setPendingEndDate}
+              placeholder="End date"
+              disabled={dateInputsReadOnly}
             />
-          </label>
+          </div>
           <div className="flex items-end">
             <Button
               id="generateReport"
-              variant="secondary"
               className="w-full md:w-auto"
               onClick={onGenerateReport}
             >

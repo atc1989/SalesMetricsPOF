@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataPagination } from "@/components/ui/data-pagination";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Table,
   TableBody,
@@ -518,21 +519,21 @@ export function PcfPage() {
                 />
               </InputGroup>
             </div>
-            <Input
-              type="date"
+            <DatePicker
               value={dateFrom}
-              onChange={(e) => {
-                setDateFrom(e.target.value);
+              onChange={(value) => {
+                setDateFrom(value);
                 setPage(1);
               }}
+              placeholder="From"
             />
-            <Input
-              type="date"
+            <DatePicker
               value={dateTo}
-              onChange={(e) => {
-                setDateTo(e.target.value);
+              onChange={(value) => {
+                setDateTo(value);
                 setPage(1);
               }}
+              placeholder="To"
             />
             <div className="flex items-center">
               <Button
