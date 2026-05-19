@@ -10,23 +10,23 @@ export function FloatingActionButtonGroup({ onSyncAll }: FloatingActionButtonGro
     <div className="fixed bottom-6 right-6 z-30 flex flex-col gap-2">
       <Link
         href="/sales"
-        className="inline-flex h-8 w-36 items-center justify-center rounded-md bg-slate-900 px-3 text-sm font-medium text-white shadow-md transition-colors hover:bg-slate-800"
+        className="inline-flex h-8 w-36 items-center justify-center rounded-md bg-foreground px-3 text-sm font-medium text-white shadow-md transition-colors hover:bg-foreground"
       >
         Sales API
       </Link>
       <Link
         href="/daily-sales"
-        className="inline-flex h-8 w-36 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-900 shadow-md transition-colors hover:bg-slate-50"
+        className="inline-flex h-8 w-36 items-center justify-center rounded-md border border-input bg-card px-3 text-sm font-medium text-foreground shadow-md transition-colors hover:bg-muted/50"
       >
         Daily Sales
       </Link>
       <Link
         href="/encoder"
-        className="inline-flex h-8 w-36 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-900 shadow-md transition-colors hover:bg-slate-50"
+        className="inline-flex h-8 w-36 items-center justify-center rounded-md border border-input bg-card px-3 text-sm font-medium text-foreground shadow-md transition-colors hover:bg-muted/50"
       >
         Encoder
       </Link>
-      <Button size="sm" variant="ghost" className="w-36 border border-slate-300 bg-white shadow-md" onClick={onSyncAll}>
+      <Button size="sm" variant="ghost" className="w-36 border border-input bg-card shadow-md" onClick={onSyncAll}>
         Sync All
       </Button>
     </div>

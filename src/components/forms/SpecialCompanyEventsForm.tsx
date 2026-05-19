@@ -401,7 +401,7 @@ export function SpecialCompanyEventsForm({
   return (
     <div
       className={
-        embedded ? "sce-page form-page form-page--embedded" : "sce-page min-h-screen bg-gray-50 form-page form-page--standalone"
+        embedded ? "sce-page form-page form-page--embedded" : "sce-page min-h-screen bg-muted/50 form-page form-page--standalone"
       }
     >
       <div className={embedded ? "form-page-body" : "pt-16 form-page-body"}>

@@ -43,7 +43,7 @@ export function Modal({
         <DialogHeader className={headerClassName}>
           <DialogTitle className={titleClassName}>{title}</DialogTitle>
         </DialogHeader>
-        <div className="text-sm text-slate-700">{children}</div>
+        <div className="text-sm text-muted-foreground">{children}</div>
         <DialogFooter>
           {footer ?? (
             <Button variant="secondary" onClick={onClose}>

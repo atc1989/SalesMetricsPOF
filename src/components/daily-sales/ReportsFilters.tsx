@@ -27,14 +27,14 @@ export default function ReportsFilters({
   onGenerateReport,
 }: ReportsFiltersProps) {
   return (
-    <div className="mb-4 grid gap-2 rounded-md border border-gray-200 bg-white p-3 md:grid-cols-5">
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+    <div className="mb-4 grid gap-2 rounded-md border border-border bg-card p-3 md:grid-cols-5">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         REPORT TYPE
         <select
           id="ddlReportType"
           value={reportType}
           onChange={(event) => onReportTypeChange(event.target.value as ReportType)}
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         >
           {reportTypes.map((type) => (
             <option key={type} value={type}>
@@ -44,29 +44,29 @@ export default function ReportsFilters({
         </select>
       </label>
 
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         FROM
         <input
           id="rpt-start-date"
           type="date"
           value={startDate}
           onChange={(event) => onStartDateChange(event.target.value)}
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         TO
         <input
           id="rpt-end-date"
           type="date"
           value={endDate}
           onChange={(event) => onEndDateChange(event.target.value)}
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 
-      <label className="flex flex-col text-xs font-medium text-gray-700">
+      <label className="flex flex-col text-xs font-medium text-muted-foreground">
         SEARCH
         <input
           id="tblSalesReportSearch"
@@ -74,7 +74,7 @@ export default function ReportsFilters({
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
           placeholder="Search report item"
-          className="mt-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 rounded border border-input px-2 py-1 text-sm"
         />
       </label>
 

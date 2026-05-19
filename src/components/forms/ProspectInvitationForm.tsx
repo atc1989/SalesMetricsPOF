@@ -337,7 +337,7 @@ export function ProspectInvitationForm({
   return (
     <div
       className={
-        embedded ? "prospect-page form-page form-page--embedded" : "prospect-page min-h-screen bg-gray-50 form-page form-page--standalone"
+        embedded ? "prospect-page form-page form-page--embedded" : "prospect-page min-h-screen bg-muted/50 form-page form-page--standalone"
       }
     >
       <div className={embedded ? "form-page-body" : "pt-16 form-page-body"}>

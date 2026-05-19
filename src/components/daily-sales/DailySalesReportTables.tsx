@@ -12,7 +12,7 @@ export function DailySalesReportTables({ packageRows, retailRows, paymentRows }:
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <Card className="space-y-2">
-        <h3 className="text-base font-semibold text-slate-900">Package Breakdown</h3>
+        <h3 className="text-base font-semibold text-foreground">Package Breakdown</h3>
         <DataTable
           data={packageRows}
           columns={[
@@ -22,7 +22,7 @@ export function DailySalesReportTables({ packageRows, retailRows, paymentRows }:
         />
       </Card>
       <Card className="space-y-2">
-        <h3 className="text-base font-semibold text-slate-900">Retail Breakdown</h3>
+        <h3 className="text-base font-semibold text-foreground">Retail Breakdown</h3>
         <DataTable
           data={retailRows}
           columns={[
@@ -32,7 +32,7 @@ export function DailySalesReportTables({ packageRows, retailRows, paymentRows }:
         />
       </Card>
       <Card className="space-y-2">
-        <h3 className="text-base font-semibold text-slate-900">Payment Breakdown</h3>
+        <h3 className="text-base font-semibold text-foreground">Payment Breakdown</h3>
         <DataTable
           data={paymentRows}
           columns={[

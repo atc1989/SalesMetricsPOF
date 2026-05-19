@@ -20,7 +20,7 @@ export function SalesMetricsDashboard() {
     <>
       <Card>
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-slate-900">Sales Metrics</h3>
+          <h3 className="text-lg font-semibold text-foreground">Sales Metrics</h3>
           <TimeRangeSelector
             value={range}
             onChange={setRange}

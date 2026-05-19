@@ -61,7 +61,7 @@ export function SectionPrintPreviewModal({
       }
     >
       <div
-        className="max-h-[70vh] overflow-auto text-xs text-slate-700"
+        className="max-h-[70vh] overflow-auto text-xs text-muted-foreground"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </Modal>

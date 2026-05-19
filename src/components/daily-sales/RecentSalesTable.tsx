@@ -28,16 +28,16 @@ export default function RecentSalesTable({
   onExport,
 }: RecentSalesTableProps) {
   return (
-    <div className="rounded-md border border-gray-200 bg-white">
+    <div className="rounded-md border border-border bg-card">
       <div className="flex items-center justify-between px-3 py-2">
-        <h2 className="text-sm font-semibold text-slate-900">Recent Sales</h2>
+        <h2 className="text-sm font-semibold text-foreground">Recent Sales</h2>
         <Button size="sm" onClick={onExport}>
           Excel
         </Button>
       </div>
       <div className="app-table-scroll">
         <table id="tblSalesToday" className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600">
+          <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-3 py-2">POF Number</th>
               <th className="px-3 py-2">GG Trans No</th>
@@ -56,13 +56,13 @@ export default function RecentSalesTable({
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={12} className="px-3 py-5 text-center text-gray-500">
+                <td colSpan={12} className="px-3 py-5 text-center text-muted-foreground">
                   No recent sales found for current filters.
                 </td>
               </tr>
             ) : (
               rows.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
+                <tr key={row.id} className="border-t border-border">
                   <td className="px-3 py-2">{row.pofNumber}</td>
                   <td className="px-3 py-2">{row.ggTransNo}</td>
                   <td className="px-3 py-2">{row.date}</td>

@@ -31,10 +31,10 @@ export function DataTable<T extends { id: string | number }>({
   emptyMessage = "No records found.",
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="app-table-scroll">
         <Table>
-          <TableHeader className="bg-slate-50">
+          <TableHeader className="bg-muted/50">
             <TableRow>
               {columns.map((column) => (
                 <TableHead key={String(column.key)} className={column.className}>
@@ -46,7 +46,7 @@ export function DataTable<T extends { id: string | number }>({
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="py-8 text-center text-slate-500">
+                <TableCell colSpan={columns.length} className="py-8 text-center text-muted-foreground">
                   {emptyMessage}
                 </TableCell>
               </TableRow>
