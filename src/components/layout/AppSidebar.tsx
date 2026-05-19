@@ -140,7 +140,7 @@ export function AppSidebar() {
                 side="right"
                 align="end"
                 sideOffset={4}
-                className="w-56 min-w-[--radix-dropdown-menu-trigger-width]"
+                className="data-[state=closed]:slide-out-to-bottom-20 data-[state=open]:slide-in-from-bottom-20 data-[state=closed]:slide-out-to-left-0 data-[state=open]:slide-in-from-left-0 data-[state=closed]:zoom-out-100 w-56 min-w-[--radix-dropdown-menu-trigger-width] duration-400"
               >
                 <DropdownMenuLabel>
                   <div className="grid text-left text-sm">

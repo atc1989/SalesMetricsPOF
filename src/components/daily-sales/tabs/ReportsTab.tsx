@@ -4,6 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { ModifyGgTransNoModal } from '@/components/daily-sales/ModifyGgTransNoModal';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/Modal';
 import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
@@ -732,20 +739,23 @@ export function ReportsTab() {
     <section id="reports" className="mt-4 space-y-4">
       <Card className="p-3">
         <div className="grid gap-2 md:grid-cols-6">
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            Report Type
-            <select
-              id="reportType"
+          <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+            <label htmlFor="reportType">Report Type</label>
+            <Select
               value={pendingType}
-              onChange={(event) => onReportTypeChange(event.target.value as ReportRangeType)}
-              className="mt-1 rounded border border-input px-2 py-1 text-sm"
+              onValueChange={(value) => onReportTypeChange(value as ReportRangeType)}
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="custom">Custom Range</option>
-            </select>
-          </label>
+              <SelectTrigger id="reportType" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="custom">Custom Range</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
             <label htmlFor="startDate">Start Date</label>
             <DatePicker
