@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { appNavLinks, isNavLinkActive } from "@/components/layout/navigation";
+import { getNavLinksForRole, isNavLinkActive } from "@/components/layout/navigation";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export function MobileSidebar() {
   const pathname = usePathname();
+  const { profile } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const navLinks = getNavLinksForRole(profile?.role ?? "super_admin");
 
   return (
     <div className="md:hidden">
@@ -37,7 +40,7 @@ export function MobileSidebar() {
               </div>
               <nav>
                 <ul className="space-y-1">
-                  {appNavLinks.map((link) => {
+                  {navLinks.map((link) => {
                     const isActive = isNavLinkActive(pathname, link.href);
 
                     return (

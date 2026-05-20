@@ -9,6 +9,10 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import {
+  isPathAllowedForRole,
+  type AppRole,
+} from "@/lib/auth/roles";
 
 export type NavLink = {
   href: string;
@@ -43,6 +47,19 @@ export const appNavGroups: NavGroup[] = [
 ];
 
 export const appNavLinks: NavLink[] = appNavGroups.flatMap((group) => group.items);
+
+export function getNavGroupsForRole(role: AppRole): NavGroup[] {
+  return appNavGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => isPathAllowedForRole(role, item.href)),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+export function getNavLinksForRole(role: AppRole): NavLink[] {
+  return getNavGroupsForRole(role).flatMap((group) => group.items);
+}
 
 export function isNavLinkActive(pathname: string, href: string) {
   if (href === "/") {
