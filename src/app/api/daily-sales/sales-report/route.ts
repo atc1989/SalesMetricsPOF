@@ -277,11 +277,8 @@ export async function GET(request: NextRequest) {
       const isNewMember = toBoolean(row.is_new_member);
       const modeOfPayment = normalizeText(row.mode_of_payment, "UNKNOWN");
       const quantity = toNumber(row.quantity);
-      const fallbackBottles = row.bottle_count == null ? quantity : toNumber(row.bottle_count);
-      const fallbackBlisters = row.blister_count == null ? 0 : toNumber(row.blister_count);
-      const bottles = row.released_count == null ? fallbackBottles : toNumber(row.released_count);
-      const blisters =
-        row.released_blpk_count == null ? fallbackBlisters : toNumber(row.released_blpk_count);
+      const bottles = row.bottle_count == null ? quantity : toNumber(row.bottle_count);
+      const blisters = row.blister_count == null ? 0 : toNumber(row.blister_count);
       const sales = toNumber(row.sales);
       const salesTwo = hasPaymentMode(row.mode_of_payment_two) ? toNumber(row.sales_two) : 0;
       const salesThree = hasPaymentMode(row.mode_of_payment_three) ? toNumber(row.sales_three) : 0;

@@ -47,6 +47,12 @@ export const ASSISTANT_TOOLS = [
     description: "Summarize event forms, prospect invitations, print logs, and submissions.",
   },
   {
+    name: "generate_sales_budget_xlsx",
+    domain: "system",
+    description:
+      "Generate a downloadable Excel workbook for sales and/or operations budget request data in a date range, limited by the user's role.",
+  },
+  {
     name: "explain_system_navigation",
     domain: "system",
     description: "Explain accessible app pages, modules, and how to use visible features.",
@@ -77,6 +83,7 @@ const DOMAIN_KEYWORDS: Record<AssistantDomain, string[]> = {
   ],
   operations: [
     "approval",
+    "budget",
     "bill",
     "billing",
     "event",
@@ -87,13 +94,18 @@ const DOMAIN_KEYWORDS: Record<AssistantDomain, string[]> = {
     "pcv",
     "petty cash",
     "print",
+    "request",
     "vendor",
     "void",
   ],
   system: [
     "access",
     "account",
+    "download",
+    "excel",
+    "export",
     "feature",
+    "file",
     "help",
     "module",
     "navigate",
@@ -101,6 +113,9 @@ const DOMAIN_KEYWORDS: Record<AssistantDomain, string[]> = {
     "page",
     "permission",
     "role",
+    "spreadsheet",
+    "workbook",
+    "xlsx",
   ],
 };
 

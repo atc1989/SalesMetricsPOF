@@ -20,8 +20,15 @@ export const ROLE_DEFAULT_PATH: Record<AppRole, string> = {
 
 const ROLE_PAGE_PREFIXES: Record<AppRole, string[]> = {
   super_admin: ["/"],
-  sales: ["/", "/sales", "/daily-sales", "/encoder", "/inventory-movement"],
-  operations: ["/bills", "/pcf", "/event-forms", "/forms"],
+  sales: [
+    "/",
+    "/sales",
+    "/daily-sales",
+    "/encoder",
+    "/inventory-movement",
+    "/members",
+  ],
+  operations: ["/bills", "/pcf", "/event-forms", "/forms", "/members"],
 };
 
 const ROLE_API_PREFIXES: Record<AppRole, string[]> = {
@@ -32,11 +39,12 @@ const ROLE_API_PREFIXES: Record<AppRole, string[]> = {
     "/api/daily-sales",
     "/api/dashboard",
     "/api/inventory-movement",
+    "/api/members",
     "/api/reports",
     "/api/sales",
     "/api/user-account",
   ],
-  operations: ["/api/assistant"],
+  operations: ["/api/assistant", "/api/members", "/api/user-account"],
 };
 
 function matchesPrefix(pathname: string, prefix: string) {
