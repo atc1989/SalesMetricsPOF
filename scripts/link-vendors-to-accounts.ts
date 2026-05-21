@@ -18,7 +18,7 @@
  */
 
 import "dotenv/config";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
@@ -52,9 +52,37 @@ type AppUser = { user_id: number; username: string | null; name: string | null }
 const norm = (value: string | null | undefined): string =>
   (value ?? "").trim().toLowerCase();
 
+// Honorific / non-name tokens to drop before keying.
+const STOP_TOKENS = new Set(["EMPLOYEE", "EMP", "MR", "MRS", "MS", "DR", "DRA"]);
+
+function nameTokens(value: string | null | undefined): string[] {
+  return (value ?? "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter((t) => t && !STOP_TOKENS.has(t));
+}
+
+// Token-sort key: order-insensitive but space-sensitive.
+function tokenKey(value: string | null | undefined): string {
+  return nameTokens(value).sort().join(" ").toLowerCase();
+}
+
+// Anagram key: every letter of the name, sorted. Order-, space-, comma-,
+// and punctuation-insensitive. "JOY ANN BATALLONES" and "BATALLONES,JOYANN"
+// produce the same key. Honorifics dropped first.
+function anagramKey(value: string | null | undefined): string {
+  return nameTokens(value)
+    .join("")
+    .split("")
+    .sort()
+    .join("")
+    .toLowerCase();
+}
+
 // Pull every row from a table in pages (Supabase caps a select at 1000).
 async function fetchAll<T>(
-  db: ReturnType<typeof createClient>,
+  db: SupabaseClient,
   table: string,
   columns: string,
 ): Promise<T[]> {
@@ -137,11 +165,49 @@ async function main() {
     if (byUsersName.has(k)) hitUsersName += 1;
   }
 
-  console.log("\nVendor-name match counts by candidate column:");
+  console.log("\nVendor-name EXACT match counts by candidate column:");
   console.log(`  user_account.user_name : ${hitAccountUserName} / ${vendors.length}`);
   console.log(`  user_account.full_name : ${hitAccountFullName} / ${vendors.length}`);
   console.log(`  users.username         : ${hitUsersUsername} / ${vendors.length}`);
   console.log(`  users.name             : ${hitUsersName} / ${vendors.length}`);
+
+  // Token-sort (order-insensitive) match against the name columns.
+  const byAccountFullNameToken = indexBy(accounts, (a) => tokenKey(a.full_name));
+  const byUsersNameToken = indexBy(users, (u) => tokenKey(u.name));
+  let tokenHitAccountFullName = 0;
+  let tokenHitUsersName = 0;
+  for (const vendor of vendors) {
+    const tk = tokenKey(vendor.name);
+    if (!tk) continue;
+    if (byAccountFullNameToken.has(tk)) tokenHitAccountFullName += 1;
+    if (byUsersNameToken.has(tk)) tokenHitUsersName += 1;
+  }
+  console.log("\nVendor-name TOKEN-SORT match counts (order-insensitive):");
+  console.log(`  user_account.full_name : ${tokenHitAccountFullName} / ${vendors.length}`);
+  console.log(`  users.name             : ${tokenHitUsersName} / ${vendors.length}`);
+
+  // Anagram match — every letter sorted; neutralizes comma + missing space
+  // + word order all at once.
+  const byAccountAnagram = indexBy(accounts, (a) => anagramKey(a.full_name));
+  let anagramHitAccountFullName = 0;
+  for (const vendor of vendors) {
+    const ak = anagramKey(vendor.name);
+    if (ak && byAccountAnagram.has(ak)) anagramHitAccountFullName += 1;
+  }
+  console.log("\nVendor-name ANAGRAM match counts (letter-multiset):");
+  console.log(`  user_account.full_name : ${anagramHitAccountFullName} / ${vendors.length}`);
+
+  // Print samples so the actual formats are visible.
+  console.log("\nSample vendor names (first 12):");
+  for (const v of vendors.slice(0, 12)) console.log(`  - ${JSON.stringify(v.name)}`);
+  console.log("\nSample user_account (first 12): user_name | full_name");
+  for (const a of accounts.slice(0, 12)) {
+    console.log(`  - ${JSON.stringify(a.user_name)} | ${JSON.stringify(a.full_name)}`);
+  }
+  console.log("\nSample users (first 12): username | name");
+  for (const u of users.slice(0, 12)) {
+    console.log(`  - ${JSON.stringify(u.username)} | ${JSON.stringify(u.name)}`);
+  }
 
   // Diagnostic: which table does daily_sales.username actually point at?
   // Sample distinct, non-blank usernames and test them against both tables.
@@ -169,76 +235,101 @@ async function main() {
     `  match users.username         : ${salesHitUsersUsername} / ${distinctSalesUsernames.length}`,
   );
 
-  // Resolve a vendor to a user_account_id. Prefer a direct user_account
-  // match; otherwise bridge through users (users.username -> users.zero_one
-  // is not a member key, so we bridge by the user's name into
-  // user_account.full_name as a fallback).
-  const matched: { vendorId: string; vendorName: string; userAccountId: number; via: string }[] = [];
+  // Resolve a vendor to a user_account_id.
+  //   Strategy 1 (exact anagram): vendor letters == account full_name
+  //     letters. High confidence.
+  //   Strategy 2 (subset): vendor letters are a sub-multiset of exactly one
+  //     account — catches vendors that lack a middle name the account has.
+  //     Medium confidence; only used when a single account contains them.
+  const matched: {
+    vendorId: string;
+    vendorName: string;
+    userAccountId: number;
+    accountName: string;
+    via: string;
+  }[] = [];
   const ambiguous: { vendorId: string; vendorName: string; note: string }[] = [];
   const unmatched: { vendorId: string; vendorName: string }[] = [];
   let alreadyLinked = 0;
+
+  // sub-multiset test on two letter-sorted strings.
+  const isSubsetOf = (small: string, big: string): boolean => {
+    let i = 0;
+    let j = 0;
+    while (i < small.length && j < big.length) {
+      if (small[i] === big[j]) {
+        i += 1;
+        j += 1;
+      } else if (small[i] > big[j]) {
+        j += 1;
+      } else {
+        return false;
+      }
+    }
+    return i === small.length;
+  };
+
+  const accountAnagrams = accounts.map((a) => ({
+    account: a,
+    key: anagramKey(a.full_name),
+  }));
 
   for (const vendor of vendors) {
     if (vendor.user_account_id != null) {
       alreadyLinked += 1;
       continue;
     }
-    const k = norm(vendor.name);
-    if (!k) {
+    const ak = anagramKey(vendor.name);
+    if (!ak) {
       unmatched.push({ vendorId: vendor.id, vendorName: vendor.name });
       continue;
     }
 
-    // Strategy 1: vendor name == user_account.user_name (direct).
-    const directAccounts = byAccountUserName.get(k);
-    if (directAccounts && directAccounts.length === 1) {
+    // Strategy 1 — exact anagram.
+    const exact = byAccountAnagram.get(ak);
+    if (exact && exact.length === 1) {
       matched.push({
         vendorId: vendor.id,
         vendorName: vendor.name,
-        userAccountId: directAccounts[0].user_account_id,
-        via: "user_account.user_name",
+        userAccountId: exact[0].user_account_id,
+        accountName: exact[0].full_name ?? "",
+        via: "anagram-exact",
       });
       continue;
     }
-    if (directAccounts && directAccounts.length > 1) {
+    if (exact && exact.length > 1) {
       ambiguous.push({
         vendorId: vendor.id,
         vendorName: vendor.name,
-        note: `${directAccounts.length} user_account rows share this user_name`,
+        note: `${exact.length} user_account rows share this name (exact anagram)`,
       });
       continue;
     }
 
-    // Strategy 2: vendor name == users.username, then bridge users.name
-    // -> user_account.full_name.
-    const matchedUsers = byUsersUsername.get(k);
-    if (matchedUsers && matchedUsers.length >= 1) {
-      const bridged = matchedUsers
-        .flatMap((u) => byAccountFullName.get(norm(u.name)) ?? [])
-        .filter((a, i, arr) => arr.findIndex((x) => x.user_account_id === a.user_account_id) === i);
-      if (bridged.length === 1) {
+    // Strategy 2 — subset (vendor name is missing a middle name etc.).
+    // Require a reasonably long key to avoid short-name noise.
+    if (ak.length >= 9) {
+      const containing = accountAnagrams.filter(
+        ({ key }) => key.length > ak.length && isSubsetOf(ak, key),
+      );
+      if (containing.length === 1) {
         matched.push({
           vendorId: vendor.id,
           vendorName: vendor.name,
-          userAccountId: bridged[0].user_account_id,
-          via: "users.username -> users.name -> user_account.full_name",
+          userAccountId: containing[0].account.user_account_id,
+          accountName: containing[0].account.full_name ?? "",
+          via: "anagram-subset",
         });
         continue;
       }
-      if (bridged.length > 1) {
+      if (containing.length > 1) {
         ambiguous.push({
           vendorId: vendor.id,
           vendorName: vendor.name,
-          note: `users.username bridges to ${bridged.length} user_account rows`,
+          note: `name is a subset of ${containing.length} user_account rows`,
         });
         continue;
       }
-      ambiguous.push({
-        vendorId: vendor.id,
-        vendorName: vendor.name,
-        note: "matched users.username but no user_account bridge by name",
-      });
-      continue;
     }
 
     unmatched.push({ vendorId: vendor.id, vendorName: vendor.name });
@@ -250,11 +341,18 @@ async function main() {
       {
         diagnostics: {
           vendors: vendors.length,
-          vendorNameMatches: {
+          vendorNameExactMatches: {
             accountUserName: hitAccountUserName,
             accountFullName: hitAccountFullName,
             usersUsername: hitUsersUsername,
             usersName: hitUsersName,
+          },
+          vendorNameTokenMatches: {
+            accountFullName: tokenHitAccountFullName,
+            usersName: tokenHitUsersName,
+          },
+          vendorNameAnagramMatches: {
+            accountFullName: anagramHitAccountFullName,
           },
           dailySalesUsername: {
             distinctValues: distinctSalesUsernames.length,
