@@ -14,7 +14,9 @@ import type {
 
 import {
   addAssistantMessage,
+  createAssistantConversation,
   getOrCreateAssistantConversation,
+  listAssistantConversations,
   listAssistantMessages,
 } from "@/lib/assistant/conversations";
 import {
@@ -35,11 +37,16 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type AssistantRequestBody = {
+  conversationId?: unknown;
   message?: unknown;
 };
 
 function getMessage(body: AssistantRequestBody) {
   return typeof body.message === "string" ? body.message.trim() : "";
+}
+
+function getConversationId(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function getManilaDate() {
@@ -106,7 +113,31 @@ export async function GET(request: NextRequest) {
   const { response, auth } = await requireRouteAccess(request);
   if (response) return response;
   const supabase = getSupabaseAdminClient();
-  const conversationId = await getOrCreateAssistantConversation(supabase, auth.userId);
+  const action = request.nextUrl.searchParams.get("action");
+
+  if (action === "new") {
+    const conversation = await createAssistantConversation(supabase, auth.userId);
+    const conversations = await listAssistantConversations(supabase, auth.userId);
+
+    return NextResponse.json({
+      success: true,
+      role: auth.role,
+      conversationId: conversation.id,
+      conversation,
+      conversations,
+      messages: [],
+    });
+  }
+
+  const requestedConversationId = getConversationId(
+    request.nextUrl.searchParams.get("conversationId"),
+  );
+  const conversationId = await getOrCreateAssistantConversation(
+    supabase,
+    auth.userId,
+    requestedConversationId,
+  );
+  const conversations = await listAssistantConversations(supabase, auth.userId);
   const messages = await listAssistantMessages(supabase, conversationId, auth.userId);
 
   return NextResponse.json({
@@ -124,6 +155,7 @@ export async function GET(request: NextRequest) {
         ? process.env.GEMINI_MODEL ?? "gemini-2.5-flash"
         : process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
     conversationId,
+    conversations,
     messages,
   });
 }
@@ -134,6 +166,7 @@ export async function POST(request: NextRequest) {
 
   const body = (await request.json().catch(() => ({}))) as AssistantRequestBody;
   const message = getMessage(body);
+  const requestedConversationId = getConversationId(body.conversationId);
 
   if (!message) {
     return NextResponse.json(
@@ -175,6 +208,7 @@ export async function POST(request: NextRequest) {
       const conversationId = await getOrCreateAssistantConversation(
         supabase,
         auth.userId,
+        requestedConversationId,
       );
       await addAssistantMessage(supabase, {
         conversationId,
@@ -238,6 +272,7 @@ export async function POST(request: NextRequest) {
     const conversationId = await getOrCreateAssistantConversation(
       supabase,
       auth.userId,
+      requestedConversationId,
     );
     await addAssistantMessage(supabase, {
       conversationId,
