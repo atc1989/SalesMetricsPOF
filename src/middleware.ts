@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth/roles";
 
 const PUBLIC_PATHS = ["/login", "/api/auth"];
+const REMOVED_PATHS = ["/members", "/api/members"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -47,6 +48,24 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const publicPath = isPublicPath(pathname);
+  const removedPath = REMOVED_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+
+  if (removedPath) {
+    if (pathname.startsWith("/api")) {
+      return NextResponse.json(
+        { success: false, message: "This feature has been removed." },
+        { status: 404 },
+      );
+    }
+
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = "/";
+    homeUrl.search = "";
+    return NextResponse.redirect(homeUrl);
+  }
+
   // If there's a logged-in user, load their profile so we can check activity/role.
   let profile: { role?: string | null; is_active?: boolean | null } | null = null;
   let profileLoadFailed = false;

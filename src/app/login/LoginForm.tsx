@@ -7,6 +7,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth/AuthContext";
 
+const removedRedirects = ["/members", "/api/members"];
+
+function getSafeRedirect(value: string | null) {
+  if (!value?.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+
+  if (removedRedirects.some((path) => value === path || value.startsWith(`${path}/`))) {
+    return "/";
+  }
+
+  return value;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,7 +42,7 @@ export function LoginForm() {
       return;
     }
 
-    const redirectTo = searchParams.get("redirectTo") || "/";
+    const redirectTo = getSafeRedirect(searchParams.get("redirectTo"));
     router.replace(redirectTo);
     router.refresh();
   }
