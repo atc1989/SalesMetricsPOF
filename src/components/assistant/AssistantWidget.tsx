@@ -105,6 +105,7 @@ function formatConversationDate(value: string) {
 
 function MessageBubble({ message }: { message: AssistantMessage }) {
   const isUser = message.role === "user";
+  const parts = message.content.split(/(\/api\/assistant\/exports\/[^\s]+)/g);
 
   return (
     <div className={cn("flex flex-col gap-1", isUser ? "items-end" : "items-start")}>
@@ -119,7 +120,28 @@ function MessageBubble({ message }: { message: AssistantMessage }) {
             : "border bg-card text-card-foreground",
         )}
       >
-        {message.content}
+        {parts.map((part, index) => {
+          if (part.startsWith("/api/assistant/exports/")) {
+            const href = part.replace(/[.,)]$/, "");
+            const trailingText = part.slice(href.length);
+
+            return (
+              <span key={`${part}-${index}`}>
+                <a
+                  href={href}
+                  className="font-medium underline underline-offset-2"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Download workbook
+                </a>
+                {trailingText}
+              </span>
+            );
+          }
+
+          return <span key={`${part}-${index}`}>{part}</span>;
+        })}
       </div>
     </div>
   );

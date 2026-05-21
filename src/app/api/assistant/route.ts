@@ -105,6 +105,8 @@ function buildInstructions(role: "super_admin" | "sales" | "operations") {
 
 Today is ${getManilaDate()} in Asia/Manila.
 Use tools for live SalesMetrics data. Do not guess counts, totals, statuses, or dates.
+When the user asks to generate, export, or download an Excel/XLSX file, use the export tool if it is available.
+If an export tool returns a downloadUrl, include the exact URL in your answer.
 When answering, mention the date range used. Keep the answer concise and practical.
 Return plain text only. Do not use Markdown formatting.`;
 }

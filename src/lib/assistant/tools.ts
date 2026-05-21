@@ -10,6 +10,11 @@ import {
   getAllowedAssistantTools,
   isAssistantToolAllowed,
 } from "@/lib/assistant/permissions";
+import {
+  assertValidExportDateRange,
+  createSalesBudgetExportUrl,
+  getSalesBudgetExportScope,
+} from "@/lib/assistant/salesBudgetExport";
 import type { AppRole } from "@/lib/auth/roles";
 
 type ToolArgs = Record<string, unknown>;
@@ -39,6 +44,31 @@ const noArgsSchema = {
   additionalProperties: false,
 };
 
+const salesBudgetExportSchema = {
+  type: "object",
+  properties: {
+    dateFrom: {
+      type: "string",
+      description: "Start date in YYYY-MM-DD format.",
+    },
+    dateTo: {
+      type: "string",
+      description: "End date in YYYY-MM-DD format.",
+    },
+    includeSales: {
+      type: "boolean",
+      description: "Whether to include sales rows when allowed by the user role.",
+    },
+    includeOperations: {
+      type: "boolean",
+      description:
+        "Whether to include bills and PCF budget request rows when allowed by the user role.",
+    },
+  },
+  required: ["dateFrom", "dateTo", "includeSales", "includeOperations"],
+  additionalProperties: false,
+};
+
 const TOOL_PARAMETERS: Record<string, FunctionTool["parameters"]> = {
   get_sales_summary: dateRangeSchema,
   get_daily_sales_report: dateRangeSchema,
@@ -47,6 +77,7 @@ const TOOL_PARAMETERS: Record<string, FunctionTool["parameters"]> = {
   get_bills_summary: dateRangeSchema,
   get_pcf_summary: dateRangeSchema,
   get_event_forms_summary: dateRangeSchema,
+  generate_sales_budget_xlsx: salesBudgetExportSchema,
   explain_system_navigation: noArgsSchema,
 };
 
@@ -209,6 +240,8 @@ export async function runAssistantToolByName(
       return getPcfSummary(supabase, args);
     case "get_event_forms_summary":
       return getEventFormsSummary(supabase, args);
+    case "generate_sales_budget_xlsx":
+      return generateSalesBudgetXlsx(role, args);
     case "explain_system_navigation":
       return getSystemNavigation(role);
     default:
@@ -216,6 +249,48 @@ export async function runAssistantToolByName(
         error: `Unknown tool ${name}.`,
       };
   }
+}
+
+function getBooleanArg(value: unknown) {
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function generateSalesBudgetXlsx(role: AppRole, args: ToolArgs) {
+  const { dateFrom, dateTo } = assertValidExportDateRange(
+    typeof args.dateFrom === "string" ? args.dateFrom : null,
+    typeof args.dateTo === "string" ? args.dateTo : null,
+  );
+  const requestedScope = {
+    includeSales: getBooleanArg(args.includeSales),
+    includeOperations: getBooleanArg(args.includeOperations),
+  };
+  const scope = getSalesBudgetExportScope(role, requestedScope);
+
+  if (!scope.includeSales && !scope.includeOperations) {
+    return {
+      error: "No exportable sheets are allowed for this role.",
+      role,
+    };
+  }
+
+  return {
+    dateFrom,
+    dateTo,
+    role,
+    includedSheets: {
+      sales: scope.includeSales,
+      bills: scope.includeOperations,
+      pcf: scope.includeOperations,
+    },
+    downloadUrl: createSalesBudgetExportUrl({
+      dateFrom,
+      dateTo,
+      includeSales: scope.includeSales,
+      includeOperations: scope.includeOperations,
+    }),
+    note:
+      "Return the downloadUrl to the user. Explain that the file is generated when they open the link.",
+  };
 }
 
 export async function runAssistantTool(
