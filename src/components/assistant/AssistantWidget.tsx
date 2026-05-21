@@ -590,18 +590,18 @@ export function AssistantWidget() {
               }}
             />
 
-            <main className="flex min-w-0 flex-1 flex-col px-4 py-12 sm:px-8 md:py-16">
-              <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col justify-center gap-10">
-                <div className="flex flex-col items-center gap-5 text-center">
+            <main className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-8 sm:px-8 md:h-screen md:py-14">
+              <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-8">
+                <div className="flex shrink-0 flex-col items-center gap-5 text-center">
                   <SparklesIcon className="size-8 text-foreground" />
                   <h1 className="text-2xl font-normal tracking-normal text-foreground">
                     Ask our AI anything
                   </h1>
                 </div>
 
-                <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
+                <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-5">
                   {!hasMessages ? (
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-1 flex-col justify-end gap-4">
                       <p className="text-sm font-semibold text-muted-foreground">
                         Suggestions on what to ask Our AI
                       </p>
@@ -619,8 +619,8 @@ export function AssistantWidget() {
                       </div>
                     </div>
                   ) : (
-                    <ScrollArea className="h-[48vh] rounded-md border bg-muted/30 p-4">
-                      <div className="flex flex-col gap-4">
+                    <ScrollArea className="min-h-0 flex-1 px-1">
+                      <div className="flex min-h-full flex-col gap-7 py-2">
                         {messages.map((message) => (
                           <MessageBubble key={message.id} message={message} />
                         ))}

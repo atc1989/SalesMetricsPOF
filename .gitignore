@@ -42,3 +42,6 @@ next-env.d.ts
 
 # user data exports from reconcile script
 user-account-diff.json
+
+# vendor-account link report (contains member names)
+vendor-account-link.json
