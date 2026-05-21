@@ -3,7 +3,15 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DataPagination } from '@/components/ui/data-pagination';
 import { Modal } from '@/components/ui/Modal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type UsersNoZeroOneRow = {
   id: string;
@@ -106,7 +114,13 @@ export function UsersTab() {
 
   const [usersSearchQuery, setUsersSearchQuery] = useState('');
   const [userAccountSearchQuery, setUserAccountSearchQuery] = useState('');
+  const [userAccountPage, setUserAccountPage] = useState(1);
+  const userAccountPageSize = 25;
   const [notice, setNotice] = useState<ModalNotice | null>(null);
+
+  useEffect(() => {
+    setUserAccountPage(1);
+  }, [userAccountSearchQuery]);
 
   const filteredUsersRows = useMemo(() => {
     const search = usersSearchQuery.trim().toLowerCase();
@@ -148,6 +162,15 @@ export function UsersTab() {
       )
     );
   }, [rows, userAccountSearchQuery]);
+
+  const userAccountTotalPages = Math.max(
+    1,
+    Math.ceil(filteredUserAccountRows.length / userAccountPageSize),
+  );
+  const userAccountPageRows = useMemo(() => {
+    const start = (userAccountPage - 1) * userAccountPageSize;
+    return filteredUserAccountRows.slice(start, start + userAccountPageSize);
+  }, [filteredUserAccountRows, userAccountPage]);
 
   const loadUserAccounts = useCallback(async () => {
     setIsLoading(true);
@@ -414,39 +437,39 @@ export function UsersTab() {
                 className="mt-1 h-10 rounded border border-input bg-muted/50 px-3 text-sm"
               />
             </label>
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-              Zero One
-              <select
-                id="zeroOne"
-                value={zeroOne}
-                required
-                onChange={(event) => setZeroOne(event.target.value)}
-                className="mt-1 h-10 rounded border border-input px-3 text-sm"
-              >
-                <option value="">Select zero one</option>
-                {zeroOneOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-              Code Payment
-              <select
-                id="codePayment"
+            <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+              <label htmlFor="zeroOne">Zero One</label>
+              <Select value={zeroOne} onValueChange={setZeroOne}>
+                <SelectTrigger id="zeroOne" className="w-full">
+                  <SelectValue placeholder="Select zero one" />
+                </SelectTrigger>
+                <SelectContent>
+                  {zeroOneOptions.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+              <label htmlFor="codePayment">Code Payment</label>
+              <Select
                 value={codePayment}
-                required
-                onChange={(event) => setCodePayment(event.target.value as 'PD' | 'FS')}
-                className="mt-1 h-10 rounded border border-input px-3 text-sm"
+                onValueChange={(value) => setCodePayment(value as 'PD' | 'FS')}
               >
-                {defaultCodePaymentOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger id="codePayment" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {defaultCodePaymentOptions.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-end gap-2">
               <Button type="submit">Save Entry</Button>
               <Button type="reset" variant="secondary">
@@ -575,7 +598,7 @@ export function UsersTab() {
                     </td>
                   </tr>
                 ) : (
-                  filteredUserAccountRows.map((row) => (
+                  userAccountPageRows.map((row) => (
                     <tr key={row.id} className="border-t border-border">
                       <td className="px-3 py-2">{row.fullName}</td>
                       <td className="px-3 py-2">{row.username}</td>
@@ -597,6 +620,19 @@ export function UsersTab() {
               </tbody>
             </table>
           </div>
+          {filteredUserAccountRows.length > 0 ? (
+            <div className="border-t border-border px-4 py-3">
+              <DataPagination
+                page={userAccountPage}
+                pageCount={userAccountTotalPages}
+                onPageChange={setUserAccountPage}
+                totalItems={filteredUserAccountRows.length}
+                pageSize={userAccountPageSize}
+                currentRangeCount={userAccountPageRows.length}
+                itemLabel="user accounts"
+              />
+            </div>
+          ) : null}
         </Card>
       </section>
 

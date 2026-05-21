@@ -1,8 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { Modal } from '@/components/ui/Modal';
 import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import {
@@ -491,30 +498,27 @@ export function InventoryReportTab() {
     <section id="inventory-report" className="mt-4 space-y-4">
       <Card className="p-3">
         <div className="grid gap-2 md:grid-cols-4">
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            FROM
-            <input
+          <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+            <label htmlFor="transDateFrom">FROM</label>
+            <DatePicker
               id="transDateFrom"
-              type="date"
               value={pendingFromDate}
-              onChange={(event) => setPendingFromDate(event.target.value)}
-              className="mt-1 rounded border border-input px-2 py-1 text-sm"
+              onChange={setPendingFromDate}
+              placeholder="From"
             />
-          </label>
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            TO
-            <input
+          </div>
+          <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+            <label htmlFor="transDateTo">TO</label>
+            <DatePicker
               id="transDateTo"
-              type="date"
               value={pendingToDate}
-              onChange={(event) => setPendingToDate(event.target.value)}
-              className="mt-1 rounded border border-input px-2 py-1 text-sm"
+              onChange={setPendingToDate}
+              placeholder="To"
             />
-          </label>
+          </div>
           <div className="flex items-end">
             <Button
               id="generateDailyInventory"
-              variant="secondary"
               className="w-full md:w-auto"
               onClick={onGenerate}
               disabled={isLoading}
@@ -522,17 +526,21 @@ export function InventoryReportTab() {
               {isLoading ? 'Generating...' : 'Generate Report'}
             </Button>
           </div>
-          <label className="flex flex-col text-xs font-medium text-muted-foreground">
-            SEARCH
-            <input
-              id="tblDailyInventorySearch"
-              type="text"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search table..."
-              className="mt-1 rounded border border-input px-2 py-1 text-sm"
-            />
-          </label>
+          <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+            <label htmlFor="tblDailyInventorySearch">SEARCH</label>
+            <InputGroup>
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupInput
+                id="tblDailyInventorySearch"
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search table…"
+              />
+            </InputGroup>
+          </div>
         </div>
       </Card>
 

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ChevronUp, LogOut, Vault } from "lucide-react";
 
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
-import { appNavGroups, isNavLinkActive } from "@/components/layout/navigation";
+import { getNavGroupsForRole, isNavLinkActive } from "@/components/layout/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -31,6 +31,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { getDefaultPathForRole } from "@/lib/auth/roles";
 import { getUserDisplayName } from "@/lib/auth/userDisplayName";
 
 function getInitials(name: string) {
@@ -43,9 +44,12 @@ function getInitials(name: string) {
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const role = profile?.role ?? "super_admin";
+  const homeHref = getDefaultPathForRole(role);
+  const navGroups = getNavGroupsForRole(role);
 
   const displayName = user ? getUserDisplayName(user) || user.email || "Signed in" : "";
   const initials = getInitials(displayName || "Signed in");
@@ -62,7 +66,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link href={homeHref}>
                 <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Vault className="size-4" />
                 </div>
@@ -79,7 +83,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {appNavGroups.map((group) => (
+        {navGroups.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -132,6 +136,9 @@ export function AppSidebar() {
                     <span className="truncate text-xs text-muted-foreground">
                       {user?.email ?? ""}
                     </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {role.replace("_", " ")}
+                    </span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -140,13 +147,16 @@ export function AppSidebar() {
                 side="right"
                 align="end"
                 sideOffset={4}
-                className="w-56 min-w-[--radix-dropdown-menu-trigger-width]"
+                className="data-[state=closed]:slide-out-to-bottom-20 data-[state=open]:slide-in-from-bottom-20 data-[state=closed]:slide-out-to-left-0 data-[state=open]:slide-in-from-left-0 data-[state=closed]:zoom-out-100 w-56 min-w-[--radix-dropdown-menu-trigger-width] duration-400"
               >
                 <DropdownMenuLabel>
                   <div className="grid text-left text-sm">
                     <span className="truncate font-medium">{displayName}</span>
                     <span className="truncate text-xs text-muted-foreground">
                       {user?.email ?? ""}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {role.replace("_", " ")}
                     </span>
                   </div>
                 </DropdownMenuLabel>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Modal } from '@/components/ui/Modal';
 import {
   getDailySalesNetPrice,
@@ -716,45 +717,42 @@ export function SalesReportTab() {
     <>
       <section id="daily-sales" className="mt-4 space-y-4">
         <Card className="p-3">
-          <div className="grid gap-2 md:grid-cols-5">
-            <label className="flex flex-col text-xs font-medium text-muted-foreground">
-              DATE
-              <input
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto_1fr] lg:items-end">
+            <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+              <label htmlFor="transDateDailySales">DATE</label>
+              <DatePicker
                 id="transDateDailySales"
-                type="date"
                 value={transDateDailySales}
-                onChange={(event) => setTransDateDailySales(event.target.value)}
-                className="mt-1 rounded border border-input px-2 py-1 text-sm"
+                onChange={setTransDateDailySales}
+                placeholder="Pick a date"
               />
-            </label>
-            <div className="flex items-end">
-              <Button
-                id="generateDailySales"
-                variant="secondary"
-                className="w-full md:w-auto"
-                onClick={onGenerateDailySales}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Generating...' : 'Generate Report'}
-              </Button>
             </div>
-            <div className="flex items-end">
-              <Button
-                id="saveCashOnHand"
-                variant="secondary"
-                className="w-full md:w-auto"
-                onClick={onSaveCashOnHand}
-                disabled={isSavingCashOnHand || isLoading}
-              >
-                {isSavingCashOnHand ? 'Saving...' : 'Save Cash on Hand'}
-              </Button>
-            </div>
-            <div className="flex items-end">
-              <Button id="upsertCashOnHand" className="w-full md:w-auto" onClick={onUpsertCashOnHand}>
-                Print
-              </Button>
-            </div>
-            <div className="flex items-end text-sm text-muted-foreground">
+            <Button
+              id="generateDailySales"
+              className="w-full lg:w-auto"
+              onClick={onGenerateDailySales}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Generating...' : 'Generate Report'}
+            </Button>
+            <Button
+              id="saveCashOnHand"
+              variant="outline"
+              className="w-full lg:w-auto"
+              onClick={onSaveCashOnHand}
+              disabled={isSavingCashOnHand || isLoading}
+            >
+              {isSavingCashOnHand ? 'Saving...' : 'Save Cash on Hand'}
+            </Button>
+            <Button
+              id="upsertCashOnHand"
+              variant="outline"
+              className="w-full lg:w-auto"
+              onClick={onUpsertCashOnHand}
+            >
+              Print
+            </Button>
+            <div className="flex items-center text-sm text-muted-foreground lg:justify-end">
               <span id="spnTransDateDailySales">{dateCaption}</span>
             </div>
           </div>

@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { Edit2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Ban, BadgeCheck, CheckCircle2, Edit2, Loader2, ShieldAlert, ShieldCheck, Wallet, WalletMinimal } from "lucide-react";
+import { notify } from "@/lib/notify";
 
 import { PcfApproveRejectModal } from "./PcfApproveRejectModal";
 import { PcfVoidModal } from "./PcfVoidModal";
@@ -181,6 +181,21 @@ export function ViewPcfPage() {
     document.title = "PCV Details | GuildLedger";
   }, [transaction?.pcv_number]);
 
+  const statusIcon = (status: PcfTransactionStatus) => {
+    switch (status) {
+      case "approved":
+        return ShieldCheck;
+      case "rejected":
+        return ShieldAlert;
+      case "paid":
+        return BadgeCheck;
+      case "void":
+        return Ban;
+      default:
+        return CheckCircle2;
+    }
+  };
+
   const handleStatusChange = async (status: PcfTransactionStatus) => {
     if (!transaction || isUpdating) return;
     setActionError(null);
@@ -192,7 +207,7 @@ export function ViewPcfPage() {
       return;
     }
     setTransaction(result.data);
-    toast.success(`PCV marked as ${formatStatus(status).toLowerCase()}`);
+    notify(statusIcon(status), `PCV marked as ${formatStatus(status).toLowerCase()}`);
   };
 
   const handleLiquidationToggle = async (isLiquidated: boolean) => {
@@ -206,7 +221,10 @@ export function ViewPcfPage() {
       return;
     }
     setTransaction(result.data);
-    toast.success(isLiquidated ? "PCV liquidated" : "PCV unliquidated");
+    notify(
+      isLiquidated ? Wallet : WalletMinimal,
+      isLiquidated ? "PCV liquidated" : "PCV unliquidated",
+    );
   };
 
   const handleOpenApprove = () => setApproveRejectModal({ isOpen: true, action: "approve" });
@@ -227,7 +245,7 @@ export function ViewPcfPage() {
     }
     setTransaction(result.data);
     setApproveRejectModal({ isOpen: false, action: "approve" });
-    toast.success(`PCV marked as ${formatStatus(nextStatus).toLowerCase()}`);
+    notify(statusIcon(nextStatus), `PCV marked as ${formatStatus(nextStatus).toLowerCase()}`);
   };
 
   const handleConfirmVoid = async () => {
@@ -242,7 +260,7 @@ export function ViewPcfPage() {
     }
     setTransaction(result.data);
     setIsVoidModalOpen(false);
-    toast.success("PCV marked as void");
+    notify(Ban, "PCV marked as void");
   };
 
   if (isLoading) {

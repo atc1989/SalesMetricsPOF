@@ -9,7 +9,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Modal } from '@/components/ui/Modal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import {
   dailySalesDiscountMatrix,
   encoderPackageOptions,
@@ -678,8 +687,15 @@ export function EncoderTab() {
             {submitError ? (
               <p className="mb-3 text-sm text-destructive">{submitError}</p>
             ) : null}
-            <form id="salesForm" className="space-y-6" onSubmit={onSubmit} onReset={onReset}>
-            <div className="grid gap-3 md:grid-cols-3">
+            <form id="salesForm" onSubmit={onSubmit} onReset={onReset}>
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Sale Info</h2>
+                <p className="text-muted-foreground text-sm">
+                  Identification, member, and event for this entry.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Event
                 <input
@@ -689,16 +705,15 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Date
-                <input
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="date">Date</label>
+                <DatePicker
                   id="date"
-                  type="date"
                   value={form.date}
-                  onChange={(event) => onDateChange(event.target.value)}
-                  className="h-10 rounded-md border border-input px-3"
+                  onChange={onDateChange}
+                  placeholder="Pick a date"
                 />
-              </label>
+              </div>
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 POF Number
                 <input
@@ -736,57 +751,89 @@ export function EncoderTab() {
                 {isUserSearchLoading ? <span className="text-xs text-muted-foreground">Searching users...</span> : null}
                 {userSearchError ? <span className="text-xs text-red-600">{userSearchError}</span> : null}
               </label>
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                New Member?
-                <select
-                  id="newMember"
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="newMember">New Member?</label>
+                <Select
                   value={form.newMember}
-                  onChange={(event) => updateField('newMember', event.target.value as '1' | '0')}
-                  className="h-10 rounded-md border border-input px-3"
+                  onValueChange={(value) => updateField('newMember', value as '1' | '0')}
                 >
-                  <option value="1">Yes</option>
-                  <option value="0">No</option>
-                </select>
-              </label>
+                  <SelectTrigger id="newMember" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Yes</SelectItem>
+                    <SelectItem value="0">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Member Type
-                <select id="memberType" value={form.memberType} onChange={(event) => onMemberTypeChange(event.target.value as EncoderMemberTypeOption)} className="h-10 rounded-md border border-input px-3">
-                  <option value="DISTRIBUTOR">Distributor</option>
-                  <option value="STOCKIST">Mobile Stockist</option>
-                  <option value="CITY STOCKIST">City Stockist</option>
-                  <option value="CENTER">Center</option>
-                  <option value="NON-MEMBER">Non-member</option>
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Package Type
-                <select id="packageType" value={form.packageType} onChange={(event) => onPackageTypeChange(event.target.value as EncoderPackageTypeOption)} className="h-10 rounded-md border border-input px-3">
-                  {encoderPackageOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                To Blister?
-                <select
-                  id="isToBlister"
-                  value={form.isToBlister}
-                  onChange={(event) => updateField('isToBlister', event.target.value as EncoderBlisterOption)}
-                  disabled={isBundledPackage}
-                  className="h-10 rounded-md border border-input px-3"
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Package & Pricing</h2>
+                <p className="text-muted-foreground text-sm">
+                  Member tier, package selection, pricing, and computed totals.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="memberType">Member Type</label>
+                <Select
+                  value={form.memberType}
+                  onValueChange={(value) => onMemberTypeChange(value as EncoderMemberTypeOption)}
                 >
-                  <option value="0">No</option>
-                  <option value="1">Yes</option>
-                </select>
+                  <SelectTrigger id="memberType" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DISTRIBUTOR">Distributor</SelectItem>
+                    <SelectItem value="STOCKIST">Mobile Stockist</SelectItem>
+                    <SelectItem value="CITY STOCKIST">City Stockist</SelectItem>
+                    <SelectItem value="CENTER">Center</SelectItem>
+                    <SelectItem value="NON-MEMBER">Non-member</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="packageType">Package Type</label>
+                <Select
+                  value={form.packageType}
+                  onValueChange={(value) => onPackageTypeChange(value as EncoderPackageTypeOption)}
+                >
+                  <SelectTrigger id="packageType" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {encoderPackageOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="isToBlister">To Blister?</label>
+                <Select
+                  value={form.isToBlister}
+                  onValueChange={(value) => updateField('isToBlister', value as EncoderBlisterOption)}
+                  disabled={isBundledPackage}
+                >
+                  <SelectTrigger id="isToBlister" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">No</SelectItem>
+                    <SelectItem value="1">Yes</SelectItem>
+                  </SelectContent>
+                </Select>
                 {isBundledPackage ? (
                   <span className="text-xs text-muted-foreground">Package bundles already include blister counts.</span>
                 ) : null}
-              </label>
+              </div>
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Original Price
                 <input
@@ -819,25 +866,28 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Discount
-                <select
-                  id="discount"
-                  value={form.discount}
-                  onChange={(event) => updateNumericField('discount', event.target.value)}
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="discount">Discount</label>
+                <Select
+                  value={String(form.discount)}
+                  onValueChange={(value) => updateNumericField('discount', value)}
                   disabled={isZeroDiscountPackage}
-                  className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50"
                 >
-                  {encoderDiscountOptions.map((option) => (
-                    <option key={`discount-${option.value}`} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="discount" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {encoderDiscountOptions.map((option) => (
+                      <SelectItem key={`discount-${option.value}`} value={String(option.value)}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {isZeroDiscountPackage ? (
                   <span className="text-xs text-muted-foreground">Old package types do not allow discounts.</span>
                 ) : null}
-              </label>
+              </div>
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Price
                 <input
@@ -879,24 +929,37 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input bg-muted/50 px-3"
                 />
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-4">
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Bag Type
-                <select
-                  id="bagType"
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Marketing Items</h2>
+                <p className="text-muted-foreground text-sm">
+                  Bags and marketing tools attached to this sale.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="bagType">Bag Type</label>
+                <Select
                   value={form.bagType}
-                  onChange={(event) => onBagTypeChange(event.target.value as EncoderBagTypeOption)}
-                  className="h-10 rounded-md border border-input px-3"
+                  onValueChange={(value) => onBagTypeChange(value as EncoderBagTypeOption)}
                 >
-                  {bagTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <SelectTrigger id="bagType" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bagTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Bag Quantity
                 <input
@@ -909,21 +972,24 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Marketing Tool
-                <select
-                  id="marketingTool"
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="marketingTool">Marketing Tool</label>
+                <Select
                   value={form.marketingTool}
-                  onChange={(event) => onMarketingToolChange(event.target.value as EncoderMarketingToolOption)}
-                  className="h-10 rounded-md border border-input px-3"
+                  onValueChange={(value) => onMarketingToolChange(value as EncoderMarketingToolOption)}
                 >
-                  {marketingToolOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <SelectTrigger id="marketingTool" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {marketingToolOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Marketing Quantity
                 <input
@@ -936,35 +1002,56 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50"
                 />
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-4">
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Mode of Payment
-                <select id="paymentMode" value={form.paymentMode} onChange={(event) => onPaymentModeChange(event.target.value as Exclude<EncoderPaymentModeOption, 'N/A'>)} className="h-10 rounded-md border border-input px-3">
-                  {primaryPaymentModes.map((mode) => (
-                    <option key={mode} value={mode}>
-                      {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : mode}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Payment Mode Type
-                <select
-                  id="paymentType"
-                  value={form.paymentType}
-                  onChange={(event) => updateField('paymentType', event.target.value)}
-                  disabled={primaryTypeIsReadOnly}
-                  className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50 disabled:text-muted-foreground"
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Payment</h2>
+                <p className="text-muted-foreground text-sm">
+                  Primary and optional secondary payment mode with references.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="paymentMode">Mode of Payment</label>
+                <Select
+                  value={form.paymentMode}
+                  onValueChange={(value) => onPaymentModeChange(value as Exclude<EncoderPaymentModeOption, 'N/A'>)}
                 >
-                  {primaryPaymentTypeOptions.map((option) => (
-                    <option key={`payment-type-${option.value}`} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <SelectTrigger id="paymentMode" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {primaryPaymentModes.map((mode) => (
+                      <SelectItem key={mode} value={mode}>
+                        {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : mode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="paymentType">Payment Mode Type</label>
+                <Select
+                  value={form.paymentType}
+                  onValueChange={(value) => updateField('paymentType', value)}
+                  disabled={primaryTypeIsReadOnly}
+                >
+                  <SelectTrigger id="paymentType" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {primaryPaymentTypeOptions.map((option) => (
+                      <SelectItem key={`payment-type-${option.value}`} value={String(option.value)}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Reference Number
                 <input
@@ -976,33 +1063,44 @@ export function EncoderTab() {
               </label>
               <div />
 
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Mode of Payment (2)
-                <select id="paymentModeTwo" value={form.paymentModeTwo} onChange={(event) => onPaymentModeTwoChange(event.target.value as EncoderPaymentModeOption)} className="h-10 rounded-md border border-input px-3">
-                  {secondaryPaymentModes.map((mode) => (
-                    <option key={`mode-two-${mode}`} value={mode}>
-                      {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : mode}
-                    </option>
-                  ))}
-                </select>
-                {paymentModeTwoError ? <span className="text-xs text-red-600">{paymentModeTwoError}</span> : null}
-              </label>
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                Payment Mode Type (2)
-                <select
-                  id="paymentTypeTwo"
-                  value={form.paymentTypeTwo}
-                  onChange={(event) => updateField('paymentTypeTwo', event.target.value)}
-                  disabled={secondaryTypeIsReadOnly}
-                  className="h-10 rounded-md border border-input px-3 disabled:bg-muted/50 disabled:text-muted-foreground"
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="paymentModeTwo">Mode of Payment (2)</label>
+                <Select
+                  value={form.paymentModeTwo}
+                  onValueChange={(value) => onPaymentModeTwoChange(value as EncoderPaymentModeOption)}
                 >
-                  {secondaryPaymentTypeOptions.map((option) => (
-                    <option key={`payment-type-two-${option.value}`} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <SelectTrigger id="paymentModeTwo" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {secondaryPaymentModes.map((mode) => (
+                      <SelectItem key={`mode-two-${mode}`} value={mode}>
+                        {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : mode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {paymentModeTwoError ? <span className="text-xs text-destructive">{paymentModeTwoError}</span> : null}
+              </div>
+              <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                <label htmlFor="paymentTypeTwo">Payment Mode Type (2)</label>
+                <Select
+                  value={form.paymentTypeTwo}
+                  onValueChange={(value) => updateField('paymentTypeTwo', value)}
+                  disabled={secondaryTypeIsReadOnly}
+                >
+                  <SelectTrigger id="paymentTypeTwo" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {secondaryPaymentTypeOptions.map((option) => (
+                      <SelectItem key={`payment-type-two-${option.value}`} value={String(option.value)}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Reference Number (2)
                 <input
@@ -1023,9 +1121,19 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3"
                 />
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-4">
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Release Tracking</h2>
+                <p className="text-muted-foreground text-sm">
+                  Released vs. to-follow quantities for bottle and blister stock.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
                 Released (Bottle)
                 <input
@@ -1070,10 +1178,20 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3"
                 />
               </label>
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm text-muted-foreground md:col-span-2">
+            <Separator className="my-10" />
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold">Remarks & Handoff</h2>
+                <p className="text-muted-foreground text-sm">
+                  Notes about this entry and who received / collected the items.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2">
+              <label className="flex flex-col gap-1 text-sm text-muted-foreground sm:col-span-2">
                 Remarks
                 <textarea
                   id="remarks"
@@ -1101,10 +1219,13 @@ export function EncoderTab() {
                   className="h-10 rounded-md border border-input px-3"
                 />
               </label>
+              </div>
             </div>
 
+            <Separator className="my-10" />
+
             <div className="flex flex-wrap justify-end gap-2">
-              <Button type="reset" variant="secondary">
+              <Button type="reset" variant="outline">
                 Clear Form
               </Button>
               <Button type="submit">Save Entry</Button>

@@ -25,18 +25,12 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -479,12 +473,14 @@ export function CreateBillPage() {
       )}
 
       {/* Payee & Reference */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payee & Reference</CardTitle>
-          <CardDescription>Vendor, reference number, request date, and priority.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+        <div className="space-y-1">
+          <h2 className="font-semibold">Payee & Reference</h2>
+          <p className="text-muted-foreground text-sm">
+            Vendor, reference number, request date, and priority.
+          </p>
+        </div>
+        <div className="md:col-span-2">
           <FieldGroup>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <Field data-invalid={!vendorInput.trim() ? undefined : undefined}>
@@ -556,12 +552,11 @@ export function CreateBillPage() {
                 <FieldLabel htmlFor="requestDate">
                   Request Date<span className="text-destructive"> *</span>
                 </FieldLabel>
-                <Input
+                <DatePicker
                   id="requestDate"
-                  type="date"
                   value={requestDate}
-                  onChange={(e) => setRequestDate(e.target.value)}
-                  required
+                  onChange={setRequestDate}
+                  placeholder="Pick a date"
                 />
               </Field>
 
@@ -583,16 +578,20 @@ export function CreateBillPage() {
               </Field>
             </div>
           </FieldGroup>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <Separator className="my-10" />
 
       {/* Payment Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Breakdown</CardTitle>
-          <CardDescription>One line per payment method or category.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+        <div className="space-y-1">
+          <h2 className="font-semibold">Payment Breakdown</h2>
+          <p className="text-muted-foreground text-sm">
+            One line per payment method or category.
+          </p>
+        </div>
+        <div className="space-y-4 md:col-span-2">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -750,15 +749,20 @@ export function CreateBillPage() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <Separator className="my-10" />
 
       {/* Reason for Payment */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Reason for Payment</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+        <div className="space-y-1">
+          <h2 className="font-semibold">Reason for Payment</h2>
+          <p className="text-muted-foreground text-sm">
+            Free-text remarks that accompany this payment request.
+          </p>
+        </div>
+        <div className="md:col-span-2">
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="reason">Reason / Remarks</FieldLabel>
@@ -772,16 +776,20 @@ export function CreateBillPage() {
               <FieldDescription>Optional. Visible on the printed receipt.</FieldDescription>
             </Field>
           </FieldGroup>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <Separator className="my-10" />
 
       {/* Attachments */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Attachments</CardTitle>
-          <CardDescription>Attach scanned forms or proof. PDF, JPG, PNG (max 10MB each).</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+        <div className="space-y-1">
+          <h2 className="font-semibold">Attachments</h2>
+          <p className="text-muted-foreground text-sm">
+            Attach scanned forms or proof. PDF, JPG, PNG (max 10MB each).
+          </p>
+        </div>
+        <div className="space-y-4 md:col-span-2">
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -836,18 +844,22 @@ export function CreateBillPage() {
               ))}
             </ul>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <Separator className="my-10" />
 
       {/* Request & Approval Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Request & Approval</CardTitle>
-          <CardDescription>Populated after submission and review.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+        <div className="space-y-1">
+          <h2 className="font-semibold">Request & Approval</h2>
+          <p className="text-muted-foreground text-sm">
+            Populated after submission and review.
+          </p>
+        </div>
+        <div className="md:col-span-2">
           <FieldGroup>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
               <Field data-disabled>
                 <FieldLabel>Requested By</FieldLabel>
                 <Input value={user?.email || "Current User"} disabled />
@@ -862,8 +874,8 @@ export function CreateBillPage() {
               </Field>
             </div>
           </FieldGroup>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Footer */}
       <div className="flex flex-wrap items-center justify-end gap-2 pb-4">

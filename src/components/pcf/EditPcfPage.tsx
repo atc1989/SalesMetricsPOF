@@ -2,8 +2,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { notify } from "@/lib/notify";
 
 import {
   getPcfTransactionById,
@@ -193,7 +193,7 @@ export function EditPcfPage() {
         return;
       }
       if (draftStorageKey) window.sessionStorage.removeItem(draftStorageKey);
-      toast.success("PCV updated.");
+      notify(CheckCircle2, "PCV updated.");
       router.push(`/pcf/${id}`);
     } finally {
       setIsSaving(false);

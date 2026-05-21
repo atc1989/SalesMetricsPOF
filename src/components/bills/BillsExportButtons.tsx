@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { toast } from "sonner";
+import { AlertCircle, Download, SearchX } from "lucide-react";
+import { notify } from "@/lib/notify";
 import { fetchBillsForExport } from "@/services/billsExportFetch";
 import { exportBills, type ExportFormat } from "@/utils/billsExport";
 
@@ -42,20 +43,20 @@ export function BillsExportButtons({
       });
 
       if (result.error) {
-        toast.error(result.error);
+        notify(AlertCircle, result.error);
         return;
       }
 
       if (!result.data.length) {
-        toast.error("No records found for the selected filters.");
+        notify(SearchX, "No records found for the selected filters.");
         return;
       }
 
       await exportBills(result.data, format);
-      toast.success(`Exported ${result.data.length} record(s) to ${format.toUpperCase()}.`);
+      notify(Download, `Exported ${result.data.length} record(s) to ${format.toUpperCase()}.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to export payment requests.";
-      toast.error(message);
+      notify(AlertCircle, message);
     } finally {
       setIsExporting(false);
     }

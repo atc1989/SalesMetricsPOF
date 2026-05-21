@@ -2,9 +2,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, FolderOpen, Printer, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import {
   fetchRecentPrints,
   fetchSubmissionById,
@@ -320,7 +320,7 @@ export function SpecialCompanyEventsForm({
     setFormState(normalizeSpecialCompanyEventsState(result.data.payload));
     setSubmissionId(result.data.id);
     setReferenceNo(result.data.reference_no);
-    toast.success(`Loaded ${result.data.reference_no}`);
+    notify(FolderOpen, `Loaded ${result.data.reference_no}`);
   };
 
   const printRoot =
