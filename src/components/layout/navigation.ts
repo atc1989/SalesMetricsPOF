@@ -6,7 +6,6 @@ import {
   Package,
   Plug,
   Receipt,
-  Users,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -35,7 +34,6 @@ export const appNavGroups: NavGroup[] = [
       { href: "/daily-sales", label: "Daily Sales", icon: CalendarDays },
       { href: "/encoder", label: "Encoder", icon: Keyboard },
       { href: "/inventory-movement", label: "Inventory Movement", icon: Package },
-      { href: "/members", label: "Member Rollup", icon: Users },
     ],
   },
   {

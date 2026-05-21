@@ -15,7 +15,7 @@ export const DEFAULT_APP_ROLE: AppRole = "sales";
 export const ROLE_DEFAULT_PATH: Record<AppRole, string> = {
   super_admin: "/",
   sales: "/",
-  operations: "/bills",
+  operations: "/",
 };
 
 const ROLE_PAGE_PREFIXES: Record<AppRole, string[]> = {
@@ -26,9 +26,8 @@ const ROLE_PAGE_PREFIXES: Record<AppRole, string[]> = {
     "/daily-sales",
     "/encoder",
     "/inventory-movement",
-    "/members",
   ],
-  operations: ["/bills", "/pcf", "/event-forms", "/forms", "/members"],
+  operations: ["/bills", "/pcf", "/event-forms", "/forms"],
 };
 
 const ROLE_API_PREFIXES: Record<AppRole, string[]> = {
@@ -39,12 +38,11 @@ const ROLE_API_PREFIXES: Record<AppRole, string[]> = {
     "/api/daily-sales",
     "/api/dashboard",
     "/api/inventory-movement",
-    "/api/members",
     "/api/reports",
     "/api/sales",
     "/api/user-account",
   ],
-  operations: ["/api/assistant", "/api/members", "/api/user-account"],
+  operations: ["/api/assistant", "/api/user-account"],
 };
 
 function matchesPrefix(pathname: string, prefix: string) {
