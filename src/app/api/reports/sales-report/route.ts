@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
 
   const rows = (data ?? []).map((row) => {
     const typedRow = row as SalesReportRow;
-    const bottleCount = toNumber(typedRow.released_count);
-    const blisterCount = toNumber(typedRow.released_blpk_count);
+    const bottleCount = toNumber(typedRow.bottle_count);
+    const blisterCount = toNumber(typedRow.blister_count);
 
     return {
       daily_sales_id: toNumber(typedRow.daily_sales_id),
@@ -113,8 +113,8 @@ export async function GET(request: NextRequest) {
   const totals = rows.reduce(
     (acc, row) => {
       acc.total_sales += row.sales;
-      acc.total_bottles += row.released_count;
-      acc.total_blisters += row.released_blpk_count;
+      acc.total_bottles += row.bottle_count;
+      acc.total_blisters += row.blister_count;
       acc.total_transactions += 1;
       return acc;
     },

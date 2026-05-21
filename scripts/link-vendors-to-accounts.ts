@@ -1,25 +1,20 @@
 /**
- * Fuzzy-link vendors to user_account members.
+ * Diagnose + link vendors to user_account members.
  *
- * The migration 20260521000003_vendors_user_account_link.sql adds
- * vendors.user_account_id and backfills only the vendors whose name is an
- * exact normalized match for exactly one user_account.full_name. This script
- * handles the messier remainder: name-order differences ("Dolatre, Roland"
- * vs "ROLAND DOLATRE"), extra middle names, etc.
+ * vendors.name turned out to hold USERNAMES, not full names. There are two
+ * username-bearing tables — user_account (user_name) and users (username) —
+ * so this script first tests the 178 vendor names against every candidate
+ * column and prints a hit-count breakdown, then links what it can.
+ *
+ * The link TARGET is always user_account.user_account_id (that is the member
+ * table the rollup page joins on). Matching is exact, case-insensitive,
+ * whitespace-trimmed.
  *
  * Reads from .env.import (falls back to plain SUPABASE_* if TARGET_* unset):
  *   TARGET_SUPABASE_URL / TARGET_SUPABASE_SERVICE_ROLE_KEY
  *
- * Default (no flag): writes vendor-account-link.json with three buckets:
- *   - matched    — confident 1:1 match (would be written on --apply)
- *   - ambiguous  — vendor name maps to multiple accounts (needs manual pick)
- *   - unmatched  — no candidate found
- *
- * With --apply: writes the `matched` bucket to vendors.user_account_id.
- * Only fills vendors that currently have a NULL user_account_id.
- *
- *   npx tsx scripts/link-vendors-to-accounts.ts          # write report
- *   npx tsx scripts/link-vendors-to-accounts.ts --apply  # commit confident matches
+ *   npx tsx scripts/link-vendors-to-accounts.ts          # diagnose + write report
+ *   npx tsx scripts/link-vendors-to-accounts.ts --apply  # also write the links
  */
 
 import "dotenv/config";
@@ -51,18 +46,46 @@ async function loadEnv() {
 }
 
 type Vendor = { id: string; name: string; user_account_id: number | null };
-type Account = { user_account_id: number; full_name: string | null };
+type Account = { user_account_id: number; user_name: string | null; full_name: string | null };
+type AppUser = { user_id: number; username: string | null; name: string | null };
 
-// Normalize a name to a sorted set of alphanumeric tokens, so that
-// "Dolatre, Roland" and "ROLAND DOLATRE" collapse to the same key.
-function tokenKey(name: string): string {
-  return name
-    .toUpperCase()
-    .replace(/[^A-Z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean)
-    .sort()
-    .join(" ");
+const norm = (value: string | null | undefined): string =>
+  (value ?? "").trim().toLowerCase();
+
+// Pull every row from a table in pages (Supabase caps a select at 1000).
+async function fetchAll<T>(
+  db: ReturnType<typeof createClient>,
+  table: string,
+  columns: string,
+): Promise<T[]> {
+  const pageSize = 1000;
+  let from = 0;
+  const all: T[] = [];
+  for (;;) {
+    const { data, error } = await db
+      .from(table)
+      .select(columns)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = (data ?? []) as T[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
+// Build a normalized-value -> rows index, skipping blank keys.
+function indexBy<T>(rows: T[], getKey: (row: T) => string | null | undefined) {
+  const map = new Map<string, T[]>();
+  for (const row of rows) {
+    const k = norm(getKey(row));
+    if (!k) continue;
+    const bucket = map.get(k) ?? [];
+    bucket.push(row);
+    map.set(k, bucket);
+  }
+  return map;
 }
 
 async function main() {
@@ -74,43 +97,84 @@ async function main() {
     process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) {
-    console.error(
-      "Missing TARGET_SUPABASE_URL / TARGET_SUPABASE_SERVICE_ROLE_KEY in .env.import",
-    );
+    console.error("Missing TARGET_SUPABASE_URL / TARGET_SUPABASE_SERVICE_ROLE_KEY in .env.import");
     process.exit(1);
   }
 
   const apply = process.argv.includes("--apply");
   const db = createClient(url, key, { auth: { persistSession: false } });
 
-  console.log("Fetching vendors and user_account…");
+  console.log("Fetching vendors, user_account, users…");
+  const vendors = await fetchAll<Vendor>(db, "vendors", "id,name,user_account_id");
+  const accounts = await fetchAll<Account>(
+    db,
+    "user_account",
+    "user_account_id,user_name,full_name",
+  );
+  const users = await fetchAll<AppUser>(db, "users", "user_id,username,name");
 
-  const { data: vendorRows, error: vendorError } = await db
-    .from("vendors")
-    .select("id,name,user_account_id");
-  if (vendorError) throw vendorError;
+  console.log(`  vendors:       ${vendors.length}`);
+  console.log(`  user_account:  ${accounts.length}`);
+  console.log(`  users:         ${users.length}`);
 
-  const { data: accountRows, error: accountError } = await db
-    .from("user_account")
-    .select("user_account_id,full_name");
-  if (accountError) throw accountError;
+  // Candidate indexes.
+  const byAccountUserName = indexBy(accounts, (a) => a.user_name);
+  const byAccountFullName = indexBy(accounts, (a) => a.full_name);
+  const byUsersUsername = indexBy(users, (u) => u.username);
+  const byUsersName = indexBy(users, (u) => u.name);
 
-  const vendors = (vendorRows ?? []) as Vendor[];
-  const accounts = (accountRows ?? []) as Account[];
-
-  // Index accounts by token key.
-  const accountsByKey = new Map<string, Account[]>();
-  for (const account of accounts) {
-    if (!account.full_name || !account.full_name.trim()) continue;
-    const k = tokenKey(account.full_name);
+  // Diagnostic: how many vendor names hit each candidate column?
+  let hitAccountUserName = 0;
+  let hitAccountFullName = 0;
+  let hitUsersUsername = 0;
+  let hitUsersName = 0;
+  for (const vendor of vendors) {
+    const k = norm(vendor.name);
     if (!k) continue;
-    const bucket = accountsByKey.get(k) ?? [];
-    bucket.push(account);
-    accountsByKey.set(k, bucket);
+    if (byAccountUserName.has(k)) hitAccountUserName += 1;
+    if (byAccountFullName.has(k)) hitAccountFullName += 1;
+    if (byUsersUsername.has(k)) hitUsersUsername += 1;
+    if (byUsersName.has(k)) hitUsersName += 1;
   }
 
-  const matched: { vendorId: string; vendorName: string; userAccountId: number; accountName: string }[] = [];
-  const ambiguous: { vendorId: string; vendorName: string; candidates: { userAccountId: number; accountName: string }[] }[] = [];
+  console.log("\nVendor-name match counts by candidate column:");
+  console.log(`  user_account.user_name : ${hitAccountUserName} / ${vendors.length}`);
+  console.log(`  user_account.full_name : ${hitAccountFullName} / ${vendors.length}`);
+  console.log(`  users.username         : ${hitUsersUsername} / ${vendors.length}`);
+  console.log(`  users.name             : ${hitUsersName} / ${vendors.length}`);
+
+  // Diagnostic: which table does daily_sales.username actually point at?
+  // Sample distinct, non-blank usernames and test them against both tables.
+  const dailySalesRows = await fetchAll<{ username: string | null }>(
+    db,
+    "daily_sales",
+    "username",
+  );
+  const distinctSalesUsernames = Array.from(
+    new Set(dailySalesRows.map((r) => norm(r.username)).filter(Boolean)),
+  );
+  let salesHitAccountUserName = 0;
+  let salesHitUsersUsername = 0;
+  for (const u of distinctSalesUsernames) {
+    if (byAccountUserName.has(u)) salesHitAccountUserName += 1;
+    if (byUsersUsername.has(u)) salesHitUsersUsername += 1;
+  }
+  console.log(
+    `\ndaily_sales.username — ${distinctSalesUsernames.length} distinct non-blank values:`,
+  );
+  console.log(
+    `  match user_account.user_name : ${salesHitAccountUserName} / ${distinctSalesUsernames.length}`,
+  );
+  console.log(
+    `  match users.username         : ${salesHitUsersUsername} / ${distinctSalesUsernames.length}`,
+  );
+
+  // Resolve a vendor to a user_account_id. Prefer a direct user_account
+  // match; otherwise bridge through users (users.username -> users.zero_one
+  // is not a member key, so we bridge by the user's name into
+  // user_account.full_name as a fallback).
+  const matched: { vendorId: string; vendorName: string; userAccountId: number; via: string }[] = [];
+  const ambiguous: { vendorId: string; vendorName: string; note: string }[] = [];
   const unmatched: { vendorId: string; vendorName: string }[] = [];
   let alreadyLinked = 0;
 
@@ -119,51 +183,107 @@ async function main() {
       alreadyLinked += 1;
       continue;
     }
-    if (!vendor.name || !vendor.name.trim()) {
+    const k = norm(vendor.name);
+    if (!k) {
       unmatched.push({ vendorId: vendor.id, vendorName: vendor.name });
       continue;
     }
-    const candidates = accountsByKey.get(tokenKey(vendor.name)) ?? [];
-    if (candidates.length === 1) {
+
+    // Strategy 1: vendor name == user_account.user_name (direct).
+    const directAccounts = byAccountUserName.get(k);
+    if (directAccounts && directAccounts.length === 1) {
       matched.push({
         vendorId: vendor.id,
         vendorName: vendor.name,
-        userAccountId: candidates[0].user_account_id,
-        accountName: candidates[0].full_name ?? "",
+        userAccountId: directAccounts[0].user_account_id,
+        via: "user_account.user_name",
       });
-    } else if (candidates.length > 1) {
+      continue;
+    }
+    if (directAccounts && directAccounts.length > 1) {
       ambiguous.push({
         vendorId: vendor.id,
         vendorName: vendor.name,
-        candidates: candidates.map((c) => ({
-          userAccountId: c.user_account_id,
-          accountName: c.full_name ?? "",
-        })),
+        note: `${directAccounts.length} user_account rows share this user_name`,
       });
-    } else {
-      unmatched.push({ vendorId: vendor.id, vendorName: vendor.name });
+      continue;
     }
+
+    // Strategy 2: vendor name == users.username, then bridge users.name
+    // -> user_account.full_name.
+    const matchedUsers = byUsersUsername.get(k);
+    if (matchedUsers && matchedUsers.length >= 1) {
+      const bridged = matchedUsers
+        .flatMap((u) => byAccountFullName.get(norm(u.name)) ?? [])
+        .filter((a, i, arr) => arr.findIndex((x) => x.user_account_id === a.user_account_id) === i);
+      if (bridged.length === 1) {
+        matched.push({
+          vendorId: vendor.id,
+          vendorName: vendor.name,
+          userAccountId: bridged[0].user_account_id,
+          via: "users.username -> users.name -> user_account.full_name",
+        });
+        continue;
+      }
+      if (bridged.length > 1) {
+        ambiguous.push({
+          vendorId: vendor.id,
+          vendorName: vendor.name,
+          note: `users.username bridges to ${bridged.length} user_account rows`,
+        });
+        continue;
+      }
+      ambiguous.push({
+        vendorId: vendor.id,
+        vendorName: vendor.name,
+        note: "matched users.username but no user_account bridge by name",
+      });
+      continue;
+    }
+
+    unmatched.push({ vendorId: vendor.id, vendorName: vendor.name });
   }
 
   await fs.writeFile(
     OUT_FILE,
-    JSON.stringify({ matched, ambiguous, unmatched }, null, 2),
+    JSON.stringify(
+      {
+        diagnostics: {
+          vendors: vendors.length,
+          vendorNameMatches: {
+            accountUserName: hitAccountUserName,
+            accountFullName: hitAccountFullName,
+            usersUsername: hitUsersUsername,
+            usersName: hitUsersName,
+          },
+          dailySalesUsername: {
+            distinctValues: distinctSalesUsernames.length,
+            matchAccountUserName: salesHitAccountUserName,
+            matchUsersUsername: salesHitUsersUsername,
+          },
+        },
+        matched,
+        ambiguous,
+        unmatched,
+      },
+      null,
+      2,
+    ),
     "utf8",
   );
 
-  console.log(`  vendors:        ${vendors.length}`);
+  console.log(`\nReport written to vendor-account-link.json:`);
   console.log(`  already linked: ${alreadyLinked}`);
-  console.log(`Report written to vendor-account-link.json:`);
-  console.log(`  matched:   ${matched.length}`);
-  console.log(`  ambiguous: ${ambiguous.length}`);
-  console.log(`  unmatched: ${unmatched.length}`);
+  console.log(`  matched:        ${matched.length}`);
+  console.log(`  ambiguous:      ${ambiguous.length}`);
+  console.log(`  unmatched:      ${unmatched.length}`);
 
   if (!apply) {
-    console.log("\nRun with --apply to write the matched links to vendors.user_account_id.");
+    console.log("\nReview the diagnostics above, then re-run with --apply to write links.");
     return;
   }
 
-  console.log(`\nApplying ${matched.length} confident links…`);
+  console.log(`\nApplying ${matched.length} links…`);
   let written = 0;
   for (const m of matched) {
     const { error } = await db
@@ -178,11 +298,6 @@ async function main() {
     written += 1;
   }
   console.log(`  done — ${written} vendors linked.`);
-  if (ambiguous.length) {
-    console.log(
-      `  ${ambiguous.length} ambiguous vendor(s) left untouched — resolve manually in vendor-account-link.json.`,
-    );
-  }
 }
 
 main().catch((error) => {
