@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   BotIcon,
+  HistoryIcon,
   ExpandIcon,
   LoaderCircleIcon,
   MessageCircleIcon,
   Minimize2Icon,
+  PlusIcon,
   SendIcon,
   SparklesIcon,
   XIcon,
@@ -27,16 +29,26 @@ type AssistantMessage = {
 type AssistantApiResponse = {
   success: boolean;
   answer?: string;
+  conversationId?: string;
   message?: string;
 };
 
 type AssistantHistoryResponse = {
   success: boolean;
+  conversationId?: string;
+  conversations?: AssistantConversation[];
   messages?: Array<{
     id: string;
     role: "user" | "assistant";
     content: string;
   }>;
+};
+
+type AssistantConversation = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 const compactSuggestions = [
@@ -78,6 +90,19 @@ function TypingDots() {
   );
 }
 
+function formatConversationDate(value: string) {
+  if (!value) {
+    return "No messages yet";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 function MessageBubble({ message }: { message: AssistantMessage }) {
   const isUser = message.role === "user";
 
@@ -97,6 +122,86 @@ function MessageBubble({ message }: { message: AssistantMessage }) {
         {message.content}
       </div>
     </div>
+  );
+}
+
+function AssistantConversationSidebar({
+  conversations,
+  activeConversationId,
+  isSending,
+  onNewChat,
+  onSelectConversation,
+}: {
+  conversations: AssistantConversation[];
+  activeConversationId: string | null;
+  isSending: boolean;
+  onNewChat: () => void;
+  onSelectConversation: (conversationId: string) => void;
+}) {
+  return (
+    <aside className="flex w-full shrink-0 flex-col border-b bg-muted/35 md:h-screen md:w-72 md:border-r md:border-b-0">
+      <div className="flex items-center gap-3 border-b px-4 py-4">
+        <AssistantMark className="size-9 bg-background text-foreground" />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground">SalesMetrics AI</p>
+          <p className="truncate text-xs text-muted-foreground">Conversation history</p>
+        </div>
+      </div>
+
+      <div className="border-b p-3">
+        <Button
+          type="button"
+          className="w-full justify-start gap-2"
+          variant="outline"
+          disabled={isSending}
+          onClick={onNewChat}
+        >
+          <PlusIcon className="size-4" />
+          New chat
+        </Button>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
+            Recents
+          </p>
+          <span className="text-xs text-muted-foreground">{conversations.length}</span>
+        </div>
+
+        <ScrollArea className="h-40 md:h-[calc(100vh-11rem)]">
+          <div className="flex flex-col gap-1 pr-2">
+            {conversations.length > 0 ? (
+              conversations.map((conversation) => (
+                <button
+                  key={conversation.id}
+                  type="button"
+                  aria-pressed={conversation.id === activeConversationId}
+                  className={cn(
+                    "group rounded-md px-3 py-2 text-left transition-colors hover:bg-background",
+                    conversation.id === activeConversationId
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground",
+                  )}
+                  onClick={() => onSelectConversation(conversation.id)}
+                >
+                  <span className="block truncate text-sm font-medium text-foreground">
+                    {conversation.title}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {formatConversationDate(conversation.updatedAt)}
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="rounded-md border border-dashed bg-background/60 px-3 py-4 text-sm text-muted-foreground">
+                Previous chats will appear here.
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    </aside>
   );
 }
 
@@ -158,11 +263,14 @@ export function AssistantWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
+  const [conversations, setConversations] = useState<AssistantConversation[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
-  const canUseAssistant = profile?.role === "super_admin";
+  const canUseAssistant = Boolean(profile?.isActive);
   const hasMessages = messages.length > 0;
 
   const welcomeMessage = useMemo<AssistantMessage>(
@@ -183,6 +291,8 @@ export function AssistantWidget() {
       .then((response) => response.json())
       .then((payload: AssistantHistoryResponse) => {
         if (!isMounted || !payload.success || !payload.messages) return;
+        setConversationId(payload.conversationId ?? null);
+        setConversations(payload.conversations ?? []);
         setMessages(
           payload.messages.map((message) => ({
             id: message.id,
@@ -203,6 +313,38 @@ export function AssistantWidget() {
       isMounted = false;
     };
   }, [canUseAssistant, hasLoadedHistory]);
+
+  async function loadConversation(nextConversationId?: string) {
+    const search = nextConversationId
+      ? `?conversationId=${encodeURIComponent(nextConversationId)}`
+      : "";
+    const response = await fetch(`/api/assistant${search}`);
+    const payload = (await response.json()) as AssistantHistoryResponse;
+
+    if (!payload.success) return;
+    setConversationId(payload.conversationId ?? nextConversationId ?? null);
+    setConversations(payload.conversations ?? []);
+    setMessages(
+      (payload.messages ?? []).map((message) => ({
+        id: message.id,
+        role: message.role,
+        content: message.content,
+      })),
+    );
+  }
+
+  async function startNewChat() {
+    if (isSending) return;
+    const response = await fetch("/api/assistant?action=new");
+    const payload = (await response.json()) as AssistantHistoryResponse;
+
+    if (!payload.success) return;
+    setConversationId(payload.conversationId ?? null);
+    setConversations(payload.conversations ?? []);
+    setMessages([]);
+    setDraft("");
+    setShowHistory(false);
+  }
 
   if (!canUseAssistant) {
     return null;
@@ -227,7 +369,7 @@ export function AssistantWidget() {
       const response = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content }),
+        body: JSON.stringify({ message: content, conversationId }),
       });
       const payload = (await response.json()) as AssistantApiResponse;
 
@@ -244,6 +386,10 @@ export function AssistantWidget() {
           content: answer,
         },
       ]);
+      if (payload.conversationId) {
+        setConversationId(payload.conversationId);
+      }
+      void loadConversation(payload.conversationId ?? conversationId ?? undefined);
     } catch (error) {
       const answer =
         error instanceof Error
@@ -289,6 +435,24 @@ export function AssistantWidget() {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  aria-label="New chat"
+                  onClick={startNewChat}
+                >
+                  <PlusIcon />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Show chat history"
+                  onClick={() => setShowHistory((current) => !current)}
+                >
+                  <HistoryIcon />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   aria-label="Expand assistant"
                   onClick={() => setIsFullscreen(true)}
                 >
@@ -305,6 +469,39 @@ export function AssistantWidget() {
                 </Button>
               </div>
             </div>
+            {showHistory ? (
+              <div className="mt-4 flex max-h-28 flex-col gap-1 overflow-auto rounded-md border bg-background p-1">
+                {conversations.length > 0 ? (
+                  conversations.map((conversation) => (
+                    <button
+                      key={conversation.id}
+                      type="button"
+                      className={cn(
+                        "rounded-sm px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted",
+                        conversation.id === conversationId && "bg-muted",
+                      )}
+                      onClick={() => {
+                        void loadConversation(conversation.id);
+                        setShowHistory(false);
+                      }}
+                    >
+                      <span className="block truncate font-medium">
+                        {conversation.title}
+                      </span>
+                      <span className="block truncate text-muted-foreground">
+                        {conversation.updatedAt
+                          ? new Date(conversation.updatedAt).toLocaleString()
+                          : "No date"}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <span className="px-2 py-1.5 text-xs text-muted-foreground">
+                    No previous chats
+                  </span>
+                )}
+              </div>
+            ) : null}
             <div className="mt-4 flex flex-col gap-1">
               <h2 className="text-xl font-semibold tracking-normal">SalesMetrics AI</h2>
               <p className="text-sm text-muted-foreground">
@@ -382,61 +579,73 @@ export function AssistantWidget() {
             </Button>
           </div>
 
-          <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-12 sm:px-8">
-            <div className="flex flex-1 flex-col justify-center gap-12">
-              <div className="flex flex-col items-center gap-5 text-center">
-                <SparklesIcon className="size-8 text-foreground" />
-                <h1 className="text-2xl font-normal tracking-normal text-foreground">
-                  Ask our AI anything
-                </h1>
-              </div>
+          <div className="flex min-h-screen flex-col md:flex-row">
+            <AssistantConversationSidebar
+              conversations={conversations}
+              activeConversationId={conversationId}
+              isSending={isSending}
+              onNewChat={startNewChat}
+              onSelectConversation={(nextConversationId) => {
+                void loadConversation(nextConversationId);
+              }}
+            />
 
-              <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-                {!hasMessages ? (
-                  <div className="flex flex-col gap-4">
-                    <p className="text-sm font-semibold text-muted-foreground">
-                      Suggestions on what to ask Our AI
-                    </p>
-                    <div className="grid gap-3 md:grid-cols-3">
-                      {fullscreenSuggestions.map((suggestion) => (
-                        <button
-                          key={suggestion}
-                          type="button"
-                          className="min-h-14 rounded-md border bg-background px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                          onClick={() => sendMessage(suggestion)}
-                        >
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <ScrollArea className="h-[48vh] rounded-md border bg-muted/30 p-4">
+            <main className="flex min-w-0 flex-1 flex-col px-4 py-12 sm:px-8 md:py-16">
+              <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col justify-center gap-10">
+                <div className="flex flex-col items-center gap-5 text-center">
+                  <SparklesIcon className="size-8 text-foreground" />
+                  <h1 className="text-2xl font-normal tracking-normal text-foreground">
+                    Ask our AI anything
+                  </h1>
+                </div>
+
+                <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
+                  {!hasMessages ? (
                     <div className="flex flex-col gap-4">
-                      {messages.map((message) => (
-                        <MessageBubble key={message.id} message={message} />
-                      ))}
-                      {isSending ? (
-                        <div className="flex flex-col gap-1">
-                          <span className="px-1 text-[10px] font-medium uppercase tracking-normal text-muted-foreground">
-                            Our AI
-                          </span>
-                          <TypingDots />
-                        </div>
-                      ) : null}
+                      <p className="text-sm font-semibold text-muted-foreground">
+                        Suggestions on what to ask Our AI
+                      </p>
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {fullscreenSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            className="min-h-14 rounded-md border bg-background px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                            onClick={() => sendMessage(suggestion)}
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </ScrollArea>
-                )}
+                  ) : (
+                    <ScrollArea className="h-[48vh] rounded-md border bg-muted/30 p-4">
+                      <div className="flex flex-col gap-4">
+                        {messages.map((message) => (
+                          <MessageBubble key={message.id} message={message} />
+                        ))}
+                        {isSending ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="px-1 text-[10px] font-medium uppercase tracking-normal text-muted-foreground">
+                              Our AI
+                            </span>
+                            <TypingDots />
+                          </div>
+                        ) : null}
+                      </div>
+                    </ScrollArea>
+                  )}
 
-                <AssistantInput
-                  value={draft}
-                  disabled={isSending}
-                  placeholder="Ask me anything about your projects"
-                  onChange={handleDraftChange}
-                  onSubmit={() => sendMessage()}
-                />
+                  <AssistantInput
+                    value={draft}
+                    disabled={isSending}
+                    placeholder="Ask me anything about your projects"
+                    onChange={handleDraftChange}
+                    onSubmit={() => sendMessage()}
+                  />
+                </div>
               </div>
-            </div>
+            </main>
           </div>
         </div>
       ) : null}
