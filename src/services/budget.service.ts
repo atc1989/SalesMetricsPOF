@@ -504,7 +504,7 @@ export async function getBudgetById(id: string) {
 
   return {
     data: {
-      Budget: {
+      budget: {
         id: data.id,
         vendor_id: data.vendor_id,
         reference_no: data.reference_no,
@@ -540,7 +540,7 @@ function roundMoney(value: unknown) {
 }
 
 export interface CreateBillPayload {
-  Budget: Omit<Budget, "id" | "created_at" | "updated_at">;
+  budget: Omit<Budget, "id" | "created_at" | "updated_at">;
   breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>;
 }
 
@@ -596,7 +596,7 @@ export async function createBudget(payload: CreateBillPayload) {
 }
 
 export interface UpdateBillPayload {
-  Budget: Partial<Omit<Budget, "id" | "created_at" | "updated_at">>;
+  budget: Partial<Omit<Budget, "id" | "created_at" | "updated_at">>;
   breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>;
 }
 

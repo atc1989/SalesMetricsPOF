@@ -228,7 +228,7 @@ export function ViewBudgetPage() {
   }, [id]);
   void pathname;
 
-  const Budget = BudgetDetails?.Budget;
+  const budget = BudgetDetails?.budget;
   const vendor = BudgetDetails?.vendor;
   const breakdowns = BudgetDetails?.breakdowns ?? [];
   const attachments = BudgetDetails?.attachments ?? [];

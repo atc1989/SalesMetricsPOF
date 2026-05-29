@@ -59,7 +59,7 @@ export interface BudgetAttachment {
 }
 
 export interface BudgetDetails {
-  Budget: Budget;
+  budget: Budget;
   vendor: Vendor;
   breakdowns: BudgetBreakdown[];
   attachments: BudgetAttachment[];
