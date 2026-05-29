@@ -205,7 +205,7 @@ export function EditBudgetPage() {
           setErrorMessage(result.error || "Budget request not found.");
           return;
         }
-        const { Budget, vendor, breakdowns: lineItems, attachments: existing } = result.data;
+        const { budget, vendor, breakdowns: lineItems, attachments: existing } = result.data;
         setBudgetStatus(budget.status);
         setVendorInput(vendor.name);
         setSelectedVendor(vendor);
@@ -424,7 +424,7 @@ export function EditBudgetPage() {
     }
     const primaryPaymentMethod = breakdowns[0]?.payment_method ?? "other";
     const payload = {
-      Budget: {
+      budget: {
         vendor_id: vendorId,
         reference_no: referenceNumber,
         request_date: requestDate,

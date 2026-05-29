@@ -228,7 +228,7 @@ export function ViewBudgetPage() {
   }, [id]);
   void pathname;
 
-  const Budget = BudgetDetails?.Budget;
+  const budget = BudgetDetails?.budget;
   const vendor = BudgetDetails?.vendor;
   const breakdowns = BudgetDetails?.breakdowns ?? [];
   const attachments = BudgetDetails?.attachments ?? [];
@@ -237,21 +237,21 @@ export function ViewBudgetPage() {
     breakdowns.reduce((sum, b) => sum + roundMoney(b.amount), 0),
   );
   const resolvedTotalAmount =
-    roundMoney(Budget?.total_amount) > 0 ? roundMoney(Budget?.total_amount) : totalAmount;
+    roundMoney(budget?.total_amount) > 0 ? roundMoney(budget?.total_amount) : totalAmount;
   const currentUserDisplayName = getUserDisplayName(user);
   const requestedByDisplay =
-    Budget?.created_by === user?.id ? currentUserDisplayName : Budget?.created_by || "—";
+    budget?.created_by === user?.id ? currentUserDisplayName : budget?.created_by || "—";
 
   useEffect(() => {
-    if (Budget?.reference_no) {
+    if (budget?.reference_no) {
       document.title = `${budget.reference_no} | GuildLedger`;
       return;
     }
     document.title = "Budget Details | GuildLedger";
-  }, [Budget?.reference_no]);
+  }, [budget?.reference_no]);
 
   const buildPdfTemplateData = (): PdfTemplateData | null => {
-    if (!Budget || !vendor) return null;
+    if (!budget || !vendor) return null;
     return {
       reference_no: budget.reference_no,
       request_date: budget.request_date,
@@ -325,7 +325,7 @@ export function ViewBudgetPage() {
   const handleEdit = () => budget && router.push(`/budget/${budget.id}/edit`);
 
   const handleConfirmApproveReject = async (notes: string) => {
-    if (!Budget || isUpdatingStatus) return;
+    if (!budget || isUpdatingStatus) return;
     const nextStatus = approveRejectModal.action === "approve" ? "approved" : "rejected";
     setActionError(null);
     setIsUpdatingStatus(true);
@@ -343,8 +343,8 @@ export function ViewBudgetPage() {
       prev
         ? {
             ...prev,
-            Budget: {
-              ...prev.Budget,
+            budget: {
+              ...prev.budget,
               status: nextStatus,
               rejection_reason: nextStatus === "rejected" ? notes.trim() : null,
             },
@@ -355,7 +355,7 @@ export function ViewBudgetPage() {
   };
 
   const handleConfirmVoid = async (_reason: string) => {
-    if (!Budget || isUpdatingStatus) return;
+    if (!budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
     const result = await updateBudgetStatus(budget.id, "void");
@@ -365,13 +365,13 @@ export function ViewBudgetPage() {
       return;
     }
     setBudgetDetails((prev) =>
-      prev ? { ...prev, Budget: { ...prev.Budget, status: "void" } } : prev,
+      prev ? { ...prev, budget: { ...prev.budget, status: "void" } } : prev,
     );
     setIsVoidModalOpen(false);
   };
 
   const handleMarkAsPaid = async () => {
-    if (!Budget || isUpdatingStatus) return;
+    if (!budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
     const result = await updateBudgetStatus(budget.id, "paid");
@@ -381,12 +381,12 @@ export function ViewBudgetPage() {
       return;
     }
     setBudgetDetails((prev) =>
-      prev ? { ...prev, Budget: { ...prev.Budget, status: "paid" } } : prev,
+      prev ? { ...prev, budget: { ...prev.budget, status: "paid" } } : prev,
     );
   };
 
   const handleSubmitForApproval = async () => {
-    if (!Budget || isUpdatingStatus) return;
+    if (!budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
     const result = await updateBudgetStatus(budget.id, "awaiting_approval");
@@ -396,11 +396,11 @@ export function ViewBudgetPage() {
       return;
     }
     setBudgetDetails((prev) =>
-      prev ? { ...prev, Budget: { ...prev.Budget, status: "awaiting_approval" } } : prev,
+      prev ? { ...prev, budget: { ...prev.budget, status: "awaiting_approval" } } : prev,
     );
   };
 
-  const canEditBill = Budget?.status !== "paid";
+  const canEditBill = budget?.status !== "paid";
 
   if (isLoading) {
     return (
@@ -418,7 +418,7 @@ export function ViewBudgetPage() {
     );
   }
 
-  if (errorMessage || !Budget || !vendor) {
+  if (errorMessage || !budget || !vendor) {
     return (
       <div className="space-y-6">
         <Breadcrumb>

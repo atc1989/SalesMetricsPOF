@@ -273,7 +273,7 @@ export async function listBudgets(params: ListBudgetsParams) {
 
   return {
     data: budgets.map((budget) => ({
-      ...Budget,
+      ...budget,
       payment_methods: Array.from(paymentMethodsByBudget.get(budget.id) ?? []),
       categories: hasCategory ? Array.from(categoriesByBudget.get(budget.id) ?? []) : []
     })) as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
@@ -285,7 +285,7 @@ export async function listBudgets(params: ListBudgetsParams) {
 export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
   const batchSize = params.batchSize ?? 1000;
   let offset = 0;
-  const allBills: Array<Budget & { vendor?: { id: string; name: string } }> = [];
+  const allBudgets: Array<Budget & { vendor?: { id: string; name: string } }> = [];
 
   while (true) {
     let request = supabase
@@ -355,7 +355,7 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
       break;
     }
 
-    allBills.push(...batch);
+    allBudgets.push(...batch);
 
     if (batch.length < batchSize) {
       break;
@@ -364,7 +364,7 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
     offset += batchSize;
   }
 
-  if (!allBills.length) {
+  if (!allBudgets.length) {
     return {
       data: [] as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
       error: null as string | null
@@ -372,7 +372,7 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
   }
 
   const paymentMethodsByBudget = new Map<string, Set<string>>();
-  const budgetIds = allBills.map((budget) => budget.id);
+  const budgetIds = allBudgets.map((budget) => budget.id);
   const chunkSize = 1000;
 
   for (let start = 0; start < budgetIds.length; start += chunkSize) {
@@ -397,8 +397,8 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
   }
 
   return {
-    data: allBills.map((budget) => ({
-      ...Budget,
+    data: allBudgets.map((budget) => ({
+      ...budget,
       payment_methods: Array.from(paymentMethodsByBudget.get(budget.id) ?? [])
     })) as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
     error: null as string | null
@@ -504,7 +504,7 @@ export async function getBudgetById(id: string) {
 
   return {
     data: {
-      Budget: {
+      budget: {
         id: data.id,
         vendor_id: data.vendor_id,
         reference_no: data.reference_no,
@@ -540,17 +540,17 @@ function roundMoney(value: unknown) {
 }
 
 export interface CreateBillPayload {
-  Budget: Omit<Budget, "id" | "created_at" | "updated_at">;
+  budget: Omit<Budget, "id" | "created_at" | "updated_at">;
   breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>;
 }
 
 export async function createBudget(payload: CreateBillPayload) {
   const normalizedBudget = {
-    ...payload.Budget,
+    ...payload.budget,
     total_amount: roundMoney(payload.budget.total_amount)
   };
 
-  const { data: Budget, error: billError } = await supabase
+  const { data: budget, error: billError } = await supabase
     .from("bills")
     .insert(normalizedBudget)
     .select(
@@ -575,7 +575,7 @@ export async function createBudget(payload: CreateBillPayload) {
     )
     .single();
 
-  if (billError || !Budget) {
+  if (billError || !budget) {
     return {
       data: null as Budget | null,
       error: mapDbError(billError, "Failed to create budget request.")
@@ -586,17 +586,17 @@ export async function createBudget(payload: CreateBillPayload) {
     const breakdownResult = await insertBudgetBreakdowns(budget.id, payload.breakdowns);
     if (breakdownResult.error) {
       return {
-        data: Budget as Budget,
+        data: budget as Budget,
         error: breakdownResult.error
       };
     }
   }
 
-  return { data: Budget as Budget, error: null as string | null };
+  return { data: budget as Budget, error: null as string | null };
 }
 
 export interface UpdateBillPayload {
-  Budget: Partial<Omit<Budget, "id" | "created_at" | "updated_at">>;
+  budget: Partial<Omit<Budget, "id" | "created_at" | "updated_at">>;
   breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>;
 }
 
@@ -614,7 +614,7 @@ export async function updateBudget(id: string, payload: UpdateBillPayload) {
   }
 
   const normalizedBudget = {
-    ...payload.Budget,
+    ...payload.budget,
     total_amount: roundMoney(payload.budget.total_amount)
   };
 
