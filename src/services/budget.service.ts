@@ -273,7 +273,7 @@ export async function listBudgets(params: ListBudgetsParams) {
 
   return {
     data: budgets.map((budget) => ({
-      ...Budget,
+      ...budget,
       payment_methods: Array.from(paymentMethodsByBudget.get(budget.id) ?? []),
       categories: hasCategory ? Array.from(categoriesByBudget.get(budget.id) ?? []) : []
     })) as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
@@ -285,7 +285,7 @@ export async function listBudgets(params: ListBudgetsParams) {
 export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
   const batchSize = params.batchSize ?? 1000;
   let offset = 0;
-  const allBills: Array<Budget & { vendor?: { id: string; name: string } }> = [];
+  const allBudgets: Array<Budget & { vendor?: { id: string; name: string } }> = [];
 
   while (true) {
     let request = supabase
@@ -355,7 +355,7 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
       break;
     }
 
-    allBills.push(...batch);
+    allBudgets.push(...batch);
 
     if (batch.length < batchSize) {
       break;
@@ -364,7 +364,7 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
     offset += batchSize;
   }
 
-  if (!allBills.length) {
+  if (!allBudgets.length) {
     return {
       data: [] as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
       error: null as string | null
@@ -372,7 +372,7 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
   }
 
   const paymentMethodsByBudget = new Map<string, Set<string>>();
-  const budgetIds = allBills.map((budget) => budget.id);
+  const budgetIds = allBudgets.map((budget) => budget.id);
   const chunkSize = 1000;
 
   for (let start = 0; start < budgetIds.length; start += chunkSize) {
@@ -397,8 +397,8 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
   }
 
   return {
-    data: allBills.map((budget) => ({
-      ...Budget,
+    data: allBudgets.map((budget) => ({
+      ...budget,
       payment_methods: Array.from(paymentMethodsByBudget.get(budget.id) ?? [])
     })) as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
     error: null as string | null
@@ -546,7 +546,7 @@ export interface CreateBillPayload {
 
 export async function createBudget(payload: CreateBillPayload) {
   const normalizedBudget = {
-    ...payload.Budget,
+    ...payload.budget,
     total_amount: roundMoney(payload.budget.total_amount)
   };
 
@@ -614,7 +614,7 @@ export async function updateBudget(id: string, payload: UpdateBillPayload) {
   }
 
   const normalizedBudget = {
-    ...payload.Budget,
+    ...payload.budget,
     total_amount: roundMoney(payload.budget.total_amount)
   };
 

@@ -343,8 +343,8 @@ export function ViewBudgetPage() {
       prev
         ? {
             ...prev,
-            Budget: {
-              ...prev.Budget,
+            budget: {
+              ...prev.budget,
               status: nextStatus,
               rejection_reason: nextStatus === "rejected" ? notes.trim() : null,
             },
@@ -365,7 +365,7 @@ export function ViewBudgetPage() {
       return;
     }
     setBudgetDetails((prev) =>
-      prev ? { ...prev, Budget: { ...prev.Budget, status: "void" } } : prev,
+      prev ? { ...prev, budget: { ...prev.budget, status: "void" } } : prev,
     );
     setIsVoidModalOpen(false);
   };
@@ -381,7 +381,7 @@ export function ViewBudgetPage() {
       return;
     }
     setBudgetDetails((prev) =>
-      prev ? { ...prev, Budget: { ...prev.Budget, status: "paid" } } : prev,
+      prev ? { ...prev, budget: { ...prev.budget, status: "paid" } } : prev,
     );
   };
 
@@ -396,7 +396,7 @@ export function ViewBudgetPage() {
       return;
     }
     setBudgetDetails((prev) =>
-      prev ? { ...prev, Budget: { ...prev.Budget, status: "awaiting_approval" } } : prev,
+      prev ? { ...prev, budget: { ...prev.budget, status: "awaiting_approval" } } : prev,
     );
   };
 

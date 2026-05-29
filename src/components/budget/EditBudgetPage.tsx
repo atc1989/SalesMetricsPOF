@@ -424,7 +424,7 @@ export function EditBudgetPage() {
     }
     const primaryPaymentMethod = breakdowns[0]?.payment_method ?? "other";
     const payload = {
-      Budget: {
+      budget: {
         vendor_id: vendorId,
         reference_no: referenceNumber,
         request_date: requestDate,
