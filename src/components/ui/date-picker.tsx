@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 // Reusable date picker built on shadcn Popover + Calendar + Button.
 // Accepts ISO date strings (YYYY-MM-DD) for value + onChange so it slots
 // straight into the existing date-string state used by the filter rows
-// in daily-sales tabs, inventory-movement, bills, pcf.
+// in daily-sales tabs, inventory-movement, budget requests, PCF.
 
 import * as React from "react";
 import { format, parse } from "date-fns";

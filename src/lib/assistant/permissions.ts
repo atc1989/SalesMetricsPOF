@@ -1,4 +1,4 @@
-import type { AppRole } from "@/lib/auth/roles";
+﻿import type { AppRole } from "@/lib/auth/roles";
 
 export const ASSISTANT_DOMAINS = ["sales", "operations", "system"] as const;
 
@@ -32,9 +32,9 @@ export const ASSISTANT_TOOLS = [
     description: "Answer dashboard KPI questions about sales performance and agents.",
   },
   {
-    name: "get_bills_summary",
+    name: "get_budget_summary",
     domain: "operations",
-    description: "Summarize bills, statuses, approvals, payments, and vendors.",
+    description: "Summarize budget requests, statuses, approvals, payments, and vendors.",
   },
   {
     name: "get_pcf_summary",
@@ -84,8 +84,8 @@ const DOMAIN_KEYWORDS: Record<AssistantDomain, string[]> = {
   operations: [
     "approval",
     "budget",
-    "bill",
-    "billing",
+    "budget",
+    "budget",
     "event",
     "form",
     "liquidation",

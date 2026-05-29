@@ -1,4 +1,4 @@
-export const APP_ROLES = ["super_admin", "sales", "operations"] as const;
+﻿export const APP_ROLES = ["super_admin", "sales", "operations"] as const;
 
 export type AppRole = (typeof APP_ROLES)[number];
 
@@ -27,7 +27,7 @@ const ROLE_PAGE_PREFIXES: Record<AppRole, string[]> = {
     "/encoder",
     "/inventory-movement",
   ],
-  operations: ["/bills", "/pcf", "/event-forms", "/forms"],
+  operations: ["/budget", "/pcf", "/event-forms", "/forms"],
 };
 
 const ROLE_API_PREFIXES: Record<AppRole, string[]> = {

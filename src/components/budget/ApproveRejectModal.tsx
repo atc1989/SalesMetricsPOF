@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, ShieldAlert } from "lucide-react";
@@ -28,10 +28,10 @@ interface ApproveRejectModalProps {
   onClose: () => void;
   onConfirm: (notes: string) => void;
   action: "approve" | "reject";
-  billReference: string;
-  billVendor: string;
-  billAmount: number;
-  billPriority: Priority;
+  budgetReference: string;
+  budgetVendor: string;
+  budgetAmount: number;
+  budgetPriority: Priority;
 }
 
 const PRIORITY_VARIANT: Record<Priority, "destructive" | "warning" | "secondary" | "neutral"> = {
@@ -46,10 +46,10 @@ export function ApproveRejectModal({
   onClose,
   onConfirm,
   action,
-  billReference,
-  billVendor,
-  billAmount,
-  billPriority,
+  budgetReference,
+  budgetVendor,
+  budgetAmount,
+  budgetPriority,
 }: ApproveRejectModalProps) {
   const [notes, setNotes] = useState("");
   const isApprove = action === "approve";
@@ -85,13 +85,13 @@ export function ApproveRejectModal({
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
             <div>
               <div className="text-xs text-muted-foreground">Reference</div>
-              <div className="font-medium">{billReference}</div>
+              <div className="font-medium">{budgetReference}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Total Amount</div>
               <div className="font-semibold tabular-nums">
                 ₱
-                {billAmount.toLocaleString("en-PH", {
+                {budgetAmount.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -99,11 +99,11 @@ export function ApproveRejectModal({
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Vendor / Payee</div>
-              <div className="font-medium">{billVendor}</div>
+              <div className="font-medium">{budgetVendor}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Priority</div>
-              <Badge variant={PRIORITY_VARIANT[billPriority]}>{billPriority}</Badge>
+              <Badge variant={PRIORITY_VARIANT[budgetPriority]}>{budgetPriority}</Badge>
             </div>
           </div>
         </div>

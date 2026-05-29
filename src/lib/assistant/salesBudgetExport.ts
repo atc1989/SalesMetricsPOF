@@ -26,7 +26,7 @@ type SalesRow = {
   remarks?: string | null;
 };
 
-type BillRow = {
+type BudgetRow = {
   request_date?: string | null;
   reference_no?: string | null;
   vendor?: { name?: string | null } | Array<{ name?: string | null }> | null;
@@ -62,7 +62,7 @@ export type SalesBudgetExportResult = {
     pcfRows: number;
     totalSales: number;
     totalReleasedBottles: number;
-    totalBills: number;
+    totalBudgets: number;
     totalPcfOut: number;
   };
 };
@@ -135,7 +135,7 @@ function formatValue(value: unknown) {
   return String(value);
 }
 
-function getVendorName(vendor: BillRow["vendor"]) {
+function getVendorName(vendor: BudgetRow["vendor"]) {
   if (Array.isArray(vendor)) {
     return vendor[0]?.name ?? "";
   }
@@ -174,13 +174,13 @@ async function fetchSalesRows(
   return (data ?? []) as SalesRow[];
 }
 
-async function fetchBillRows(
+async function fetchbudgetRows(
   supabase: SupabaseClient,
   dateFrom: string,
   dateTo: string,
 ) {
   const { data, error } = await supabase
-    .from("bills")
+    .from("Budget")
     .select(
       "request_date,reference_no,remarks,payment_method,priority_level,total_amount,status,vendor:vendors(name)",
     )
@@ -192,7 +192,7 @@ async function fetchBillRows(
     throw new Error(error.message);
   }
 
-  return (data ?? []) as BillRow[];
+  return (data ?? []) as BudgetRow[];
 }
 
 async function fetchPcfRows(
@@ -224,10 +224,10 @@ export async function buildSalesBudgetWorkbook(
     scope: ExportScope;
   },
 ): Promise<SalesBudgetExportResult> {
-  const [salesRows, billRows, pcfRows] = await Promise.all([
+  const [salesRows, budgetRows, pcfRows] = await Promise.all([
     input.scope.includeSales ? fetchSalesRows(supabase, input.dateFrom, input.dateTo) : [],
     input.scope.includeOperations
-      ? fetchBillRows(supabase, input.dateFrom, input.dateTo)
+      ? fetchbudgetRows(supabase, input.dateFrom, input.dateTo)
       : [],
     input.scope.includeOperations
       ? fetchPcfRows(supabase, input.dateFrom, input.dateTo)
@@ -257,7 +257,7 @@ export async function buildSalesBudgetWorkbook(
     };
   });
 
-  const billsExportRows = billRows.map((row) => ({
+  const budgetExportRows = budgetRows.map((row) => ({
     Date: formatValue(row.request_date),
     "Reference No.": formatValue(row.reference_no),
     Vendor: getVendorName(row.vendor),
@@ -290,7 +290,7 @@ export async function buildSalesBudgetWorkbook(
     (sum, row) => sum + toNumber(row["Released Bottles"]),
     0,
   );
-  const totalBills = billsExportRows.reduce((sum, row) => sum + toNumber(row.Amount), 0);
+  const totalBudgets = budgetExportRows.reduce((sum, row) => sum + toNumber(row.Amount), 0);
   const totalPcfOut = pcfExportRows.reduce(
     (sum, row) => sum + toNumber(row["Amount Out"]),
     0,
@@ -306,8 +306,8 @@ export async function buildSalesBudgetWorkbook(
       { Metric: "Sales Rows", Value: salesRows.length },
       { Metric: "Total Sales", Value: totalSales },
       { Metric: "Released Bottles", Value: totalReleasedBottles },
-      { Metric: "Bills Rows", Value: billRows.length },
-      { Metric: "Total Bills", Value: totalBills },
+      { Metric: "Budget Rows", Value: budgetRows.length },
+      { Metric: "Total Budget", Value: totalBudgets },
       { Metric: "PCF Rows", Value: pcfRows.length },
       { Metric: "Total PCF Out", Value: totalPcfOut },
     ],
@@ -326,8 +326,8 @@ export async function buildSalesBudgetWorkbook(
   if (input.scope.includeOperations) {
     appendSheet(
       workbook,
-      "Bills",
-      billsExportRows,
+      "Budget",
+      budgetExportRows,
       [12, 18, 28, 36, 18, 14, 14, 18],
     );
     appendSheet(
@@ -350,11 +350,11 @@ export async function buildSalesBudgetWorkbook(
       dateFrom: input.dateFrom,
       dateTo: input.dateTo,
       salesRows: salesRows.length,
-      billsRows: billRows.length,
+      billsRows: budgetRows.length,
       pcfRows: pcfRows.length,
       totalSales,
       totalReleasedBottles,
-      totalBills,
+      totalBudgets,
       totalPcfOut,
     },
   };

@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 // Unified card-style pagination based on @ss-components/pagination-10 from shadcnstudio.
 // Wraps the standard shadcn Pagination primitives with the pagination-10 styling
 // ("rounded-md border p-1 shadow-xs" on PaginationContent), and adds the page-window
-// logic + ellipsis handling that we previously inlined in BillsPage and PcfPage.
+// logic + ellipsis handling that we previously inlined in BudgetPage and PcfPage.
 //
 // Usage:
 //   <DataPagination

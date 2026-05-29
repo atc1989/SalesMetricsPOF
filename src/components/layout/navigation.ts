@@ -1,4 +1,4 @@
-import {
+﻿import {
   CalendarDays,
   ClipboardList,
   Keyboard,
@@ -39,7 +39,7 @@ export const appNavGroups: NavGroup[] = [
   {
     label: "Operations",
     items: [
-      { href: "/bills", label: "Bills", icon: Receipt },
+      { href: "/budget", label: "Budget", icon: Receipt },
       { href: "/pcf", label: "PCF", icon: Wallet },
       { href: "/event-forms", label: "Event Forms", icon: ClipboardList },
     ],

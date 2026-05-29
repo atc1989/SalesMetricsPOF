@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -300,7 +300,7 @@ export function AssistantWidget() {
       id: "welcome",
       role: "assistant",
       content:
-        "Ask me about SalesMetrics reports, sales, released bottles, inventory movement, bills, PCF, or event forms.",
+        "Ask me about SalesMetrics reports, sales, released bottles, inventory movement, budget requests, PCF, or event forms.",
     }),
     [],
   );

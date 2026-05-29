@@ -4,7 +4,7 @@ import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
-type ExportableBill = {
+type ExportableBudget = {
   request_date?: string;
   reference_no?: string;
   vendor?: { name?: string };
@@ -23,10 +23,10 @@ type ExportMeta = {
 
 export type ExportFormat = "csv" | "xlsx" | "pdf";
 
-export function exportBills(bills: ExportableBill[], format: ExportFormat, meta?: ExportMeta) {
-  if (format === "csv") return exportBillsToCSV(bills);
-  if (format === "xlsx") return exportBillsToExcel(bills);
-  if (format === "pdf") return exportBillsToPDF(bills, meta);
+export function exportBudgets(budgets: ExportableBudget[], format: ExportFormat, meta?: ExportMeta) {
+  if (format === "csv") return exportBudgetsToCSV(budgets);
+  if (format === "xlsx") return exportBudgetsToExcel(budgets);
+  if (format === "pdf") return exportBudgetsToPDF(budgets, meta);
   throw new Error(`Unknown export format: ${format}`);
 }
 
@@ -73,33 +73,33 @@ export const formatPeso = (amount: number) =>
 
 const getExportDate = () => new Date().toISOString().slice(0, 10);
 
-export function mapBillsToExportRows(bills: ExportableBill[]) {
-  return bills.map((bill) => {
+export function mapBudgetsToExportRows(budgets: ExportableBudget[]) {
+  return budgets.map((budget) => {
     const paymentMethods = Array.from(
       new Set(
-        (bill.payment_methods?.length ? bill.payment_methods : bill.payment_method ? [bill.payment_method] : [])
+        (Budget.payment_methods?.length ? Budget.payment_methods : Budget.payment_method ? [Budget.payment_method] : [])
           .filter(Boolean)
           .map(formatPaymentMethod)
       )
     );
-    const total = Number(bill.total_amount ?? 0);
+    const total = Number(Budget.total_amount ?? 0);
 
     return {
-      Date: formatDate(bill.request_date),
-      "Reference No.": bill.reference_no ?? "",
-      "Payee / Vendor": bill.vendor?.name ?? "",
-      "Purpose Summary": bill.remarks ?? "",
+      Date: formatDate(Budget.request_date),
+      "Reference No.": Budget.reference_no ?? "",
+      "Payee / Vendor": Budget.vendor?.name ?? "",
+      "Purpose Summary": Budget.remarks ?? "",
       "Payment Method": paymentMethods.join(", "),
-      Priority: toSentenceCase(bill.priority_level ?? ""),
+      Priority: toSentenceCase(Budget.priority_level ?? ""),
       "Total Amount": formatPeso(Number.isFinite(total) ? total : 0),
-      Status: toSentenceCase(bill.status ?? ""),
-      "Requested By": bill.created_by ?? ""
+      Status: toSentenceCase(Budget.status ?? ""),
+      "Requested By": Budget.created_by ?? ""
     };
   });
 }
 
-export function exportBillsToCSV(bills: ExportableBill[]) {
-  const rows = mapBillsToExportRows(bills);
+export function exportBudgetsToCSV(budgets: ExportableBudget[]) {
+  const rows = mapBudgetsToExportRows(budgets);
   const csv = Papa.unparse(rows, {
     columns: [
       "Date",
@@ -115,11 +115,11 @@ export function exportBillsToCSV(bills: ExportableBill[]) {
   });
 
   const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
-  saveAs(blob, `bills_${getExportDate()}.csv`);
+  saveAs(blob, `budget_requests_${getExportDate()}.csv`);
 }
 
-export function exportBillsToExcel(bills: ExportableBill[]) {
-  const rows = mapBillsToExportRows(bills);
+export function exportBudgetsToExcel(budgets: ExportableBudget[]) {
+  const rows = mapBudgetsToExportRows(budgets);
   const worksheet = XLSX.utils.json_to_sheet(rows, {
     header: [
       "Date",
@@ -148,11 +148,11 @@ export function exportBillsToExcel(bills: ExportableBill[]) {
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Payment Requests");
-  XLSX.writeFile(workbook, `bills_${getExportDate()}.xlsx`);
+  XLSX.writeFile(workbook, `budget_requests_${getExportDate()}.xlsx`);
 }
 
-export function exportBillsToPDF(bills: ExportableBill[], meta?: ExportMeta) {
-  const rows = mapBillsToExportRows(bills);
+export function exportBudgetsToPDF(budgets: ExportableBudget[], meta?: ExportMeta) {
+  const rows = mapBudgetsToExportRows(budgets);
   const exportedAt = formatDateTime(new Date());
   const doc = new jsPDF({
     orientation: "landscape",
@@ -217,5 +217,5 @@ export function exportBillsToPDF(bills: ExportableBill[], meta?: ExportMeta) {
     }
   });
 
-  doc.save(`bills_${getExportDate()}.pdf`);
+  doc.save(`budget_requests_${getExportDate()}.pdf`);
 }

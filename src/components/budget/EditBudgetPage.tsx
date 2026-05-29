@@ -5,19 +5,19 @@ import { useRouter, useParams } from "next/navigation";
 import { Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 
 import {
-  getBillById,
-  updateBill,
+  getBudgetById,
+  updateBudget,
   type ServiceError,
-} from "@/services/bills.service";
+} from "@/services/budget.service";
 import {
-  deleteBillAttachments,
-  uploadBillAttachments,
-} from "@/services/billAttachments.service";
+  deleteBudgetAttachments,
+  uploadBudgetAttachments,
+} from "@/services/budgetAttachments.service";
 import { createVendor, listVendors } from "@/services/vendors.service";
 import { confirmDiscardChanges } from "@/lib/alerts";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type {
-  BillAttachment,
+  BudgetAttachment,
   PaymentMethod,
   PriorityLevel,
   Vendor,
@@ -148,14 +148,14 @@ function roundMoney(value: unknown) {
   return Math.round((amount + Number.EPSILON) * 100) / 100;
 }
 
-export function EditBillPage() {
+export function EditBudgetPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : (params?.id as string | undefined);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [billStatus, setBillStatus] = useState<string | null>(null);
+  const [BudgetStatus, setBudgetStatus] = useState<string | null>(null);
 
   const [vendorInput, setVendorInput] = useState("");
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -169,8 +169,8 @@ export function EditBillPage() {
   const [requestDate, setRequestDate] = useState("");
   const [priority, setPriority] = useState("Standard");
   const [reasonForPayment, setReasonForPayment] = useState("");
-  const [attachments, setAttachments] = useState<BillAttachment[]>([]);
-  const [attachmentsToDelete, setAttachmentsToDelete] = useState<BillAttachment[]>([]);
+  const [attachments, setAttachments] = useState<BudgetAttachment[]>([]);
+  const [attachmentsToDelete, setAttachmentsToDelete] = useState<BudgetAttachment[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [breakdowns, setBreakdowns] = useState<PaymentBreakdown[]>([]);
@@ -186,7 +186,7 @@ export function EditBillPage() {
     [],
   );
 
-  const canEdit = billStatus !== null && billStatus !== "paid";
+  const canEdit = BudgetStatus !== null && BudgetStatus !== "paid";
   const isDuplicatePrfError = (error: string | ServiceError | null | undefined) =>
     typeof error === "object" && error?.code === "DUPLICATE_PRF";
 
@@ -194,33 +194,33 @@ export function EditBillPage() {
     let isMounted = true;
     if (!id) {
       setIsLoading(false);
-      setErrorMessage("Bill not found.");
+      setErrorMessage("Budget request not found.");
       return;
     }
     setIsLoading(true);
-    getBillById(id)
+    getBudgetById(id)
       .then((result) => {
         if (!isMounted) return;
         if (result.error || !result.data) {
-          setErrorMessage(result.error || "Bill not found.");
+          setErrorMessage(result.error || "Budget request not found.");
           return;
         }
-        const { bill, vendor, breakdowns: lineItems, attachments: existing } = result.data;
-        setBillStatus(bill.status);
+        const { Budget, vendor, breakdowns: lineItems, attachments: existing } = result.data;
+        setBudgetStatus(Budget.status);
         setVendorInput(vendor.name);
         setSelectedVendor(vendor);
-        setReferenceNumber(bill.reference_no);
-        setRequestDate(bill.request_date);
+        setReferenceNumber(Budget.reference_no);
+        setRequestDate(Budget.request_date);
         setPriority(
-          bill.priority_level === "urgent"
+          Budget.priority_level === "urgent"
             ? "Urgent"
-            : bill.priority_level === "high"
+            : Budget.priority_level === "high"
               ? "High"
-              : bill.priority_level === "low"
+              : Budget.priority_level === "low"
                 ? "Low"
                 : "Standard",
         );
-        setReasonForPayment(bill.remarks || "");
+        setReasonForPayment(Budget.remarks || "");
         setAttachments(existing);
         setAttachmentsToDelete([]);
         setNewFiles([]);
@@ -228,7 +228,7 @@ export function EditBillPage() {
           lineItems.length > 0
             ? lineItems.map((b, idx) => ({
                 id: b.id || idx.toString(),
-                payment_method: (b.payment_method ?? bill.payment_method ?? "other") as PaymentMethod,
+                payment_method: (b.payment_method ?? Budget.payment_method ?? "other") as PaymentMethod,
                 category: b.category || "",
                 description: b.description || "",
                 amount: String(b.amount ?? ""),
@@ -239,20 +239,20 @@ export function EditBillPage() {
             : [
                 {
                   id: "recovered-breakdown",
-                  payment_method: (bill.payment_method ?? "other") as PaymentMethod,
+                  payment_method: (Budget.payment_method ?? "other") as PaymentMethod,
                   category: "",
                   description: "",
-                  amount: String(bill.total_amount ?? ""),
-                  bank_name: bill.bank_name || "",
-                  bank_account_name: bill.bank_account_name || "",
-                  bank_account_no: bill.bank_account_no || "",
+                  amount: String(Budget.total_amount ?? ""),
+                  bank_name: Budget.bank_name || "",
+                  bank_account_name: Budget.bank_account_name || "",
+                  bank_account_no: Budget.bank_account_no || "",
                 },
               ];
         setBreakdowns(nextBreakdowns);
       })
       .catch((error) => {
         if (!isMounted) return;
-        setErrorMessage(error.message || "Failed to load bill.");
+        setErrorMessage(error.message || "Failed to load budget request.");
       })
       .finally(() => {
         if (!isMounted) return;
@@ -369,7 +369,7 @@ export function EditBillPage() {
   const handleSaveChanges = async () => {
     if (!id) return;
     if (!canEdit) {
-      setErrorMessage("Paid bills can no longer be edited.");
+      setErrorMessage("Paid budget requests can no longer be edited.");
       return;
     }
     setReferenceError(null);
@@ -424,7 +424,7 @@ export function EditBillPage() {
     }
     const primaryPaymentMethod = breakdowns[0]?.payment_method ?? "other";
     const payload = {
-      bill: {
+      Budget: {
         vendor_id: vendorId,
         reference_no: referenceNumber,
         request_date: requestDate,
@@ -448,7 +448,7 @@ export function EditBillPage() {
           b.payment_method === "bank_transfer" ? b.bank_account_no || null : null,
       })),
     };
-    const result = await updateBill(id, payload);
+    const result = await updateBudget(id, payload);
     if (result.error) {
       setIsSaving(false);
       if (isDuplicatePrfError(result.error)) {
@@ -456,35 +456,35 @@ export function EditBillPage() {
         return;
       }
       const message = typeof result.error === "string" ? result.error : result.error?.message;
-      setErrorMessage(message || "Failed to update bill.");
+      setErrorMessage(message || "Failed to update budget request.");
       return;
     }
 
     if (attachmentsToDelete.length > 0) {
-      const deleteResult = await deleteBillAttachments(attachmentsToDelete);
+      const deleteResult = await deleteBudgetAttachments(attachmentsToDelete);
       if (deleteResult.error) {
         setIsSaving(false);
-        setErrorMessage(`Bill updated, but failed to delete attachments: ${deleteResult.error}`);
+        setErrorMessage(`Budget request updated, but failed to delete attachments: ${deleteResult.error}`);
         return;
       }
     }
 
     if (newFiles.length > 0) {
-      const uploadResult = await uploadBillAttachments(id, newFiles, user?.id);
+      const uploadResult = await uploadBudgetAttachments(id, newFiles, user?.id);
       if (uploadResult.error) {
         setIsSaving(false);
-        setErrorMessage(`Bill updated, but attachment upload failed: ${uploadResult.error}`);
+        setErrorMessage(`Budget request updated, but attachment upload failed: ${uploadResult.error}`);
         return;
       }
     }
 
     setIsSaving(false);
-    router.push(`/bills/${id}`);
+    router.push(`/budget/${id}`);
   };
 
   const handleCancel = async () => {
     const shouldDiscard = await confirmDiscardChanges();
-    if (shouldDiscard) router.push(`/bills/${id ?? ""}`);
+    if (shouldDiscard) router.push(`/budget/${id ?? ""}`);
   };
 
   if (isLoading) {
@@ -503,14 +503,14 @@ export function EditBillPage() {
     );
   }
 
-  if (errorMessage && !billStatus) {
+  if (errorMessage && !BudgetStatus) {
     return (
       <div className="space-y-6">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/bills">Bills</Link>
+                <Link href="/budget">Bills</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -521,10 +521,10 @@ export function EditBillPage() {
         </Breadcrumb>
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Bill not found</EmptyTitle>
+            <EmptyTitle>Budget request not found</EmptyTitle>
             <EmptyDescription>{errorMessage}</EmptyDescription>
           </EmptyHeader>
-          <Button onClick={() => router.push("/bills")}>Back to Bills</Button>
+          <Button onClick={() => router.push("/budget")}>Back to Bills</Button>
         </Empty>
       </div>
     );
@@ -545,13 +545,13 @@ export function EditBillPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/bills">Bills</Link>
+              <Link href="/budget">Bills</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/bills/${id ?? ""}`}>{referenceNumber}</Link>
+              <Link href={`/budget/${id ?? ""}`}>{referenceNumber}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -566,7 +566,7 @@ export function EditBillPage() {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">Edit Payment Request</h1>
-            <Badge variant={getStatusVariant(billStatus)}>{formatStatus(billStatus)}</Badge>
+            <Badge variant={getStatusVariant(BudgetStatus)}>{formatStatus(BudgetStatus)}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{referenceNumber}</span>
@@ -593,7 +593,7 @@ export function EditBillPage() {
         <Alert variant="default">
           <AlertTitle>Read-only</AlertTitle>
           <AlertDescription>
-            This bill is {formatStatus(billStatus)} and can no longer be edited because it is paid.
+            This Budget is {formatStatus(BudgetStatus)} and can no longer be edited because it is paid.
           </AlertDescription>
         </Alert>
       )}
@@ -601,7 +601,7 @@ export function EditBillPage() {
       {/* Error */}
       {errorMessage && (
         <Alert variant="destructive">
-          <AlertTitle>Cannot save bill</AlertTitle>
+          <AlertTitle>Cannot save Budget</AlertTitle>
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}

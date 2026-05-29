@@ -10,12 +10,12 @@ import {
   Printer,
 } from "lucide-react";
 
-import { VoidBillModal } from "./VoidBillModal";
+import { VoidBudgetModal } from "./VoidBudgetModal";
 import { ApproveRejectModal } from "./ApproveRejectModal";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getUserDisplayName } from "@/lib/auth/userDisplayName";
-import { getBillById, updateBillStatus } from "@/services/bills.service";
-import type { BillDetails } from "@/types/billing";
+import { getBudgetById, updateBudgetStatus } from "@/services/budget.service";
+import type { BudgetDetails } from "@/types/billing";
 import { buildReceiptHtml as buildPrintReceiptHtml } from "@/print/receiptTemplate";
 import { printReceipt } from "@/print/printReceipt";
 import {
@@ -23,7 +23,7 @@ import {
   buildReceiptHtml as buildReceiptPdfHtml,
   type PdfTemplateData,
 } from "@/pdf/pdfTemplates";
-import { downloadBillAttachment } from "@/services/billAttachments.service";
+import { downloadBudgetAttachment } from "@/services/budgetAttachments.service";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -165,13 +165,13 @@ function roundMoney(value: unknown) {
   return Math.round((amount + Number.EPSILON) * 100) / 100;
 }
 
-export function ViewBillPage() {
+export function ViewBudgetPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : (params?.id as string | undefined);
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
-  const [billDetails, setBillDetails] = useState<BillDetails | null>(null);
+  const [BudgetDetails, setBudgetDetails] = useState<BudgetDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -186,26 +186,26 @@ export function ViewBillPage() {
     let isMounted = true;
     if (!id) {
       setIsLoading(false);
-      setErrorMessage("Bill not found.");
+      setErrorMessage("Budget request not found.");
       return;
     }
 
     setIsLoading(true);
-    getBillById(id)
+    getBudgetById(id)
       .then((result) => {
         if (!isMounted) return;
         if (result.error || !result.data) {
-          setErrorMessage(result.error || "Bill not found.");
-          setBillDetails(null);
+          setErrorMessage(result.error || "Budget request not found.");
+          setBudgetDetails(null);
         } else {
-          setBillDetails(result.data);
+          setBudgetDetails(result.data);
           setErrorMessage(null);
         }
       })
       .catch((error) => {
         if (!isMounted) return;
-        setErrorMessage(error.message || "Failed to load bill.");
-        setBillDetails(null);
+        setErrorMessage(error.message || "Failed to load budget request.");
+        setBudgetDetails(null);
       })
       .finally(() => {
         if (!isMounted) return;
@@ -219,7 +219,7 @@ export function ViewBillPage() {
 
   useEffect(() => {
     if (!id) return;
-    const key = `bill-${id}-attachmentError`;
+    const key = `Budget-${id}-attachmentError`;
     const stored = typeof window !== "undefined" ? sessionStorage.getItem(key) : null;
     if (stored) {
       setActionError(stored);
@@ -228,34 +228,34 @@ export function ViewBillPage() {
   }, [id]);
   void pathname;
 
-  const bill = billDetails?.bill;
-  const vendor = billDetails?.vendor;
-  const breakdowns = billDetails?.breakdowns ?? [];
-  const attachments = billDetails?.attachments ?? [];
+  const Budget = BudgetDetails?.Budget;
+  const vendor = BudgetDetails?.vendor;
+  const breakdowns = BudgetDetails?.breakdowns ?? [];
+  const attachments = BudgetDetails?.attachments ?? [];
 
   const totalAmount = roundMoney(
     breakdowns.reduce((sum, b) => sum + roundMoney(b.amount), 0),
   );
   const resolvedTotalAmount =
-    roundMoney(bill?.total_amount) > 0 ? roundMoney(bill?.total_amount) : totalAmount;
+    roundMoney(Budget?.total_amount) > 0 ? roundMoney(Budget?.total_amount) : totalAmount;
   const currentUserDisplayName = getUserDisplayName(user);
   const requestedByDisplay =
-    bill?.created_by === user?.id ? currentUserDisplayName : bill?.created_by || "—";
+    Budget?.created_by === user?.id ? currentUserDisplayName : Budget?.created_by || "—";
 
   useEffect(() => {
-    if (bill?.reference_no) {
-      document.title = `${bill.reference_no} | GuildLedger`;
+    if (Budget?.reference_no) {
+      document.title = `${Budget.reference_no} | GuildLedger`;
       return;
     }
-    document.title = "Bill Details | GuildLedger";
-  }, [bill?.reference_no]);
+    document.title = "Budget Details | GuildLedger";
+  }, [Budget?.reference_no]);
 
   const buildPdfTemplateData = (): PdfTemplateData | null => {
-    if (!bill || !vendor) return null;
+    if (!Budget || !vendor) return null;
     return {
-      reference_no: bill.reference_no,
-      request_date: bill.request_date,
-      status: bill.status,
+      reference_no: Budget.reference_no,
+      request_date: Budget.request_date,
+      status: Budget.status,
       vendor_name: vendor.name,
       requester_name: requestedByDisplay,
       checked_by: "—",
@@ -269,7 +269,7 @@ export function ViewBillPage() {
         bank_account_no: breakdown.bank_account_no,
       })),
       total_amount: resolvedTotalAmount,
-      remarks: bill.remarks || "",
+      remarks: Budget.remarks || "",
       attachments: attachments.map((a) => a.file_name),
       company_name: "GuildLedger",
     };
@@ -322,15 +322,15 @@ export function ViewBillPage() {
   const handleApprove = () => setApproveRejectModal({ isOpen: true, action: "approve" });
   const handleReject = () => setApproveRejectModal({ isOpen: true, action: "reject" });
   const handleVoid = () => setIsVoidModalOpen(true);
-  const handleEdit = () => bill && router.push(`/bills/${bill.id}/edit`);
+  const handleEdit = () => budget && router.push(`/budget/${Budget.id}/edit`);
 
   const handleConfirmApproveReject = async (notes: string) => {
-    if (!bill || isUpdatingStatus) return;
+    if (!Budget || isUpdatingStatus) return;
     const nextStatus = approveRejectModal.action === "approve" ? "approved" : "rejected";
     setActionError(null);
     setIsUpdatingStatus(true);
-    const result = await updateBillStatus(
-      bill.id,
+    const result = await updateBudgetStatus(
+      Budget.id,
       nextStatus,
       approveRejectModal.action === "reject" ? notes : null,
     );
@@ -339,12 +339,12 @@ export function ViewBillPage() {
       setActionError(result.error);
       return;
     }
-    setBillDetails((prev) =>
+    setBudgetDetails((prev) =>
       prev
         ? {
             ...prev,
-            bill: {
-              ...prev.bill,
+            Budget: {
+              ...prev.Budget,
               status: nextStatus,
               rejection_reason: nextStatus === "rejected" ? notes.trim() : null,
             },
@@ -355,52 +355,52 @@ export function ViewBillPage() {
   };
 
   const handleConfirmVoid = async (_reason: string) => {
-    if (!bill || isUpdatingStatus) return;
+    if (!Budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
-    const result = await updateBillStatus(bill.id, "void");
+    const result = await updateBudgetStatus(Budget.id, "void");
     setIsUpdatingStatus(false);
     if (result.error) {
       setActionError(result.error);
       return;
     }
-    setBillDetails((prev) =>
-      prev ? { ...prev, bill: { ...prev.bill, status: "void" } } : prev,
+    setBudgetDetails((prev) =>
+      prev ? { ...prev, Budget: { ...prev.Budget, status: "void" } } : prev,
     );
     setIsVoidModalOpen(false);
   };
 
   const handleMarkAsPaid = async () => {
-    if (!bill || isUpdatingStatus) return;
+    if (!Budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
-    const result = await updateBillStatus(bill.id, "paid");
+    const result = await updateBudgetStatus(Budget.id, "paid");
     setIsUpdatingStatus(false);
     if (result.error) {
       setActionError(result.error);
       return;
     }
-    setBillDetails((prev) =>
-      prev ? { ...prev, bill: { ...prev.bill, status: "paid" } } : prev,
+    setBudgetDetails((prev) =>
+      prev ? { ...prev, Budget: { ...prev.Budget, status: "paid" } } : prev,
     );
   };
 
   const handleSubmitForApproval = async () => {
-    if (!bill || isUpdatingStatus) return;
+    if (!Budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
-    const result = await updateBillStatus(bill.id, "awaiting_approval");
+    const result = await updateBudgetStatus(Budget.id, "awaiting_approval");
     setIsUpdatingStatus(false);
     if (result.error) {
       setActionError(result.error);
       return;
     }
-    setBillDetails((prev) =>
-      prev ? { ...prev, bill: { ...prev.bill, status: "awaiting_approval" } } : prev,
+    setBudgetDetails((prev) =>
+      prev ? { ...prev, Budget: { ...prev.Budget, status: "awaiting_approval" } } : prev,
     );
   };
 
-  const canEditBill = bill?.status !== "paid";
+  const canEditBill = Budget?.status !== "paid";
 
   if (isLoading) {
     return (
@@ -418,14 +418,14 @@ export function ViewBillPage() {
     );
   }
 
-  if (errorMessage || !bill || !vendor) {
+  if (errorMessage || !Budget || !vendor) {
     return (
       <div className="space-y-6">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/bills">Bills</Link>
+                <Link href="/budget">Bills</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -436,12 +436,12 @@ export function ViewBillPage() {
         </Breadcrumb>
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Bill not found</EmptyTitle>
+            <EmptyTitle>Budget request not found</EmptyTitle>
             <EmptyDescription>
-              {errorMessage || "The bill you are looking for does not exist."}
+              {errorMessage || "The budget request you are looking for does not exist."}
             </EmptyDescription>
           </EmptyHeader>
-          <Button onClick={() => router.push("/bills")}>Back to Bills</Button>
+          <Button onClick={() => router.push("/budget")}>Back to Bills</Button>
         </Empty>
       </div>
     );
@@ -454,12 +454,12 @@ export function ViewBillPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/bills">Bills</Link>
+              <Link href="/budget">Bills</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>{bill.reference_no}</BreadcrumbPage>
+            <BreadcrumbPage>{Budget.reference_no}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -469,11 +469,11 @@ export function ViewBillPage() {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">Payment Request</h1>
-            <Badge variant={getStatusVariant(bill.status)}>{formatStatus(bill.status)}</Badge>
+            <Badge variant={getStatusVariant(Budget.status)}>{formatStatus(Budget.status)}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{bill.reference_no}</span> · {vendor.name}
-            {" "}· {bill.request_date}
+            <span className="font-medium text-foreground">{Budget.reference_no}</span> · {vendor.name}
+            {" "}· {Budget.request_date}
           </p>
         </div>
 
@@ -491,7 +491,7 @@ export function ViewBillPage() {
             <FileDown data-icon="inline-start" />
             Receipt PDF
           </Button>
-          {bill.status !== "paid" && bill.status !== "void" && (
+          {Budget.status !== "paid" && Budget.status !== "void" && (
             <Button variant="destructive" size="sm" onClick={handleVoid}>
               Void
             </Button>
@@ -520,13 +520,13 @@ export function ViewBillPage() {
         <CardContent>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <DetailRow label="Vendor / Payee" value={vendor.name} />
-            <DetailRow label="Reference No." value={bill.reference_no} mono />
-            <DetailRow label="Request Date" value={bill.request_date} />
+            <DetailRow label="Reference No." value={Budget.reference_no} mono />
+            <DetailRow label="Request Date" value={Budget.request_date} />
             <DetailRow
               label="Priority"
               value={
-                <Badge variant={getPriorityVariant(bill.priority_level)}>
-                  {formatPriority(bill.priority_level)}
+                <Badge variant={getPriorityVariant(Budget.priority_level)}>
+                  {formatPriority(Budget.priority_level)}
                 </Badge>
               }
             />
@@ -609,18 +609,18 @@ export function ViewBillPage() {
         <CardContent>
           <div className="rounded-md border bg-muted/30 p-4">
             <p className="whitespace-pre-wrap text-sm">
-              {bill.remarks || "No remarks provided."}
+              {Budget.remarks || "No remarks provided."}
             </p>
           </div>
         </CardContent>
       </Card>
 
       {/* Rejection Reason */}
-      {bill.status === "rejected" && bill.rejection_reason && (
+      {Budget.status === "rejected" && Budget.rejection_reason && (
         <Alert variant="destructive">
           <AlertTitle>Rejection Reason</AlertTitle>
           <AlertDescription className="whitespace-pre-wrap">
-            {bill.rejection_reason}
+            {Budget.rejection_reason}
           </AlertDescription>
         </Alert>
       )}
@@ -647,7 +647,7 @@ export function ViewBillPage() {
                     size="sm"
                     className="px-0"
                     onClick={async () => {
-                      const result = await downloadBillAttachment(
+                      const result = await downloadBudgetAttachment(
                         attachment.file_path,
                         attachment.file_name,
                       );
@@ -671,7 +671,7 @@ export function ViewBillPage() {
         <CardContent>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <DetailRow label="Requested By" value={requestedByDisplay} />
-            <DetailRow label="Submitted Date" value={bill.request_date} />
+            <DetailRow label="Submitted Date" value={Budget.request_date} />
             <DetailRow label="Checked By" value="—" />
             <DetailRow label="Approved By" value="—" />
           </div>
@@ -680,11 +680,11 @@ export function ViewBillPage() {
 
       {/* Footer Actions */}
       <div className="flex flex-wrap items-center justify-end gap-2 pb-4">
-        <Button variant="outline" onClick={() => router.push("/bills")}>
+        <Button variant="outline" onClick={() => router.push("/budget")}>
           Back to list
         </Button>
 
-        {bill.status === "draft" && (
+        {Budget.status === "draft" && (
           <Button onClick={handleSubmitForApproval} disabled={isUpdatingStatus}>
             {isUpdatingStatus && (
               <Loader2 data-icon="inline-start" className="animate-spin" />
@@ -693,7 +693,7 @@ export function ViewBillPage() {
           </Button>
         )}
 
-        {bill.status === "awaiting_approval" && (
+        {Budget.status === "awaiting_approval" && (
           <>
             <Button
               variant="destructive"
@@ -711,7 +711,7 @@ export function ViewBillPage() {
           </>
         )}
 
-        {bill.status === "approved" && (
+        {Budget.status === "approved" && (
           <Button onClick={handleMarkAsPaid} disabled={isUpdatingStatus}>
             {isUpdatingStatus && (
               <Loader2 data-icon="inline-start" className="animate-spin" />
@@ -722,13 +722,13 @@ export function ViewBillPage() {
       </div>
 
       {/* Modals */}
-      <VoidBillModal
+      <VoidBudgetModal
         isOpen={isVoidModalOpen}
         onClose={() => setIsVoidModalOpen(false)}
         onConfirm={handleConfirmVoid}
-        billReference={bill.reference_no}
-        billVendor={vendor.name}
-        billAmount={resolvedTotalAmount}
+        budgetReference={Budget.reference_no}
+        budgetVendor={vendor.name}
+        budgetAmount={resolvedTotalAmount}
       />
 
       <ApproveRejectModal
@@ -736,10 +736,10 @@ export function ViewBillPage() {
         onClose={() => setApproveRejectModal({ isOpen: false, action: "approve" })}
         onConfirm={handleConfirmApproveReject}
         action={approveRejectModal.action}
-        billReference={bill.reference_no}
-        billVendor={vendor.name}
-        billAmount={resolvedTotalAmount}
-        billPriority={formatPriority(bill.priority_level) as "Urgent" | "High" | "Standard" | "Low"}
+        budgetReference={Budget.reference_no}
+        budgetVendor={vendor.name}
+        budgetAmount={resolvedTotalAmount}
+        budgetPriority={formatPriority(Budget.priority_level) as "Urgent" | "High" | "Standard" | "Low"}
       />
     </div>
   );

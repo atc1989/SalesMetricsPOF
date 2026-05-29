@@ -1,10 +1,10 @@
 import { supabase } from "@/lib/supabase/client";
-import type { BillStatus } from "../types/billing";
+import type { BudgetStatus } from "../types/billing";
 import {
-  buildBillSearchOrFilter,
-  findVendorIdsForBillSearch,
-  normalizeBillSearchTerm
-} from "./billSearchFilters";
+  buildBudgetSearchOrFilter,
+  findVendorIdsForBudgetSearch,
+  normalizeBudgetSearchTerm
+} from "./budgetSearchFilters";
 
 type ActiveTab = "All" | "Draft" | "Awaiting Approval" | "Rejected" | "Approved" | "Paid" | "Void";
 
@@ -30,7 +30,7 @@ type ExportFilters = {
 
 const PAGE_SIZE = 1000;
 
-function mapActiveTabToStatus(tab: string): BillStatus | undefined {
+function mapActiveTabToStatus(tab: string): BudgetStatus | undefined {
   switch (tab as ActiveTab) {
     case "Draft":
       return "draft";
@@ -49,7 +49,7 @@ function mapActiveTabToStatus(tab: string): BillStatus | undefined {
   }
 }
 
-async function fetchFilteredBillsPage(filters: ExportFilters, from: number, to: number) {
+async function fetchFilteredBudgetPage(filters: ExportFilters, from: number, to: number) {
   let request = supabase
     .from("bills")
     .select(
@@ -84,15 +84,15 @@ async function fetchFilteredBillsPage(filters: ExportFilters, from: number, to: 
   }
 
   if (filters.searchQuery.trim()) {
-    const searchTerm = normalizeBillSearchTerm(filters.searchQuery);
+    const searchTerm = normalizeBudgetSearchTerm(filters.searchQuery);
     if (searchTerm) {
-      const vendorSearch = await findVendorIdsForBillSearch(searchTerm);
+      const vendorSearch = await findVendorIdsForBudgetSearch(searchTerm);
 
       if (vendorSearch.error) {
         return { data: [], error: vendorSearch.error };
       }
 
-      request = request.or(buildBillSearchOrFilter(searchTerm, vendorSearch.data));
+      request = request.or(buildBudgetSearchOrFilter(searchTerm, vendorSearch.data));
     }
   }
 
@@ -104,7 +104,7 @@ async function fetchFilteredBillsPage(filters: ExportFilters, from: number, to: 
   return { data: data ?? [], error: null as string | null };
 }
 
-export async function fetchBillsForExport(filters: ExportFilters) {
+export async function fetchBudgetsForExport(filters: ExportFilters) {
   const allBills: Array<{
     id: string;
     reference_no: string;
@@ -122,7 +122,7 @@ export async function fetchBillsForExport(filters: ExportFilters) {
 
   while (true) {
     const to = from + PAGE_SIZE - 1;
-    const pageResult = await fetchFilteredBillsPage(filters, from, to);
+    const pageResult = await fetchFilteredBudgetPage(filters, from, to);
 
     if (pageResult.error) {
       return { data: [] as BillExportRow[], error: pageResult.error };
@@ -154,7 +154,7 @@ export async function fetchBillsForExport(filters: ExportFilters) {
     return { data: [] as BillExportRow[], error: null as string | null };
   }
 
-  const billIds = allBills.map((bill) => bill.id);
+  const billIds = allBills.map((budget) => Budget.id);
   const { data: breakdowns, error: breakdownError } = await supabase
     .from("bill_breakdowns")
     .select("bill_id,payment_method")
@@ -174,22 +174,22 @@ export async function fetchBillsForExport(filters: ExportFilters) {
     }
   });
 
-  const mapped: BillExportRow[] = allBills.map((bill) => {
-    const vendor = Array.isArray(bill.vendor) ? bill.vendor[0] : bill.vendor;
-    const paymentMethods = Array.from(paymentMethodsByBill.get(bill.id) ?? []);
-    const fallbackMethod = bill.payment_method ? [bill.payment_method] : [];
+  const mapped: BillExportRow[] = allBills.map((budget) => {
+    const vendor = Array.isArray(Budget.vendor) ? Budget.vendor[0] : Budget.vendor;
+    const paymentMethods = Array.from(paymentMethodsByBill.get(Budget.id) ?? []);
+    const fallbackMethod = Budget.payment_method ? [Budget.payment_method] : [];
 
     return {
-      id: bill.id,
-      request_date: bill.request_date,
-      reference_no: bill.reference_no,
+      id: Budget.id,
+      request_date: Budget.request_date,
+      reference_no: Budget.reference_no,
       vendor_name: vendor?.name ?? "-",
-      purpose_summary: bill.remarks ?? "-",
+      purpose_summary: Budget.remarks ?? "-",
       payment_methods: paymentMethods.length ? paymentMethods : fallbackMethod,
-      priority_level: bill.priority_level,
-      total_amount: Number(bill.total_amount ?? 0),
-      status: bill.status,
-      created_by: bill.created_by
+      priority_level: Budget.priority_level,
+      total_amount: Number(Budget.total_amount ?? 0),
+      status: Budget.status,
+      created_by: Budget.created_by
     };
   });
 

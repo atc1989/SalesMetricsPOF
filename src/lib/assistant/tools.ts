@@ -62,7 +62,7 @@ const salesBudgetExportSchema = {
     includeOperations: {
       type: "boolean",
       description:
-        "Whether to include bills and PCF budget request rows when allowed by the user role.",
+        "Whether to include budget request and PCF rows when allowed by the user role.",
     },
   },
   required: ["dateFrom", "dateTo", "includeSales", "includeOperations"],
@@ -74,7 +74,7 @@ const TOOL_PARAMETERS: Record<string, FunctionTool["parameters"]> = {
   get_daily_sales_report: dateRangeSchema,
   get_inventory_movement_summary: dateRangeSchema,
   get_sales_dashboard_kpis: dateRangeSchema,
-  get_bills_summary: dateRangeSchema,
+  get_budget_summary: dateRangeSchema,
   get_pcf_summary: dateRangeSchema,
   get_event_forms_summary: dateRangeSchema,
   generate_sales_budget_xlsx: salesBudgetExportSchema,
@@ -109,7 +109,7 @@ type InventoryMovementRow = {
   blister_closing: number | string | null;
 };
 
-type BillRow = {
+type BudgetRow = {
   request_date: string | null;
   status: string | null;
   priority_level: string | null;
@@ -234,8 +234,8 @@ export async function runAssistantToolByName(
       return getSalesSummary(supabase, args);
     case "get_inventory_movement_summary":
       return getInventoryMovementSummary(supabase, args);
-    case "get_bills_summary":
-      return getBillsSummary(supabase, args);
+    case "get_budget_summary":
+      return getBudgetSummary(supabase, args);
     case "get_pcf_summary":
       return getPcfSummary(supabase, args);
     case "get_event_forms_summary":
@@ -279,7 +279,7 @@ function generateSalesBudgetXlsx(role: AppRole, args: ToolArgs) {
     role,
     includedSheets: {
       sales: scope.includeSales,
-      bills: scope.includeOperations,
+      budget: scope.includeOperations,
       pcf: scope.includeOperations,
     },
     downloadUrl: createSalesBudgetExportUrl({
@@ -375,7 +375,7 @@ async function getInventoryMovementSummary(supabase: SupabaseClient, args: ToolA
   };
 }
 
-async function getBillsSummary(supabase: SupabaseClient, args: ToolArgs) {
+async function getBudgetSummary(supabase: SupabaseClient, args: ToolArgs) {
   const { dateFrom, dateTo } = getDateRange(args);
   const { data, error } = await supabase
     .from("bills")
@@ -388,13 +388,13 @@ async function getBillsSummary(supabase: SupabaseClient, args: ToolArgs) {
     return { error: error.message, code: error.code };
   }
 
-  const rows = (data ?? []) as BillRow[];
+  const rows = (data ?? []) as BudgetRow[];
   const recordRows = rows as Array<Record<string, unknown>>;
 
   return {
     dateFrom,
     dateTo,
-    totalBills: rows.length,
+    totalBudgets: rows.length,
     totalAmount: sumBy(recordRows, "total_amount"),
     byStatus: countBy(recordRows, "status"),
     byPriority: countBy(recordRows, "priority_level"),
@@ -476,7 +476,7 @@ function getSystemNavigation(role: AppRole) {
   if (role === "super_admin") {
     return {
       role,
-      pages: ["Dashboard", "Sales API", "Daily Sales", "Encoder", "Inventory Movement", "Bills", "PCF", "Event Forms"],
+      pages: ["Dashboard", "Sales API", "Daily Sales", "Encoder", "Inventory Movement", "Budget", "PCF", "Event Forms"],
     };
   }
 
@@ -489,6 +489,6 @@ function getSystemNavigation(role: AppRole) {
 
   return {
     role,
-    pages: ["Bills", "PCF", "Event Forms"],
+    pages: ["Budget", "PCF", "Event Forms"],
   };
 }

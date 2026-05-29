@@ -6,11 +6,11 @@ import { Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
-  createBill,
+  createBudget,
   isReferenceNoTaken,
   type ServiceError,
-} from "@/services/bills.service";
-import { uploadBillAttachments } from "@/services/billAttachments.service";
+} from "@/services/budget.service";
+import { uploadBudgetAttachments } from "@/services/budgetAttachments.service";
 import { createVendor, listVendors } from "@/services/vendors.service";
 import type { PaymentMethod, PriorityLevel, Vendor } from "@/types/billing";
 
@@ -83,7 +83,7 @@ function roundMoney(value: unknown) {
   return Math.round((amount + Number.EPSILON) * 100) / 100;
 }
 
-export function CreateBillPage() {
+export function CreateBudgetPage() {
   const [vendorInput, setVendorInput] = useState("");
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [vendorOptions, setVendorOptions] = useState<Vendor[]>([]);
@@ -129,7 +129,7 @@ export function CreateBillPage() {
   );
 
   useEffect(() => {
-    document.title = "Create New Bill | GuildLedger";
+    document.title = "Create Budget Request | GuildLedger";
   }, []);
 
   useEffect(() => {
@@ -279,7 +279,7 @@ export function CreateBillPage() {
     setErrorMessage(null);
     setReferenceError(null);
     if (!user) {
-      setErrorMessage("You must be logged in to create a bill.");
+      setErrorMessage("You must be logged in to create a Budget.");
       return;
     }
     if (!vendorInput.trim()) {
@@ -342,7 +342,7 @@ export function CreateBillPage() {
     }
     const primaryPaymentMethod = breakdowns[0]?.payment_method ?? "other";
     const payload = {
-      bill: {
+      Budget: {
         vendor_id: vendorId,
         reference_no: referenceNumber,
         request_date: requestDate,
@@ -368,7 +368,7 @@ export function CreateBillPage() {
           b.payment_method === "bank_transfer" ? b.bank_account_no || null : null,
       })),
     };
-    const result = await createBill(payload);
+    const result = await createBudget(payload);
     if (result.error || !result.data) {
       setIsSaving(false);
       if (isDuplicatePrfError(result.error)) {
@@ -378,12 +378,12 @@ export function CreateBillPage() {
         return;
       }
       const message = typeof result.error === "string" ? result.error : result.error?.message;
-      setErrorMessage(message || "Failed to create bill.");
+      setErrorMessage(message || "Failed to create budget request.");
       return;
     }
 
     if (attachments.length > 0) {
-      const attachmentResult = await uploadBillAttachments(
+      const attachmentResult = await uploadBudgetAttachments(
         result.data.id,
         attachments,
         user.id,
@@ -392,17 +392,17 @@ export function CreateBillPage() {
         setIsSaving(false);
         if (typeof window !== "undefined") {
           sessionStorage.setItem(
-            `bill-${result.data.id}-attachmentError`,
-            `Bill created, but attachment upload failed: ${attachmentResult.error}`,
+            `Budget-${result.data.id}-attachmentError`,
+            `Budget created, but attachment upload failed: ${attachmentResult.error}`,
           );
         }
-        router.push(`/bills/${result.data.id}`);
+        router.push(`/budget/${result.data.id}`);
         return;
       }
     }
 
     setIsSaving(false);
-    router.push(`/bills/${result.data.id}`);
+    router.push(`/budget/${result.data.id}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -422,12 +422,12 @@ export function CreateBillPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/bills">Bills</Link>
+              <Link href="/budget">Bills</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>New Bill</BreadcrumbPage>
+            <BreadcrumbPage>New Budget</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -435,7 +435,7 @@ export function CreateBillPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Create New Bill</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Create New Budget</h1>
           <p className="text-sm text-muted-foreground">
             Create a new payment request for approval.
           </p>
@@ -444,7 +444,7 @@ export function CreateBillPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/bills")}
+            onClick={() => router.push("/budget")}
             disabled={isSaving}
           >
             Cancel
@@ -467,7 +467,7 @@ export function CreateBillPage() {
       {/* Error */}
       {errorMessage && (
         <Alert variant="destructive">
-          <AlertTitle>Cannot save bill</AlertTitle>
+          <AlertTitle>Cannot save Budget</AlertTitle>
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
@@ -882,7 +882,7 @@ export function CreateBillPage() {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push("/bills")}
+          onClick={() => router.push("/budget")}
           disabled={isSaving}
         >
           Cancel

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
@@ -20,23 +20,23 @@ import {
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 
-interface VoidBillModalProps {
+interface VoidBudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (reason: string) => void;
-  billReference: string;
-  billVendor: string;
-  billAmount: number;
+  budgetReference: string;
+  budgetVendor: string;
+  budgetAmount: number;
 }
 
-export function VoidBillModal({
+export function VoidBudgetModal({
   isOpen,
   onClose,
   onConfirm,
-  billReference,
-  billVendor,
-  billAmount,
-}: VoidBillModalProps) {
+  budgetReference,
+  budgetVendor,
+  budgetAmount,
+}: VoidBudgetModalProps) {
   const [voidReason, setVoidReason] = useState("");
 
   useEffect(() => {
@@ -66,13 +66,13 @@ export function VoidBillModal({
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
             <div>
               <div className="text-xs text-muted-foreground">Reference</div>
-              <div className="font-medium">{billReference}</div>
+              <div className="font-medium">{budgetReference}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Total Amount</div>
               <div className="font-semibold tabular-nums">
                 ₱
-                {billAmount.toLocaleString("en-PH", {
+                {budgetAmount.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -80,7 +80,7 @@ export function VoidBillModal({
             </div>
             <div className="col-span-2">
               <div className="text-xs text-muted-foreground">Vendor / Payee</div>
-              <div className="font-medium">{billVendor}</div>
+              <div className="font-medium">{budgetVendor}</div>
             </div>
           </div>
         </div>
