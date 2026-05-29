@@ -550,7 +550,7 @@ export async function createBudget(payload: CreateBillPayload) {
     total_amount: roundMoney(payload.budget.total_amount)
   };
 
-  const { data: Budget, error: billError } = await supabase
+  const { data: budget, error: billError } = await supabase
     .from("bills")
     .insert(normalizedBudget)
     .select(
@@ -586,13 +586,13 @@ export async function createBudget(payload: CreateBillPayload) {
     const breakdownResult = await insertBudgetBreakdowns(budget.id, payload.breakdowns);
     if (breakdownResult.error) {
       return {
-        data: Budget as Budget,
+        data: budget as Budget,
         error: breakdownResult.error
       };
     }
   }
 
-  return { data: Budget as Budget, error: null as string | null };
+  return { data: budget as Budget, error: null as string | null };
 }
 
 export interface UpdateBillPayload {
