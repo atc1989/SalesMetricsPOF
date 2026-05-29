@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { ViewBillPage } from "@/components/bills/ViewBillPage";
+import { ViewBudgetPage } from "@/components/budget/ViewBudgetPage";
 
 export default function Page() {
   return (
     <Suspense fallback={null}>
-      <ViewBillPage />
+      <ViewBudgetPage />
     </Suspense>
   );
 }

@@ -1,10 +1,10 @@
-import { supabase } from "@/lib/supabase/client";
+﻿import { supabase } from "@/lib/supabase/client";
 
-export function normalizeBillSearchTerm(value: string | undefined | null) {
+export function normalizeBudgetSearchTerm(value: string | undefined | null) {
   return (value ?? "").trim().replace(/[%(),]/g, "").trim();
 }
 
-export async function findVendorIdsForBillSearch(searchTerm: string) {
+export async function findVendorIdsForBudgetSearch(searchTerm: string) {
   if (!searchTerm) {
     return { data: [] as string[], error: null as string | null };
   }
@@ -25,7 +25,7 @@ export async function findVendorIdsForBillSearch(searchTerm: string) {
   };
 }
 
-export function buildBillSearchOrFilter(searchTerm: string, vendorIds: string[]) {
+export function buildBudgetSearchOrFilter(searchTerm: string, vendorIds: string[]) {
   const clauses = [`reference_no.ilike.%${searchTerm}%`, `remarks.ilike.%${searchTerm}%`];
 
   if (vendorIds.length > 0) {

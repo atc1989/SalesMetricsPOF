@@ -1,19 +1,19 @@
 import { supabase } from "@/lib/supabase/client";
 import type { PostgrestError } from "@supabase/supabase-js";
 import type {
-  Bill,
-  BillBreakdown,
-  BillDetails,
-  BillStatus
+  Budget,
+  BudgetBreakdown,
+  BudgetDetails,
+  BudgetStatus
 } from "../types/billing";
 import {
-  buildBillSearchOrFilter,
-  findVendorIdsForBillSearch,
-  normalizeBillSearchTerm
-} from "./billSearchFilters";
+  buildBudgetSearchOrFilter,
+  findVendorIdsForBudgetSearch,
+  normalizeBudgetSearchTerm
+} from "./budgetSearchFilters";
 
-export interface ListBillsParams {
-  status?: BillStatus;
+export interface ListBudgetsParams {
+  status?: BudgetStatus;
   search?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -21,8 +21,8 @@ export interface ListBillsParams {
   pageSize?: number;
 }
 
-export interface ListBillsForExportParams {
-  status?: BillStatus;
+export interface ListBudgetsForExportParams {
+  status?: BudgetStatus;
   search?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -35,10 +35,10 @@ export type ServiceError =
       message: string;
     };
 
-const BILL_BREAKDOWN_BASE_SELECT =
+const BUDGET_BREAKDOWN_BASE_SELECT =
   "id,bill_id,payment_method,description,amount,bank_name,bank_account_name,bank_account_no";
 
-function isMissingBillBreakdownsCategoryError(error: PostgrestError | null | undefined) {
+function isMissingBudgetBreakdownsCategoryError(error: PostgrestError | null | undefined) {
   if (!error) return false;
   const joined = [error.message, error.details, error.hint]
     .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
@@ -57,10 +57,10 @@ function isMissingBillBreakdownsCategoryError(error: PostgrestError | null | und
   );
 }
 
-function buildBillDetailsSelect(includeCategory: boolean) {
+function buildBudgetDetailsSelect(includeCategory: boolean) {
   const breakdownSelect = includeCategory
     ? `id,bill_id,payment_method,category,description,amount,bank_name,bank_account_name,bank_account_no`
-    : BILL_BREAKDOWN_BASE_SELECT;
+    : BUDGET_BREAKDOWN_BASE_SELECT;
 
   return `
       id,
@@ -84,11 +84,11 @@ function buildBillDetailsSelect(includeCategory: boolean) {
     `;
 }
 
-async function fetchBillBreakdownSummaries(billIds: string[]) {
+async function fetchBudgetBreakdownSummaries(budgetIds: string[]) {
   const withCategory = await supabase
     .from("bill_breakdowns")
     .select("bill_id,payment_method,category")
-    .in("bill_id", billIds);
+    .in("bill_id", budgetIds);
 
   if (!withCategory.error) {
     return {
@@ -98,14 +98,14 @@ async function fetchBillBreakdownSummaries(billIds: string[]) {
     };
   }
 
-  if (!isMissingBillBreakdownsCategoryError(withCategory.error)) {
+  if (!isMissingBudgetBreakdownsCategoryError(withCategory.error)) {
     return { data: [], hasCategory: false, error: withCategory.error };
   }
 
   const fallback = await supabase
     .from("bill_breakdowns")
     .select("bill_id,payment_method")
-    .in("bill_id", billIds);
+    .in("bill_id", budgetIds);
 
   if (fallback.error) {
     return { data: [], hasCategory: false, error: fallback.error };
@@ -120,7 +120,7 @@ async function fetchBillBreakdownSummaries(billIds: string[]) {
 
 function buildBreakdownInsertRows(
   billId: string,
-  breakdowns: Array<Omit<BillBreakdown, "id" | "bill_id">>,
+  breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>,
   includeCategory: boolean
 ) {
   return breakdowns.map((b) => {
@@ -142,9 +142,9 @@ function buildBreakdownInsertRows(
   });
 }
 
-async function insertBillBreakdowns(
+async function insertBudgetBreakdowns(
   billId: string,
-  breakdowns: Array<Omit<BillBreakdown, "id" | "bill_id">>
+  breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>
 ) {
   const rowsWithCategory = buildBreakdownInsertRows(billId, breakdowns, true);
   let { error } = await supabase.from("bill_breakdowns").insert(rowsWithCategory);
@@ -153,7 +153,7 @@ async function insertBillBreakdowns(
     return { error: null as string | null, categoryPersisted: true };
   }
 
-  if (!isMissingBillBreakdownsCategoryError(error)) {
+  if (!isMissingBudgetBreakdownsCategoryError(error)) {
     return { error: mapDbError(error, "Failed to save breakdown lines."), categoryPersisted: true };
   }
 
@@ -167,7 +167,7 @@ async function insertBillBreakdowns(
   return { error: null as string | null, categoryPersisted: false };
 }
 
-export async function listBills(params: ListBillsParams) {
+export async function listBudgets(params: ListBudgetsParams) {
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 10;
   const from = (page - 1) * pageSize;
@@ -213,15 +213,15 @@ export async function listBills(params: ListBillsParams) {
   }
 
   if (params.search && params.search.trim()) {
-    const searchTerm = normalizeBillSearchTerm(params.search);
+    const searchTerm = normalizeBudgetSearchTerm(params.search);
     if (searchTerm) {
-      const vendorSearch = await findVendorIdsForBillSearch(searchTerm);
+      const vendorSearch = await findVendorIdsForBudgetSearch(searchTerm);
 
       if (vendorSearch.error) {
         return { data: [], count: 0, error: vendorSearch.error };
       }
 
-      request = request.or(buildBillSearchOrFilter(searchTerm, vendorSearch.data));
+      request = request.or(buildBudgetSearchOrFilter(searchTerm, vendorSearch.data));
     }
   }
 
@@ -231,61 +231,61 @@ export async function listBills(params: ListBillsParams) {
     return { data: [], count: 0, error: error.message };
   }
 
-  const bills = (data ?? []) as unknown as Array<Bill & { vendor?: { id: string; name: string } }>;
-  bills.forEach((bill) => {
-    if (Array.isArray(bill.vendor)) {
-      bill.vendor = bill.vendor[0];
+  const budgets = (data ?? []) as unknown as Array<Budget & { vendor?: { id: string; name: string } }>;
+  budgets.forEach((budget) => {
+    if (Array.isArray(Budget.vendor)) {
+      Budget.vendor = Budget.vendor[0];
     }
   });
 
-  if (bills.length === 0) {
+  if (budgets.length === 0) {
     return {
-      data: bills as Array<Bill & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
+      data: budgets as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
       count: count ?? 0,
       error: null as string | null
     };
   }
 
-  const billIds = bills.map((bill) => bill.id);
+  const budgetIds = budgets.map((budget) => Budget.id);
   const { data: breakdowns, error: breakdownError, hasCategory } =
-    await fetchBillBreakdownSummaries(billIds);
+    await fetchBudgetBreakdownSummaries(budgetIds);
 
   if (breakdownError) {
     return { data: [], count: 0, error: breakdownError.message };
   }
 
-  const paymentMethodsByBill = new Map<string, Set<string>>();
-  const categoriesByBill = new Map<string, Set<string>>();
+  const paymentMethodsByBudget = new Map<string, Set<string>>();
+  const categoriesByBudget = new Map<string, Set<string>>();
   (breakdowns ?? []).forEach((breakdown: any) => {
-    if (!paymentMethodsByBill.has(breakdown.bill_id)) {
-      paymentMethodsByBill.set(breakdown.bill_id, new Set());
+    if (!paymentMethodsByBudget.has(breakdown.bill_id)) {
+      paymentMethodsByBudget.set(breakdown.bill_id, new Set());
     }
-    if (!categoriesByBill.has(breakdown.bill_id)) {
-      categoriesByBill.set(breakdown.bill_id, new Set());
+    if (!categoriesByBudget.has(breakdown.bill_id)) {
+      categoriesByBudget.set(breakdown.bill_id, new Set());
     }
     if (breakdown.payment_method) {
-      paymentMethodsByBill.get(breakdown.bill_id)?.add(breakdown.payment_method);
+      paymentMethodsByBudget.get(breakdown.bill_id)?.add(breakdown.payment_method);
     }
     if (typeof breakdown.category === "string" && breakdown.category.trim()) {
-      categoriesByBill.get(breakdown.bill_id)?.add(breakdown.category.trim());
+      categoriesByBudget.get(breakdown.bill_id)?.add(breakdown.category.trim());
     }
   });
 
   return {
-    data: bills.map((bill) => ({
-      ...bill,
-      payment_methods: Array.from(paymentMethodsByBill.get(bill.id) ?? []),
-      categories: hasCategory ? Array.from(categoriesByBill.get(bill.id) ?? []) : []
-    })) as Array<Bill & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
+    data: budgets.map((budget) => ({
+      ...Budget,
+      payment_methods: Array.from(paymentMethodsByBudget.get(budget.id) ?? []),
+      categories: hasCategory ? Array.from(categoriesByBudget.get(budget.id) ?? []) : []
+    })) as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
     count: count ?? 0,
     error: null as string | null
   };
 }
 
-export async function listBillsForExport(params: ListBillsForExportParams) {
+export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
   const batchSize = params.batchSize ?? 1000;
   let offset = 0;
-  const allBills: Array<Bill & { vendor?: { id: string; name: string } }> = [];
+  const allBills: Array<Budget & { vendor?: { id: string; name: string } }> = [];
 
   while (true) {
     let request = supabase
@@ -326,15 +326,15 @@ export async function listBillsForExport(params: ListBillsForExportParams) {
     }
 
     if (params.search && params.search.trim()) {
-      const searchTerm = normalizeBillSearchTerm(params.search);
+      const searchTerm = normalizeBudgetSearchTerm(params.search);
       if (searchTerm) {
-        const vendorSearch = await findVendorIdsForBillSearch(searchTerm);
+        const vendorSearch = await findVendorIdsForBudgetSearch(searchTerm);
 
         if (vendorSearch.error) {
           return { data: [], error: vendorSearch.error };
         }
 
-        request = request.or(buildBillSearchOrFilter(searchTerm, vendorSearch.data));
+        request = request.or(buildBudgetSearchOrFilter(searchTerm, vendorSearch.data));
       }
     }
 
@@ -344,10 +344,10 @@ export async function listBillsForExport(params: ListBillsForExportParams) {
       return { data: [], error: error.message };
     }
 
-    const batch = (data ?? []) as unknown as Array<Bill & { vendor?: { id: string; name: string } }>;
-    batch.forEach((bill) => {
-      if (Array.isArray(bill.vendor)) {
-        bill.vendor = bill.vendor[0];
+    const batch = (data ?? []) as unknown as Array<Budget & { vendor?: { id: string; name: string } }>;
+    batch.forEach((budget) => {
+      if (Array.isArray(Budget.vendor)) {
+        Budget.vendor = Budget.vendor[0];
       }
     });
 
@@ -366,17 +366,17 @@ export async function listBillsForExport(params: ListBillsForExportParams) {
 
   if (!allBills.length) {
     return {
-      data: [] as Array<Bill & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
+      data: [] as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
       error: null as string | null
     };
   }
 
-  const paymentMethodsByBill = new Map<string, Set<string>>();
-  const billIds = allBills.map((bill) => bill.id);
+  const paymentMethodsByBudget = new Map<string, Set<string>>();
+  const budgetIds = allBills.map((budget) => Budget.id);
   const chunkSize = 1000;
 
-  for (let start = 0; start < billIds.length; start += chunkSize) {
-    const idChunk = billIds.slice(start, start + chunkSize);
+  for (let start = 0; start < budgetIds.length; start += chunkSize) {
+    const idChunk = budgetIds.slice(start, start + chunkSize);
     const { data: breakdowns, error: breakdownError } = await supabase
       .from("bill_breakdowns")
       .select("bill_id,payment_method")
@@ -387,20 +387,20 @@ export async function listBillsForExport(params: ListBillsForExportParams) {
     }
 
     (breakdowns ?? []).forEach((breakdown: any) => {
-      if (!paymentMethodsByBill.has(breakdown.bill_id)) {
-        paymentMethodsByBill.set(breakdown.bill_id, new Set());
+      if (!paymentMethodsByBudget.has(breakdown.bill_id)) {
+        paymentMethodsByBudget.set(breakdown.bill_id, new Set());
       }
       if (breakdown.payment_method) {
-        paymentMethodsByBill.get(breakdown.bill_id)?.add(breakdown.payment_method);
+        paymentMethodsByBudget.get(breakdown.bill_id)?.add(breakdown.payment_method);
       }
     });
   }
 
   return {
-    data: allBills.map((bill) => ({
-      ...bill,
-      payment_methods: Array.from(paymentMethodsByBill.get(bill.id) ?? [])
-    })) as Array<Bill & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
+    data: allBills.map((budget) => ({
+      ...Budget,
+      payment_methods: Array.from(paymentMethodsByBudget.get(budget.id) ?? [])
+    })) as Array<Budget & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
     error: null as string | null
   };
 }
@@ -462,17 +462,17 @@ function mapDbError(error: PostgrestError | null | undefined, fallback: string) 
   return error.message || fallback;
 }
 
-export async function getBillById(id: string) {
+export async function getBudgetById(id: string) {
   let { data, error } = await supabase
     .from("bills")
-    .select(buildBillDetailsSelect(true))
+    .select(buildBudgetDetailsSelect(true))
     .eq("id", id)
     .single();
 
-  if (error && isMissingBillBreakdownsCategoryError(error)) {
+  if (error && isMissingBudgetBreakdownsCategoryError(error)) {
     const fallbackResult = await supabase
       .from("bills")
-      .select(buildBillDetailsSelect(false))
+      .select(buildBudgetDetailsSelect(false))
       .eq("id", id)
       .single();
 
@@ -489,7 +489,7 @@ export async function getBillById(id: string) {
   }
 
   if (error) {
-    return { data: null as BillDetails | null, error: error.message };
+    return { data: null as BudgetDetails | null, error: error.message };
   }
 
   const { data: attachments, error: attachmentError } = await supabase
@@ -499,12 +499,12 @@ export async function getBillById(id: string) {
     .order("created_at", { ascending: true });
 
   if (attachmentError) {
-    return { data: null as BillDetails | null, error: attachmentError.message };
+    return { data: null as BudgetDetails | null, error: attachmentError.message };
   }
 
   return {
     data: {
-      bill: {
+      Budget: {
         id: data.id,
         vendor_id: data.vendor_id,
         reference_no: data.reference_no,
@@ -528,7 +528,7 @@ export async function getBillById(id: string) {
         amount: roundMoney(breakdown.amount)
       })),
       attachments: attachments ?? []
-    } as BillDetails,
+    } as BudgetDetails,
     error: null as string | null
   };
 }
@@ -540,19 +540,19 @@ function roundMoney(value: unknown) {
 }
 
 export interface CreateBillPayload {
-  bill: Omit<Bill, "id" | "created_at" | "updated_at">;
-  breakdowns: Array<Omit<BillBreakdown, "id" | "bill_id">>;
+  Budget: Omit<Budget, "id" | "created_at" | "updated_at">;
+  breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>;
 }
 
-export async function createBill(payload: CreateBillPayload) {
-  const normalizedBill = {
-    ...payload.bill,
-    total_amount: roundMoney(payload.bill.total_amount)
+export async function createBudget(payload: CreateBillPayload) {
+  const normalizedBudget = {
+    ...payload.Budget,
+    total_amount: roundMoney(payload.Budget.total_amount)
   };
 
-  const { data: bill, error: billError } = await supabase
+  const { data: Budget, error: billError } = await supabase
     .from("bills")
-    .insert(normalizedBill)
+    .insert(normalizedBudget)
     .select(
       `
       id,
@@ -575,52 +575,52 @@ export async function createBill(payload: CreateBillPayload) {
     )
     .single();
 
-  if (billError || !bill) {
+  if (billError || !Budget) {
     return {
-      data: null as Bill | null,
-      error: mapDbError(billError, "Failed to create bill.")
+      data: null as Budget | null,
+      error: mapDbError(billError, "Failed to create budget request.")
     };
   }
 
   if (payload.breakdowns.length > 0) {
-    const breakdownResult = await insertBillBreakdowns(bill.id, payload.breakdowns);
+    const breakdownResult = await insertBudgetBreakdowns(Budget.id, payload.breakdowns);
     if (breakdownResult.error) {
       return {
-        data: bill as Bill,
+        data: Budget as Budget,
         error: breakdownResult.error
       };
     }
   }
 
-  return { data: bill as Bill, error: null as string | null };
+  return { data: Budget as Budget, error: null as string | null };
 }
 
 export interface UpdateBillPayload {
-  bill: Partial<Omit<Bill, "id" | "created_at" | "updated_at">>;
-  breakdowns: Array<Omit<BillBreakdown, "id" | "bill_id">>;
+  Budget: Partial<Omit<Budget, "id" | "created_at" | "updated_at">>;
+  breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>;
 }
 
-export async function updateBill(id: string, payload: UpdateBillPayload) {
+export async function updateBudget(id: string, payload: UpdateBillPayload) {
   const { data: existingBreakdowns, error: existingBreakdownsError } = await supabase
     .from("bill_breakdowns")
-    .select(BILL_BREAKDOWN_BASE_SELECT)
+    .select(BUDGET_BREAKDOWN_BASE_SELECT)
     .eq("bill_id", id);
 
   if (existingBreakdownsError) {
     return {
-      data: null as Bill | null,
+      data: null as Budget | null,
       error: mapDbError(existingBreakdownsError, "Failed to load current breakdown lines.")
     };
   }
 
-  const normalizedBill = {
-    ...payload.bill,
-    total_amount: roundMoney(payload.bill.total_amount)
+  const normalizedBudget = {
+    ...payload.Budget,
+    total_amount: roundMoney(payload.Budget.total_amount)
   };
 
   const { data: updated, error: updateError } = await supabase
     .from("bills")
-    .update(normalizedBill)
+    .update(normalizedBudget)
     .eq("id", id)
     .select(
       `
@@ -646,8 +646,8 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
 
   if (updateError || !updated) {
     return {
-      data: null as Bill | null,
-      error: mapDbError(updateError, "Failed to update bill.")
+      data: null as Budget | null,
+      error: mapDbError(updateError, "Failed to update budget request.")
     };
   }
 
@@ -657,23 +657,23 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
     .eq("bill_id", id);
 
   if (deleteError) {
-    return { data: updated as Bill, error: mapDbError(deleteError, "Failed to update breakdown lines.") };
+    return { data: updated as Budget, error: mapDbError(deleteError, "Failed to update breakdown lines.") };
   }
 
   if (payload.breakdowns.length > 0) {
-    const breakdownResult = await insertBillBreakdowns(id, payload.breakdowns);
+    const breakdownResult = await insertBudgetBreakdowns(id, payload.breakdowns);
     if (breakdownResult.error) {
       if ((existingBreakdowns ?? []).length > 0) {
         await supabase.from("bill_breakdowns").insert(existingBreakdowns);
       }
-      return { data: updated as Bill, error: breakdownResult.error };
+      return { data: updated as Budget, error: breakdownResult.error };
     }
   }
 
-  return { data: updated as Bill, error: null as string | null };
+  return { data: updated as Budget, error: null as string | null };
 }
 
-export async function updateBillStatus(id: string, status: BillStatus, rejectionReason?: string | null) {
+export async function updateBudgetStatus(id: string, status: BudgetStatus, rejectionReason?: string | null) {
   const trimmedReason = (rejectionReason || "").trim();
   const updatePayload = {
     status,
@@ -707,8 +707,8 @@ export async function updateBillStatus(id: string, status: BillStatus, rejection
     .single();
 
   if (error || !data) {
-    return { data: null as Bill | null, error: error?.message || "Failed to update bill status." };
+    return { data: null as Budget | null, error: error?.message || "Failed to update Budget status." };
   }
 
-  return { data: data as Bill, error: null as string | null };
+  return { data: data as Budget, error: null as string | null };
 }

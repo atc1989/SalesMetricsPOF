@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabase/client";
-import type { BillAttachment } from "../types/billing";
+﻿import { supabase } from "@/lib/supabase/client";
+import type { BudgetAttachment } from "../types/billing";
 
 const ATTACHMENTS_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_BILL_ATTACHMENTS_BUCKET || "bill_attachments";
@@ -9,7 +9,7 @@ interface ServiceResult<T> {
   error: string | null;
 }
 
-export async function listBillAttachments(billId: string): Promise<ServiceResult<BillAttachment[]>> {
+export async function listBudgetAttachments(billId: string): Promise<ServiceResult<BudgetAttachment[]>> {
   const { data, error } = await supabase
     .from("bill_attachments")
     .select("id,bill_id,file_path,file_name,mime_type,file_size,uploaded_by,created_at")
@@ -20,17 +20,17 @@ export async function listBillAttachments(billId: string): Promise<ServiceResult
     return { data: [], error: error.message || "Failed to load attachments." };
   }
 
-  return { data: (data ?? []) as BillAttachment[], error: null };
+  return { data: (data ?? []) as BudgetAttachment[], error: null };
 }
 
-export async function uploadBillAttachments(
+export async function uploadBudgetAttachments(
   billId: string,
   files: File[],
   uploadedBy?: string
-): Promise<ServiceResult<BillAttachment[]>> {
+): Promise<ServiceResult<BudgetAttachment[]>> {
   if (!files.length) return { data: [], error: null };
 
-  const insertedRows: Array<Omit<BillAttachment, "id" | "created_at">> = [];
+  const insertedRows: Array<Omit<BudgetAttachment, "id" | "created_at">> = [];
   const uploadedPaths: string[] = [];
 
   for (const file of files) {
@@ -79,10 +79,10 @@ export async function uploadBillAttachments(
     return { data: [], error: error.message || "Failed to save attachment records." };
   }
 
-  return { data: (data ?? []) as BillAttachment[], error: null };
+  return { data: (data ?? []) as BudgetAttachment[], error: null };
 }
 
-export async function deleteBillAttachments(attachments: BillAttachment[]): Promise<ServiceResult<null>> {
+export async function deleteBudgetAttachments(attachments: BudgetAttachment[]): Promise<ServiceResult<null>> {
   if (!attachments.length) return { data: null, error: null };
 
   const ids = attachments.map((attachment) => attachment.id).filter(Boolean);
@@ -112,7 +112,7 @@ export async function deleteBillAttachments(attachments: BillAttachment[]): Prom
   return { data: null, error: null };
 }
 
-export async function downloadBillAttachment(filePath: string, fallbackFileName: string) {
+export async function downloadBudgetAttachment(filePath: string, fallbackFileName: string) {
   const { data, error } = await supabase.storage
     .from(ATTACHMENTS_BUCKET)
     .download(filePath);

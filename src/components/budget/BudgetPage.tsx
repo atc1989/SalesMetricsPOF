@@ -5,13 +5,13 @@ import { AlertCircle, Download, FileText, Loader2, Plus, Search, SearchX } from 
 import { notify } from "@/lib/notify";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getUserDisplayName } from "@/lib/auth/userDisplayName";
-import { listBills, listBillsForExport } from "@/services/bills.service";
-import type { BillStatus } from "@/types/billing";
+import { listBudgets, listBudgetsForExport } from "@/services/budget.service";
+import type { BudgetStatus } from "@/types/billing";
 import {
-  exportBillsToCSV,
-  exportBillsToExcel,
-  exportBillsToPDF,
-} from "@/utils/billsExport";
+  exportBudgetsToCSV,
+  exportBudgetsToExcel,
+  exportBudgetsToPDF,
+} from "@/utils/budgetExport";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +42,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type BillRow = {
+type BudgetRow = {
   id: string;
   request_date: string;
   reference_no: string;
@@ -66,7 +66,7 @@ type BadgeVariant =
   | "warning"
   | "neutral";
 
-export function BillsPage() {
+export function BudgetPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -74,7 +74,7 @@ export function BillsPage() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
-  const [bills, setBills] = useState<BillRow[]>([]);
+  const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"csv" | "xlsx" | "pdf" | null>(null);
@@ -84,7 +84,7 @@ export function BillsPage() {
 
   const tabs = ["All", "Draft", "Awaiting Approval", "Rejected", "Approved", "Paid", "Void"];
 
-  const statusFilter = useMemo<BillStatus | undefined>(() => {
+  const statusFilter = useMemo<BudgetStatus | undefined>(() => {
     switch (activeTab) {
       case "Draft":
         return "draft";
@@ -215,7 +215,7 @@ export function BillsPage() {
   };
 
   useEffect(() => {
-    document.title = "Bills | GuildLedger";
+    document.title = "Budget | GuildLedger";
   }, []);
 
   useEffect(() => {
@@ -223,7 +223,7 @@ export function BillsPage() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    listBills({
+    listBudgets({
       status: statusFilter,
       search: searchQuery,
       dateFrom: dateFrom || undefined,
@@ -235,17 +235,17 @@ export function BillsPage() {
         if (!isMounted) return;
         if (result.error) {
           setErrorMessage(result.error);
-          setBills([]);
+          setBudgets([]);
           setTotalCount(0);
         } else {
-          setBills(result.data as BillRow[]);
+          setBudgets(result.data as BudgetRow[]);
           setTotalCount(result.count);
         }
       })
       .catch((error) => {
         if (!isMounted) return;
-        setErrorMessage(error.message || "Failed to load bills.");
-        setBills([]);
+        setErrorMessage(error.message || "Failed to load budgets.");
+        setBudgets([]);
         setTotalCount(0);
       })
       .finally(() => {
@@ -260,8 +260,8 @@ export function BillsPage() {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  const fetchBillsForExport = async () => {
-    const result = await listBillsForExport({
+  const fetchBudgetsForExport = async () => {
+    const result = await listBudgetsForExport({
       status: statusFilter,
       search: searchQuery,
       dateFrom: dateFrom || undefined,
@@ -287,17 +287,17 @@ export function BillsPage() {
   const handleExport = async (type: "csv" | "xlsx" | "pdf") => {
     setExporting(type);
     try {
-      const exportBills = await fetchBillsForExport();
-      if (!exportBills.length) {
+      const exportBudgets = await fetchBudgetsForExport();
+      if (!exportBudgets.length) {
         notify(SearchX, "No rows to export");
         return;
       }
 
-      if (type === "csv") exportBillsToCSV(exportBills);
-      if (type === "xlsx") exportBillsToExcel(exportBills);
-      if (type === "pdf") exportBillsToPDF(exportBills, { filters: getFilterSummary() });
+      if (type === "csv") exportBudgetsToCSV(exportBudgets);
+      if (type === "xlsx") exportBudgetsToExcel(exportBudgets);
+      if (type === "pdf") exportBudgetsToPDF(exportBudgets, { filters: getFilterSummary() });
 
-      notify(Download, `Exported ${exportBills.length} rows`);
+      notify(Download, `Exported ${exportBudgets.length} rows`);
     } catch (error) {
       console.error(error);
       notify(AlertCircle, "Export failed");
@@ -360,9 +360,9 @@ export function BillsPage() {
               "PDF"
             )}
           </Button>
-          <Button onClick={() => router.push("/bills/new")}>
+          <Button onClick={() => router.push("/budget/new")}>
             <Plus data-icon="inline-start" />
-            New Bill
+            New Budget
           </Button>
         </div>
       </div>
@@ -454,7 +454,7 @@ export function BillsPage() {
             {errorMessage}
           </CardContent>
         </Card>
-      ) : bills.length > 0 ? (
+      ) : budgets.length > 0 ? (
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -475,51 +475,51 @@ export function BillsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {bills.map((bill) => (
-                    <TableRow key={bill.id}>
-                      <TableCell className="whitespace-nowrap text-sm">{bill.request_date}</TableCell>
-                      <TableCell className="font-medium">{bill.reference_no}</TableCell>
-                      <TableCell>{bill.vendor?.name || "—"}</TableCell>
+                  {budgets.map((budget) => (
+                    <TableRow key={Budget.id}>
+                      <TableCell className="whitespace-nowrap text-sm">{Budget.request_date}</TableCell>
+                      <TableCell className="font-medium">{Budget.reference_no}</TableCell>
+                      <TableCell>{Budget.vendor?.name || "—"}</TableCell>
                       <TableCell className="max-w-xs text-sm text-muted-foreground">
-                        <span className="line-clamp-2">{bill.remarks || "—"}</span>
+                        <span className="line-clamp-2">{Budget.remarks || "—"}</span>
                       </TableCell>
                       <TableCell>
                         {renderPaymentMethods(
-                          bill.payment_methods?.length
-                            ? bill.payment_methods
-                            : bill.payment_method
-                              ? [bill.payment_method]
+                          Budget.payment_methods?.length
+                            ? Budget.payment_methods
+                            : Budget.payment_method
+                              ? [Budget.payment_method]
                               : [],
                         )}
                       </TableCell>
-                      <TableCell>{renderCategories(bill.categories)}</TableCell>
+                      <TableCell>{renderCategories(Budget.categories)}</TableCell>
                       <TableCell>
-                        <Badge variant={getPriorityVariant(bill.priority_level)}>
-                          {formatPriority(bill.priority_level)}
+                        <Badge variant={getPriorityVariant(Budget.priority_level)}>
+                          {formatPriority(Budget.priority_level)}
                         </Badge>
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-right font-semibold">
                         ₱
-                        {Number(bill.total_amount).toLocaleString("en-PH", {
+                        {Number(Budget.total_amount).toLocaleString("en-PH", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusVariant(bill.status)}>
-                          {formatStatus(bill.status)}
+                        <Badge variant={getStatusVariant(Budget.status)}>
+                          {formatStatus(Budget.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {bill.created_by === user?.id
+                        {Budget.created_by === user?.id
                           ? currentUserDisplayName
-                          : bill.created_by}
+                          : Budget.created_by}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="link"
                           className="px-0"
-                          onClick={() => router.push(`/bills/${bill.id}`)}
+                          onClick={() => router.push(`/budget/${budget.id}`)}
                         >
                           View
                         </Button>
@@ -538,7 +538,7 @@ export function BillsPage() {
                 onPageChange={setPage}
                 totalItems={totalCount}
                 pageSize={pageSize}
-                currentRangeCount={bills.length}
+                currentRangeCount={budgets.length}
                 itemLabel="results"
               />
             </div>
@@ -552,13 +552,13 @@ export function BillsPage() {
             </EmptyMedia>
             <EmptyTitle>No payment requests found</EmptyTitle>
             <EmptyDescription>
-              Try adjusting your filters or create a new bill.
+              Try adjusting your filters or create a new Budget.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button onClick={() => router.push("/bills/new")}>
+            <Button onClick={() => router.push("/budget/new")}>
               <Plus data-icon="inline-start" />
-              Create New Bill
+              Create New Budget
             </Button>
           </EmptyContent>
         </Empty>

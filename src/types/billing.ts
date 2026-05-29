@@ -1,4 +1,4 @@
-export type BillStatus =
+export type BudgetStatus =
   | "draft"
   | "awaiting_approval"
   | "rejected"
@@ -16,7 +16,7 @@ export interface Vendor {
   address?: string | null;
 }
 
-export interface Bill {
+export interface Budget {
   id: string;
   vendor_id: string;
   reference_no: string;
@@ -26,7 +26,7 @@ export interface Bill {
   bank_name?: string | null;
   bank_account_name?: string | null;
   bank_account_no?: string | null;
-  status: BillStatus;
+  status: BudgetStatus;
   remarks?: string | null;
   rejection_reason?: string | null;
   total_amount: number;
@@ -35,7 +35,7 @@ export interface Bill {
   updated_at?: string;
 }
 
-export interface BillBreakdown {
+export interface BudgetBreakdown {
   id?: string;
   bill_id: string;
   payment_method: PaymentMethod;
@@ -47,7 +47,7 @@ export interface BillBreakdown {
   bank_account_no?: string | null;
 }
 
-export interface BillAttachment {
+export interface BudgetAttachment {
   id: string;
   bill_id: string;
   file_path: string;
@@ -58,11 +58,11 @@ export interface BillAttachment {
   created_at?: string;
 }
 
-export interface BillDetails {
-  bill: Bill;
+export interface BudgetDetails {
+  Budget: Budget;
   vendor: Vendor;
-  breakdowns: BillBreakdown[];
-  attachments: BillAttachment[];
+  breakdowns: BudgetBreakdown[];
+  attachments: BudgetAttachment[];
 }
 
 export type PcfTransactionType =

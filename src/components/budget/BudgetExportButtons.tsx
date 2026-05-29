@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { AlertCircle, Download, SearchX } from "lucide-react";
 import { notify } from "@/lib/notify";
-import { fetchBillsForExport } from "@/services/billsExportFetch";
-import { exportBills, type ExportFormat } from "@/utils/billsExport";
+import { fetchBudgetsForExport } from "@/services/budgetExportFetch";
+import { exportBudgets, type ExportFormat } from "@/utils/budgetExport";
 
-type BillsExportButtonsProps = {
+type budgetExportButtonsProps = {
   activeTab: string;
   searchQuery: string;
   dateFrom: string;
@@ -22,12 +22,12 @@ const EXPORT_OPTIONS: ExportOption[] = [
   { key: "pdf", label: "PDF" }
 ];
 
-export function BillsExportButtons({
+export function budgetExportButtons({
   activeTab,
   searchQuery,
   dateFrom,
   dateTo
-}: BillsExportButtonsProps) {
+}: budgetExportButtonsProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async (format: ExportFormat) => {
@@ -35,7 +35,7 @@ export function BillsExportButtons({
     setIsExporting(true);
 
     try {
-      const result = await fetchBillsForExport({
+      const result = await fetchBudgetsForExport({
         activeTab,
         searchQuery,
         dateFrom,
@@ -52,7 +52,7 @@ export function BillsExportButtons({
         return;
       }
 
-      await exportBills(result.data, format);
+      await exportBudgets(result.data, format);
       notify(Download, `Exported ${result.data.length} record(s) to ${format.toUpperCase()}.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to export payment requests.";
