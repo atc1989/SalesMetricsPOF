@@ -154,7 +154,7 @@ export async function fetchBudgetsForExport(filters: ExportFilters) {
     return { data: [] as BillExportRow[], error: null as string | null };
   }
 
-  const billIds = allBills.map((budget) => Budget.id);
+  const billIds = allBills.map((budget) => budget.id);
   const { data: breakdowns, error: breakdownError } = await supabase
     .from("bill_breakdowns")
     .select("bill_id,payment_method")
@@ -175,21 +175,21 @@ export async function fetchBudgetsForExport(filters: ExportFilters) {
   });
 
   const mapped: BillExportRow[] = allBills.map((budget) => {
-    const vendor = Array.isArray(Budget.vendor) ? Budget.vendor[0] : Budget.vendor;
-    const paymentMethods = Array.from(paymentMethodsByBill.get(Budget.id) ?? []);
-    const fallbackMethod = Budget.payment_method ? [Budget.payment_method] : [];
+    const vendor = Array.isArray(budget.vendor) ? budget.vendor[0] : budget.vendor;
+    const paymentMethods = Array.from(paymentMethodsByBill.get(budget.id) ?? []);
+    const fallbackMethod = budget.payment_method ? [budget.payment_method] : [];
 
     return {
-      id: Budget.id,
-      request_date: Budget.request_date,
-      reference_no: Budget.reference_no,
+      id: budget.id,
+      request_date: budget.request_date,
+      reference_no: budget.reference_no,
       vendor_name: vendor?.name ?? "-",
-      purpose_summary: Budget.remarks ?? "-",
+      purpose_summary: budget.remarks ?? "-",
       payment_methods: paymentMethods.length ? paymentMethods : fallbackMethod,
-      priority_level: Budget.priority_level,
-      total_amount: Number(Budget.total_amount ?? 0),
-      status: Budget.status,
-      created_by: Budget.created_by
+      priority_level: budget.priority_level,
+      total_amount: Number(budget.total_amount ?? 0),
+      status: budget.status,
+      created_by: budget.created_by
     };
   });
 

@@ -244,7 +244,7 @@ export function ViewBudgetPage() {
 
   useEffect(() => {
     if (Budget?.reference_no) {
-      document.title = `${Budget.reference_no} | GuildLedger`;
+      document.title = `${budget.reference_no} | GuildLedger`;
       return;
     }
     document.title = "Budget Details | GuildLedger";
@@ -253,9 +253,9 @@ export function ViewBudgetPage() {
   const buildPdfTemplateData = (): PdfTemplateData | null => {
     if (!Budget || !vendor) return null;
     return {
-      reference_no: Budget.reference_no,
-      request_date: Budget.request_date,
-      status: Budget.status,
+      reference_no: budget.reference_no,
+      request_date: budget.request_date,
+      status: budget.status,
       vendor_name: vendor.name,
       requester_name: requestedByDisplay,
       checked_by: "—",
@@ -269,7 +269,7 @@ export function ViewBudgetPage() {
         bank_account_no: breakdown.bank_account_no,
       })),
       total_amount: resolvedTotalAmount,
-      remarks: Budget.remarks || "",
+      remarks: budget.remarks || "",
       attachments: attachments.map((a) => a.file_name),
       company_name: "GuildLedger",
     };
@@ -322,7 +322,7 @@ export function ViewBudgetPage() {
   const handleApprove = () => setApproveRejectModal({ isOpen: true, action: "approve" });
   const handleReject = () => setApproveRejectModal({ isOpen: true, action: "reject" });
   const handleVoid = () => setIsVoidModalOpen(true);
-  const handleEdit = () => budget && router.push(`/budget/${Budget.id}/edit`);
+  const handleEdit = () => budget && router.push(`/budget/${budget.id}/edit`);
 
   const handleConfirmApproveReject = async (notes: string) => {
     if (!Budget || isUpdatingStatus) return;
@@ -330,7 +330,7 @@ export function ViewBudgetPage() {
     setActionError(null);
     setIsUpdatingStatus(true);
     const result = await updateBudgetStatus(
-      Budget.id,
+      budget.id,
       nextStatus,
       approveRejectModal.action === "reject" ? notes : null,
     );
@@ -358,7 +358,7 @@ export function ViewBudgetPage() {
     if (!Budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
-    const result = await updateBudgetStatus(Budget.id, "void");
+    const result = await updateBudgetStatus(budget.id, "void");
     setIsUpdatingStatus(false);
     if (result.error) {
       setActionError(result.error);
@@ -374,7 +374,7 @@ export function ViewBudgetPage() {
     if (!Budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
-    const result = await updateBudgetStatus(Budget.id, "paid");
+    const result = await updateBudgetStatus(budget.id, "paid");
     setIsUpdatingStatus(false);
     if (result.error) {
       setActionError(result.error);
@@ -389,7 +389,7 @@ export function ViewBudgetPage() {
     if (!Budget || isUpdatingStatus) return;
     setActionError(null);
     setIsUpdatingStatus(true);
-    const result = await updateBudgetStatus(Budget.id, "awaiting_approval");
+    const result = await updateBudgetStatus(budget.id, "awaiting_approval");
     setIsUpdatingStatus(false);
     if (result.error) {
       setActionError(result.error);
@@ -459,7 +459,7 @@ export function ViewBudgetPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>{Budget.reference_no}</BreadcrumbPage>
+            <BreadcrumbPage>{budget.reference_no}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -469,11 +469,11 @@ export function ViewBudgetPage() {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">Payment Request</h1>
-            <Badge variant={getStatusVariant(Budget.status)}>{formatStatus(Budget.status)}</Badge>
+            <Badge variant={getStatusVariant(budget.status)}>{formatStatus(budget.status)}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{Budget.reference_no}</span> · {vendor.name}
-            {" "}· {Budget.request_date}
+            <span className="font-medium text-foreground">{budget.reference_no}</span> · {vendor.name}
+            {" "}· {budget.request_date}
           </p>
         </div>
 
@@ -491,7 +491,7 @@ export function ViewBudgetPage() {
             <FileDown data-icon="inline-start" />
             Receipt PDF
           </Button>
-          {Budget.status !== "paid" && Budget.status !== "void" && (
+          {budget.status !== "paid" && budget.status !== "void" && (
             <Button variant="destructive" size="sm" onClick={handleVoid}>
               Void
             </Button>
@@ -520,13 +520,13 @@ export function ViewBudgetPage() {
         <CardContent>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <DetailRow label="Vendor / Payee" value={vendor.name} />
-            <DetailRow label="Reference No." value={Budget.reference_no} mono />
-            <DetailRow label="Request Date" value={Budget.request_date} />
+            <DetailRow label="Reference No." value={budget.reference_no} mono />
+            <DetailRow label="Request Date" value={budget.request_date} />
             <DetailRow
               label="Priority"
               value={
-                <Badge variant={getPriorityVariant(Budget.priority_level)}>
-                  {formatPriority(Budget.priority_level)}
+                <Badge variant={getPriorityVariant(budget.priority_level)}>
+                  {formatPriority(budget.priority_level)}
                 </Badge>
               }
             />
@@ -609,18 +609,18 @@ export function ViewBudgetPage() {
         <CardContent>
           <div className="rounded-md border bg-muted/30 p-4">
             <p className="whitespace-pre-wrap text-sm">
-              {Budget.remarks || "No remarks provided."}
+              {budget.remarks || "No remarks provided."}
             </p>
           </div>
         </CardContent>
       </Card>
 
       {/* Rejection Reason */}
-      {Budget.status === "rejected" && Budget.rejection_reason && (
+      {budget.status === "rejected" && budget.rejection_reason && (
         <Alert variant="destructive">
           <AlertTitle>Rejection Reason</AlertTitle>
           <AlertDescription className="whitespace-pre-wrap">
-            {Budget.rejection_reason}
+            {budget.rejection_reason}
           </AlertDescription>
         </Alert>
       )}
@@ -671,7 +671,7 @@ export function ViewBudgetPage() {
         <CardContent>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <DetailRow label="Requested By" value={requestedByDisplay} />
-            <DetailRow label="Submitted Date" value={Budget.request_date} />
+            <DetailRow label="Submitted Date" value={budget.request_date} />
             <DetailRow label="Checked By" value="—" />
             <DetailRow label="Approved By" value="—" />
           </div>
@@ -684,7 +684,7 @@ export function ViewBudgetPage() {
           Back to list
         </Button>
 
-        {Budget.status === "draft" && (
+        {budget.status === "draft" && (
           <Button onClick={handleSubmitForApproval} disabled={isUpdatingStatus}>
             {isUpdatingStatus && (
               <Loader2 data-icon="inline-start" className="animate-spin" />
@@ -693,7 +693,7 @@ export function ViewBudgetPage() {
           </Button>
         )}
 
-        {Budget.status === "awaiting_approval" && (
+        {budget.status === "awaiting_approval" && (
           <>
             <Button
               variant="destructive"
@@ -711,7 +711,7 @@ export function ViewBudgetPage() {
           </>
         )}
 
-        {Budget.status === "approved" && (
+        {budget.status === "approved" && (
           <Button onClick={handleMarkAsPaid} disabled={isUpdatingStatus}>
             {isUpdatingStatus && (
               <Loader2 data-icon="inline-start" className="animate-spin" />
@@ -726,7 +726,7 @@ export function ViewBudgetPage() {
         isOpen={isVoidModalOpen}
         onClose={() => setIsVoidModalOpen(false)}
         onConfirm={handleConfirmVoid}
-        budgetReference={Budget.reference_no}
+        budgetReference={budget.reference_no}
         budgetVendor={vendor.name}
         budgetAmount={resolvedTotalAmount}
       />
@@ -736,10 +736,10 @@ export function ViewBudgetPage() {
         onClose={() => setApproveRejectModal({ isOpen: false, action: "approve" })}
         onConfirm={handleConfirmApproveReject}
         action={approveRejectModal.action}
-        budgetReference={Budget.reference_no}
+        budgetReference={budget.reference_no}
         budgetVendor={vendor.name}
         budgetAmount={resolvedTotalAmount}
-        budgetPriority={formatPriority(Budget.priority_level) as "Urgent" | "High" | "Standard" | "Low"}
+        budgetPriority={formatPriority(budget.priority_level) as "Urgent" | "High" | "Standard" | "Low"}
       />
     </div>
   );

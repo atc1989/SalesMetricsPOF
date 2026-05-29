@@ -77,23 +77,23 @@ export function mapBudgetsToExportRows(budgets: ExportableBudget[]) {
   return budgets.map((budget) => {
     const paymentMethods = Array.from(
       new Set(
-        (Budget.payment_methods?.length ? Budget.payment_methods : Budget.payment_method ? [Budget.payment_method] : [])
+        (budget.payment_methods?.length ? budget.payment_methods : budget.payment_method ? [budget.payment_method] : [])
           .filter(Boolean)
           .map(formatPaymentMethod)
       )
     );
-    const total = Number(Budget.total_amount ?? 0);
+    const total = Number(budget.total_amount ?? 0);
 
     return {
-      Date: formatDate(Budget.request_date),
-      "Reference No.": Budget.reference_no ?? "",
-      "Payee / Vendor": Budget.vendor?.name ?? "",
-      "Purpose Summary": Budget.remarks ?? "",
+      Date: formatDate(budget.request_date),
+      "Reference No.": budget.reference_no ?? "",
+      "Payee / Vendor": budget.vendor?.name ?? "",
+      "Purpose Summary": budget.remarks ?? "",
       "Payment Method": paymentMethods.join(", "),
-      Priority: toSentenceCase(Budget.priority_level ?? ""),
+      Priority: toSentenceCase(budget.priority_level ?? ""),
       "Total Amount": formatPeso(Number.isFinite(total) ? total : 0),
-      Status: toSentenceCase(Budget.status ?? ""),
-      "Requested By": Budget.created_by ?? ""
+      Status: toSentenceCase(budget.status ?? ""),
+      "Requested By": budget.created_by ?? ""
     };
   });
 }

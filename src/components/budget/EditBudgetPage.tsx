@@ -206,21 +206,21 @@ export function EditBudgetPage() {
           return;
         }
         const { Budget, vendor, breakdowns: lineItems, attachments: existing } = result.data;
-        setBudgetStatus(Budget.status);
+        setBudgetStatus(budget.status);
         setVendorInput(vendor.name);
         setSelectedVendor(vendor);
-        setReferenceNumber(Budget.reference_no);
-        setRequestDate(Budget.request_date);
+        setReferenceNumber(budget.reference_no);
+        setRequestDate(budget.request_date);
         setPriority(
-          Budget.priority_level === "urgent"
+          budget.priority_level === "urgent"
             ? "Urgent"
-            : Budget.priority_level === "high"
+            : budget.priority_level === "high"
               ? "High"
-              : Budget.priority_level === "low"
+              : budget.priority_level === "low"
                 ? "Low"
                 : "Standard",
         );
-        setReasonForPayment(Budget.remarks || "");
+        setReasonForPayment(budget.remarks || "");
         setAttachments(existing);
         setAttachmentsToDelete([]);
         setNewFiles([]);
@@ -228,7 +228,7 @@ export function EditBudgetPage() {
           lineItems.length > 0
             ? lineItems.map((b, idx) => ({
                 id: b.id || idx.toString(),
-                payment_method: (b.payment_method ?? Budget.payment_method ?? "other") as PaymentMethod,
+                payment_method: (b.payment_method ?? budget.payment_method ?? "other") as PaymentMethod,
                 category: b.category || "",
                 description: b.description || "",
                 amount: String(b.amount ?? ""),
@@ -239,13 +239,13 @@ export function EditBudgetPage() {
             : [
                 {
                   id: "recovered-breakdown",
-                  payment_method: (Budget.payment_method ?? "other") as PaymentMethod,
+                  payment_method: (budget.payment_method ?? "other") as PaymentMethod,
                   category: "",
                   description: "",
-                  amount: String(Budget.total_amount ?? ""),
-                  bank_name: Budget.bank_name || "",
-                  bank_account_name: Budget.bank_account_name || "",
-                  bank_account_no: Budget.bank_account_no || "",
+                  amount: String(budget.total_amount ?? ""),
+                  bank_name: budget.bank_name || "",
+                  bank_account_name: budget.bank_account_name || "",
+                  bank_account_no: budget.bank_account_no || "",
                 },
               ];
         setBreakdowns(nextBreakdowns);

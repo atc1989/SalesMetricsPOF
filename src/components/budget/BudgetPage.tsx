@@ -476,44 +476,44 @@ export function BudgetPage() {
                 </TableHeader>
                 <TableBody>
                   {budgets.map((budget) => (
-                    <TableRow key={Budget.id}>
-                      <TableCell className="whitespace-nowrap text-sm">{Budget.request_date}</TableCell>
-                      <TableCell className="font-medium">{Budget.reference_no}</TableCell>
-                      <TableCell>{Budget.vendor?.name || "—"}</TableCell>
+                    <TableRow key={budget.id}>
+                      <TableCell className="whitespace-nowrap text-sm">{budget.request_date}</TableCell>
+                      <TableCell className="font-medium">{budget.reference_no}</TableCell>
+                      <TableCell>{budget.vendor?.name || "—"}</TableCell>
                       <TableCell className="max-w-xs text-sm text-muted-foreground">
-                        <span className="line-clamp-2">{Budget.remarks || "—"}</span>
+                        <span className="line-clamp-2">{budget.remarks || "—"}</span>
                       </TableCell>
                       <TableCell>
                         {renderPaymentMethods(
-                          Budget.payment_methods?.length
-                            ? Budget.payment_methods
-                            : Budget.payment_method
-                              ? [Budget.payment_method]
+                          budget.payment_methods?.length
+                            ? budget.payment_methods
+                            : budget.payment_method
+                              ? [budget.payment_method]
                               : [],
                         )}
                       </TableCell>
-                      <TableCell>{renderCategories(Budget.categories)}</TableCell>
+                      <TableCell>{renderCategories(budget.categories)}</TableCell>
                       <TableCell>
-                        <Badge variant={getPriorityVariant(Budget.priority_level)}>
-                          {formatPriority(Budget.priority_level)}
+                        <Badge variant={getPriorityVariant(budget.priority_level)}>
+                          {formatPriority(budget.priority_level)}
                         </Badge>
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-right font-semibold">
                         ₱
-                        {Number(Budget.total_amount).toLocaleString("en-PH", {
+                        {Number(budget.total_amount).toLocaleString("en-PH", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusVariant(Budget.status)}>
-                          {formatStatus(Budget.status)}
+                        <Badge variant={getStatusVariant(budget.status)}>
+                          {formatStatus(budget.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {Budget.created_by === user?.id
+                        {budget.created_by === user?.id
                           ? currentUserDisplayName
-                          : Budget.created_by}
+                          : budget.created_by}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -552,7 +552,7 @@ export function BudgetPage() {
             </EmptyMedia>
             <EmptyTitle>No payment requests found</EmptyTitle>
             <EmptyDescription>
-              Try adjusting your filters or create a new Budget.
+              Try adjusting your filters or create a new budget request.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
