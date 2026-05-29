@@ -233,8 +233,8 @@ export async function listBudgets(params: ListBudgetsParams) {
 
   const budgets = (data ?? []) as unknown as Array<Budget & { vendor?: { id: string; name: string } }>;
   budgets.forEach((budget) => {
-    if (Array.isArray(Budget.vendor)) {
-      Budget.vendor = Budget.vendor[0];
+    if (Array.isArray(budget.vendor)) {
+      budget.vendor = budget.vendor[0];
     }
   });
 
@@ -246,7 +246,7 @@ export async function listBudgets(params: ListBudgetsParams) {
     };
   }
 
-  const budgetIds = budgets.map((budget) => Budget.id);
+  const budgetIds = budgets.map((budget) => budget.id);
   const { data: breakdowns, error: breakdownError, hasCategory } =
     await fetchBudgetBreakdownSummaries(budgetIds);
 
@@ -346,8 +346,8 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
 
     const batch = (data ?? []) as unknown as Array<Budget & { vendor?: { id: string; name: string } }>;
     batch.forEach((budget) => {
-      if (Array.isArray(Budget.vendor)) {
-        Budget.vendor = Budget.vendor[0];
+      if (Array.isArray(budget.vendor)) {
+        budget.vendor = budget.vendor[0];
       }
     });
 
@@ -372,7 +372,7 @@ export async function listBudgetsForExport(params: ListBudgetsForExportParams) {
   }
 
   const paymentMethodsByBudget = new Map<string, Set<string>>();
-  const budgetIds = allBills.map((budget) => Budget.id);
+  const budgetIds = allBills.map((budget) => budget.id);
   const chunkSize = 1000;
 
   for (let start = 0; start < budgetIds.length; start += chunkSize) {
@@ -547,7 +547,7 @@ export interface CreateBillPayload {
 export async function createBudget(payload: CreateBillPayload) {
   const normalizedBudget = {
     ...payload.Budget,
-    total_amount: roundMoney(payload.Budget.total_amount)
+    total_amount: roundMoney(payload.budget.total_amount)
   };
 
   const { data: Budget, error: billError } = await supabase
@@ -583,7 +583,7 @@ export async function createBudget(payload: CreateBillPayload) {
   }
 
   if (payload.breakdowns.length > 0) {
-    const breakdownResult = await insertBudgetBreakdowns(Budget.id, payload.breakdowns);
+    const breakdownResult = await insertBudgetBreakdowns(budget.id, payload.breakdowns);
     if (breakdownResult.error) {
       return {
         data: Budget as Budget,
@@ -615,7 +615,7 @@ export async function updateBudget(id: string, payload: UpdateBillPayload) {
 
   const normalizedBudget = {
     ...payload.Budget,
-    total_amount: roundMoney(payload.Budget.total_amount)
+    total_amount: roundMoney(payload.budget.total_amount)
   };
 
   const { data: updated, error: updateError } = await supabase

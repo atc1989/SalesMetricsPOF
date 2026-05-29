@@ -279,7 +279,7 @@ export function CreateBudgetPage() {
     setErrorMessage(null);
     setReferenceError(null);
     if (!user) {
-      setErrorMessage("You must be logged in to create a Budget.");
+      setErrorMessage("You must be logged in to create a budget request.");
       return;
     }
     if (!vendorInput.trim()) {
