@@ -575,7 +575,7 @@ export async function createBudget(payload: CreateBillPayload) {
     )
     .single();
 
-  if (billError || !Budget) {
+  if (billError || !budget) {
     return {
       data: null as Budget | null,
       error: mapDbError(billError, "Failed to create budget request.")
