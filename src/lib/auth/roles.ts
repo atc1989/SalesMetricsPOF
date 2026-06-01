@@ -15,7 +15,7 @@ export const DEFAULT_APP_ROLE: AppRole = "sales";
 export const ROLE_DEFAULT_PATH: Record<AppRole, string> = {
   super_admin: "/",
   sales: "/",
-  operations: "/",
+  operations: "/budget",
 };
 
 const ROLE_PAGE_PREFIXES: Record<AppRole, string[]> = {
