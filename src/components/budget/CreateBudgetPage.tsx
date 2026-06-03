@@ -109,7 +109,7 @@ function CategorySuggestionInput({
         autoComplete="off"
       />
       {isOpen && filteredOptions.length > 0 && (
-        <div className="absolute z-20 mt-1 max-h-48 w-full overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+        <div className="absolute z-20 mt-1 max-h-48 w-max min-w-full max-w-[calc(100vw-2rem)] overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
           {filteredOptions.map((category) => (
             <button
               type="button"
@@ -119,7 +119,7 @@ function CategorySuggestionInput({
                 onChange(category);
                 setIsOpen(false);
               }}
-              className="block w-full truncate rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+              className="block w-full whitespace-nowrap rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
               title={category}
             >
               {category}
