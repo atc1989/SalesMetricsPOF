@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Plus, Trash2, Upload, X } from "lucide-react";
@@ -89,27 +89,67 @@ function CategorySuggestionInput({
   options,
   onChange,
 }: CategorySuggestionInputProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{
+    left: number;
+    top: number;
+    minWidth: number;
+  } | null>(null);
   const normalizedValue = value.trim().toLowerCase();
   const filteredOptions = options.filter((option) =>
     normalizedValue ? option.toLowerCase().includes(normalizedValue) : true,
   );
+  const updateMenuPosition = useCallback(() => {
+    const rect = inputRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setMenuPosition({
+      left: Math.max(rect.left, 16),
+      top: rect.bottom + 4,
+      minWidth: rect.width,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const animationFrame = window.requestAnimationFrame(updateMenuPosition);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [isOpen, updateMenuPosition]);
 
   return (
     <div className="relative">
       <Input
+        ref={inputRef}
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
           setIsOpen(true);
+          window.requestAnimationFrame(updateMenuPosition);
         }}
-        onFocus={() => setIsOpen(true)}
+        onFocus={() => {
+          setIsOpen(true);
+          updateMenuPosition();
+        }}
         onBlur={() => window.setTimeout(() => setIsOpen(false), 100)}
         placeholder="e.g., Food"
         autoComplete="off"
       />
-      {isOpen && filteredOptions.length > 0 && (
-        <div className="absolute z-20 mt-1 max-h-48 w-max min-w-full max-w-[calc(100vw-2rem)] overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+      {isOpen && menuPosition && filteredOptions.length > 0 && (
+        <div
+          className="fixed z-50 max-h-48 w-max overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
+          style={{
+            left: menuPosition.left,
+            top: menuPosition.top,
+            minWidth: menuPosition.minWidth,
+            maxWidth: `calc(100vw - ${menuPosition.left + 16}px)`,
+          }}
+        >
           {filteredOptions.map((category) => (
             <button
               type="button"
