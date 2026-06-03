@@ -118,6 +118,49 @@ async function fetchBudgetBreakdownSummaries(budgetIds: string[]) {
   };
 }
 
+export async function listBudgetCategories(
+  query?: string,
+): Promise<{ data: string[]; error: string | null }> {
+  const trimmedQuery = query?.trim();
+  let request = supabase
+    .from("bill_breakdowns")
+    .select("category")
+    .not("category", "is", null)
+    .order("category");
+
+  if (trimmedQuery) {
+    request = request.ilike("category", `%${trimmedQuery}%`);
+  }
+
+  const { data, error } = await request.limit(200);
+
+  if (error) {
+    if (isMissingBudgetBreakdownsCategoryError(error)) {
+      return { data: [] as string[], error: null as string | null };
+    }
+    return {
+      data: [] as string[],
+      error:
+        error.code === "42501"
+          ? "You do not have permission to perform this action."
+          : error.message || "Failed to load budget categories.",
+    };
+  }
+
+  const rows = (data ?? []) as Array<{ category?: unknown }>;
+  const categories = Array.from(
+    new Set(
+      rows
+        .map((row): string =>
+          typeof row.category === "string" ? row.category.trim() : "",
+        )
+        .filter((category) => category.length > 0),
+    ),
+  );
+
+  return { data: categories, error: null as string | null };
+}
+
 function buildBreakdownInsertRows(
   billId: string,
   breakdowns: Array<Omit<BudgetBreakdown, "id" | "bill_id">>,

@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import {
   createBudget,
   isReferenceNoTaken,
+  listBudgetCategories,
   type ServiceError,
 } from "@/services/budget.service";
 import { uploadBudgetAttachments } from "@/services/budgetAttachments.service";
@@ -77,6 +78,58 @@ const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   other: "Other",
 };
 
+interface CategorySuggestionInputProps {
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}
+
+function CategorySuggestionInput({
+  value,
+  options,
+  onChange,
+}: CategorySuggestionInputProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const normalizedValue = value.trim().toLowerCase();
+  const filteredOptions = options.filter((option) =>
+    normalizedValue ? option.toLowerCase().includes(normalizedValue) : true,
+  );
+
+  return (
+    <div className="relative">
+      <Input
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setIsOpen(true);
+        }}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => window.setTimeout(() => setIsOpen(false), 100)}
+        placeholder="e.g., Food"
+        autoComplete="off"
+      />
+      {isOpen && filteredOptions.length > 0 && (
+        <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-popover p-1 shadow-md">
+          {filteredOptions.map((category) => (
+            <button
+              type="button"
+              key={category}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onChange(category);
+                setIsOpen(false);
+              }}
+              className="w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function roundMoney(value: unknown) {
   const amount = Number(value ?? 0);
   if (!Number.isFinite(amount)) return 0;
@@ -102,6 +155,7 @@ export function CreateBudgetPage() {
   const [isDragActive, setIsDragActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -130,6 +184,17 @@ export function CreateBudgetPage() {
 
   useEffect(() => {
     document.title = "Create Budget Request | GuildLedger";
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    listBudgetCategories().then((result) => {
+      if (!isMounted) return;
+      setCategoryOptions(result.data);
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -629,12 +694,12 @@ export function CreateBudgetPage() {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Input
+                        <CategorySuggestionInput
                           value={breakdown.category}
-                          onChange={(e) =>
-                            updateBreakdown(breakdown.id, "category", e.target.value)
+                          options={categoryOptions}
+                          onChange={(value) =>
+                            updateBreakdown(breakdown.id, "category", value)
                           }
-                          placeholder="e.g., Food"
                         />
                       </TableCell>
                       <TableCell>
