@@ -214,8 +214,13 @@ export function DashboardTab() {
   const totalBlisters = filteredRows.reduce((sum, row) => sum + row.blisters, 0);
 
   const onApply = () => {
-    setFromDate(pendingFromDate);
-    setToDate(pendingToDate);
+    const nextFromDate = pendingFromDate || pendingToDate || today;
+    const nextToDate = pendingToDate || pendingFromDate || today;
+
+    setPendingFromDate(nextFromDate);
+    setPendingToDate(nextToDate);
+    setFromDate(nextFromDate);
+    setToDate(nextToDate);
     setPaymentMode(pendingPaymentMode);
   };
 
