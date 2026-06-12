@@ -17,6 +17,26 @@ function readUsername(body: JsonObject) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function readDailySalesIds(body: JsonObject) {
+  const value = body.dailySalesIds ?? body.daily_sales_ids ?? body.dailySalesId ?? body.daily_sales_id;
+  const values = Array.isArray(value) ? value : [value];
+
+  return values
+    .map((entry) => {
+      if (typeof entry === "number" && Number.isInteger(entry)) {
+        return entry;
+      }
+
+      if (typeof entry === "string" && entry.trim()) {
+        const parsed = Number(entry);
+        return Number.isInteger(parsed) ? parsed : null;
+      }
+
+      return null;
+    })
+    .filter((entry): entry is number => entry !== null && entry > 0);
+}
+
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as JsonObject | null;
 
@@ -29,6 +49,41 @@ export async function POST(request: NextRequest) {
 
   const pofNumber = readPofNumber(body);
   const username = readUsername(body);
+  const dailySalesIds = readDailySalesIds(body);
+
+  const supabase = getSupabaseAdminClient();
+
+  if (dailySalesIds.length > 0) {
+    const { data, error } = await supabase
+      .from("daily_sales")
+      .delete()
+      .in("daily_sales_id", dailySalesIds)
+      .select("daily_sales_id");
+
+    if (error) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Failed to remove daily sales row",
+          error: {
+            code: error.code,
+            details: error.message,
+          },
+        },
+        { status: 500 },
+      );
+    }
+
+    const inventoryMovementRebuildWarning =
+      await rebuildInventoryMovementDaily(supabase);
+
+    return NextResponse.json({
+      success: true,
+      data,
+      deletedCount: data?.length ?? 0,
+      inventoryMovementRebuildWarning,
+    });
+  }
 
   if (!pofNumber) {
     return NextResponse.json(
@@ -36,8 +91,6 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-
-  const supabase = getSupabaseAdminClient();
 
   if (username) {
     const { data, error } = await supabase
