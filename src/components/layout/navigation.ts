@@ -7,6 +7,7 @@
   Plug,
   Receipt,
   Scale,
+  TrendingUp,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -43,6 +44,12 @@ export const appNavGroups: NavGroup[] = [
       { href: "/budget", label: "Budget", icon: Receipt },
       { href: "/pcf", label: "PCF", icon: Wallet },
       { href: "/event-forms", label: "Event Forms", icon: ClipboardList },
+    ],
+  },
+  {
+    label: "Reports",
+    items: [
+      { href: "/cash-flow", label: "Cash Flow", icon: TrendingUp },
     ],
   },
   {
