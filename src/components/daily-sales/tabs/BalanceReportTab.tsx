@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Card } from '@/components/ui/card';
@@ -12,7 +13,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── constants (mirrors EncoderTab primaryPaymentModes) ────────────────────────
+
+const PAYMENT_MODES = [
+  'CASH',
+  'BANK',
+  'MAYA(IGI)',
+  'MAYA(ATC)',
+  'SBCOLLECT(IGI)',
+  'SBCOLLECT(ATC)',
+  'EWALLET',
+  'CHEQUE',
+  'EPOINTS',
+  'CONSIGNMENT',
+  'AR(CSA)',
+  'AR(LEADERSUPPORT)',
+] as const;
+
+type PaymentMode = (typeof PAYMENT_MODES)[number];
+
+// ── helpers ───────────────────────────────────────────────────────────────────
 
 type RangeType = 'daily' | 'weekly' | 'monthly' | 'custom';
 
@@ -61,52 +81,142 @@ type ApiResponse = {
   allExpenseCategories: string[];
 };
 
-// ── ExemptionFilter sub-component ────────────────────────────────────────────
+// ── SalesExemptionFilter — dropdown style matching EncoderTab MOP ─────────────
 
-function ExemptionFilter({
-  label,
-  options,
+function SalesExemptionFilter({
   excluded,
-  onToggle,
+  onAdd,
+  onRemove,
 }: {
-  label: string;
-  options: string[];
   excluded: string[];
-  onToggle: (item: string) => void;
+  onAdd: (mode: string) => void;
+  onRemove: (mode: string) => void;
 }) {
-  if (!options.length) return null;
+  const available = PAYMENT_MODES.filter((m) => !excluded.includes(m));
+
   return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label} — Exemptions</p>
-      <div className="flex flex-wrap gap-2">
-        {options.map((opt) => {
-          const active = excluded.includes(opt);
-          return (
-            <button
-              key={opt}
-              onClick={() => onToggle(opt)}
-              className={[
-                'px-2 py-0.5 rounded text-xs border transition-colors',
-                active
-                  ? 'bg-destructive/10 border-destructive/40 text-destructive line-through'
-                  : 'bg-muted border-border text-foreground',
-              ].join(' ')}
-            >
-              {opt}
-            </button>
-          );
-        })}
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        Sales — Mode of Payment Exemptions
+      </p>
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="w-56">
+          <Select
+            value=""
+            onValueChange={(val) => { if (val) onAdd(val); }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select mode to exempt…" />
+            </SelectTrigger>
+            <SelectContent>
+              {available.map((mode) => (
+                <SelectItem key={mode} value={mode}>
+                  {mode}
+                </SelectItem>
+              ))}
+              {available.length === 0 && (
+                <SelectItem value="__none__" disabled>
+                  All modes exempted
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {excluded.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {excluded.map((mode) => (
+              <span
+                key={mode}
+                className="inline-flex items-center gap-1 rounded bg-destructive/10 border border-destructive/30 px-2 py-0.5 text-xs text-destructive"
+              >
+                {mode}
+                <button
+                  onClick={() => onRemove(mode)}
+                  className="hover:text-destructive/70 transition-colors"
+                  aria-label={`Remove ${mode} exemption`}
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
-      {excluded.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          Excluded: {excluded.join(', ')}
-        </p>
-      )}
     </div>
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// ── ExpensesExemptionFilter — same dropdown pattern for expense categories ────
+
+function ExpensesExemptionFilter({
+  options,
+  excluded,
+  onAdd,
+  onRemove,
+}: {
+  options: string[];
+  excluded: string[];
+  onAdd: (cat: string) => void;
+  onRemove: (cat: string) => void;
+}) {
+  const available = options.filter((c) => !excluded.includes(c));
+  if (!options.length) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        Expenses — Category Exemptions
+      </p>
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="w-56">
+          <Select
+            value=""
+            onValueChange={(val) => { if (val) onAdd(val); }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category to exempt…" />
+            </SelectTrigger>
+            <SelectContent>
+              {available.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+              {available.length === 0 && (
+                <SelectItem value="__none__" disabled>
+                  All categories exempted
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {excluded.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {excluded.map((cat) => (
+              <span
+                key={cat}
+                className="inline-flex items-center gap-1 rounded bg-destructive/10 border border-destructive/30 px-2 py-0.5 text-xs text-destructive"
+              >
+                {cat}
+                <button
+                  onClick={() => onRemove(cat)}
+                  className="hover:text-destructive/70 transition-colors"
+                  aria-label={`Remove ${cat} exemption`}
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function BalanceReportTab() {
   const [rangeType, setRangeType] = useState<RangeType>('daily');
@@ -120,7 +230,10 @@ export function BalanceReportTab() {
   const [excludedPaymentModes, setExcludedPaymentModes] = useState<string[]>([]);
   const [excludedExpenseCategories, setExcludedExpenseCategories] = useState<string[]>([]);
 
-  const activeRange = useMemo(() => calcRange(rangeType, fromDate, toDate), [rangeType, fromDate, toDate]);
+  const activeRange = useMemo(
+    () => calcRange(rangeType, fromDate, toDate),
+    [rangeType, fromDate, toDate]
+  );
 
   const isCustom = rangeType === 'custom';
 
@@ -134,7 +247,6 @@ export function BalanceReportTab() {
       const json: ApiResponse = await res.json();
       if (!json.success) throw new Error('Failed to load balance report.');
       setRawData(json);
-      // Reset exemptions when data changes (new modes/categories may appear)
       setExcludedPaymentModes([]);
       setExcludedExpenseCategories([]);
     } catch (e) {
@@ -144,15 +256,13 @@ export function BalanceReportTab() {
     }
   };
 
-  // Auto-load on mount (today's daily view)
   useEffect(() => { fetchReport(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Apply client-side exemption filters ──────────────────────────────────
+  // ── Client-side exemption filtering ──────────────────────────────────────
 
   const filteredRows = useMemo<BalanceRow[]>(() => {
     if (!rawData) return [];
     return rawData.rows.map((row) => {
-      // Recompute sales excluding exempted modes
       const filteredSalesByMode: Record<string, number> = {};
       let filteredSales = 0;
       for (const [mode, amount] of Object.entries(row.salesByMode)) {
@@ -162,7 +272,6 @@ export function BalanceReportTab() {
         }
       }
 
-      // Recompute expenses excluding exempted categories
       const filteredExpensesByCategory: Record<string, number> = {};
       let filteredExpenses = 0;
       for (const [cat, amount] of Object.entries(row.expensesByCategory)) {
@@ -196,7 +305,6 @@ export function BalanceReportTab() {
     [filteredRows]
   );
 
-  // Aggregate expenses by category across all filtered rows (for summary section)
   const categoryTotals = useMemo(() => {
     const map = new Map<string, number>();
     for (const row of filteredRows) {
@@ -207,15 +315,15 @@ export function BalanceReportTab() {
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [filteredRows]);
 
-  const togglePaymentMode = (mode: string) =>
-    setExcludedPaymentModes((prev) =>
-      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]
-    );
+  const addPaymentMode = (mode: string) =>
+    setExcludedPaymentModes((prev) => (prev.includes(mode) ? prev : [...prev, mode]));
+  const removePaymentMode = (mode: string) =>
+    setExcludedPaymentModes((prev) => prev.filter((m) => m !== mode));
 
-  const toggleExpenseCategory = (cat: string) =>
-    setExcludedExpenseCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
-    );
+  const addExpenseCategory = (cat: string) =>
+    setExcludedExpenseCategories((prev) => (prev.includes(cat) ? prev : [...prev, cat]));
+  const removeExpenseCategory = (cat: string) =>
+    setExcludedExpenseCategories((prev) => prev.filter((c) => c !== cat));
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -246,8 +354,8 @@ export function BalanceReportTab() {
               <DatePicker
                 value={toDate}
                 onChange={(val) => {
-                  setToDate(val ?? today);
-                  setFromDate(val ?? today);
+                  setToDate(val);
+                  setFromDate(val);
                 }}
               />
             </div>
@@ -257,11 +365,11 @@ export function BalanceReportTab() {
             <>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">From</label>
-                <DatePicker value={fromDate} onChange={(val) => setFromDate(val ?? today)} />
+                <DatePicker value={fromDate} onChange={setFromDate} />
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">To</label>
-                <DatePicker value={toDate} onChange={(val) => setToDate(val ?? today)} />
+                <DatePicker value={toDate} onChange={setToDate} />
               </div>
             </>
           )}
@@ -271,37 +379,41 @@ export function BalanceReportTab() {
           </Button>
         </div>
 
-        {rawData && (
-          <div className="border-t pt-3 space-y-3">
-            <ExemptionFilter
-              label="Sales"
-              options={rawData.allPaymentModes}
-              excluded={excludedPaymentModes}
-              onToggle={togglePaymentMode}
-            />
-            <ExemptionFilter
-              label="Expenses"
+        {/* ── Exemption filters (shown after data loads) ── */}
+        <div className="border-t pt-3 space-y-4">
+          <SalesExemptionFilter
+            excluded={excludedPaymentModes}
+            onAdd={addPaymentMode}
+            onRemove={removePaymentMode}
+          />
+          {rawData && rawData.allExpenseCategories.length > 0 && (
+            <ExpensesExemptionFilter
               options={rawData.allExpenseCategories}
               excluded={excludedExpenseCategories}
-              onToggle={toggleExpenseCategory}
+              onAdd={addExpenseCategory}
+              onRemove={removeExpenseCategory}
             />
-          </div>
-        )}
+          )}
+        </div>
       </Card>
 
-      {/* ── Error ── */}
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* ── Daily Balance Table ── */}
       {filteredRows.length > 0 && (
         <Card className="overflow-hidden">
           <div className="px-4 py-3 border-b">
             <h2 className="text-sm font-semibold">
-              Daily Balance — {activeRange.from}
-              {activeRange.from !== activeRange.to && ` to ${activeRange.to}`}
+              Daily Balance —{' '}
+              {activeRange.from === activeRange.to
+                ? activeRange.from
+                : `${activeRange.from} to ${activeRange.to}`}
             </h2>
+            {excludedPaymentModes.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Sales excludes: {excludedPaymentModes.join(', ')}
+              </p>
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -321,10 +433,12 @@ export function BalanceReportTab() {
                     <td className="px-4 py-2 text-right tabular-nums text-destructive/80">
                       {row.totalExpenses > 0 ? `(${peso(row.totalExpenses)})` : '—'}
                     </td>
-                    <td className={[
-                      'px-4 py-2 text-right tabular-nums font-medium',
-                      row.balance < 0 ? 'text-destructive' : 'text-green-600',
-                    ].join(' ')}>
+                    <td
+                      className={[
+                        'px-4 py-2 text-right tabular-nums font-medium',
+                        row.balance < 0 ? 'text-destructive' : 'text-green-600',
+                      ].join(' ')}
+                    >
                       {peso(row.balance)}
                     </td>
                   </tr>
@@ -333,14 +447,20 @@ export function BalanceReportTab() {
               <tfoot className="border-t-2 bg-muted/50 font-semibold">
                 <tr>
                   <td className="px-4 py-2">Total</td>
-                  <td className="px-4 py-2 text-right tabular-nums">{peso(grandTotals.totalSales)}</td>
-                  <td className="px-4 py-2 text-right tabular-nums text-destructive/80">
-                    {grandTotals.totalExpenses > 0 ? `(${peso(grandTotals.totalExpenses)})` : '—'}
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {peso(grandTotals.totalSales)}
                   </td>
-                  <td className={[
-                    'px-4 py-2 text-right tabular-nums',
-                    grandTotals.balance < 0 ? 'text-destructive' : 'text-green-600',
-                  ].join(' ')}>
+                  <td className="px-4 py-2 text-right tabular-nums text-destructive/80">
+                    {grandTotals.totalExpenses > 0
+                      ? `(${peso(grandTotals.totalExpenses)})`
+                      : '—'}
+                  </td>
+                  <td
+                    className={[
+                      'px-4 py-2 text-right tabular-nums',
+                      grandTotals.balance < 0 ? 'text-destructive' : 'text-green-600',
+                    ].join(' ')}
+                  >
                     {peso(grandTotals.balance)}
                   </td>
                 </tr>
@@ -381,7 +501,9 @@ export function BalanceReportTab() {
               <tfoot className="border-t-2 bg-muted/50 font-semibold">
                 <tr>
                   <td className="px-4 py-2">Total</td>
-                  <td className="px-4 py-2 text-right tabular-nums">{peso(grandTotals.totalExpenses)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {peso(grandTotals.totalExpenses)}
+                  </td>
                   <td className="px-4 py-2 text-right tabular-nums">100%</td>
                 </tr>
               </tfoot>
@@ -390,7 +512,6 @@ export function BalanceReportTab() {
         </Card>
       )}
 
-      {/* ── Empty state ── */}
       {!isLoading && rawData && filteredRows.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
           No data found for the selected period.
