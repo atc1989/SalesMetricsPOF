@@ -13,24 +13,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// ── constants (mirrors EncoderTab primaryPaymentModes) ────────────────────────
+// ── constants ─────────────────────────────────────────────────────────────────
 
-const PAYMENT_MODES = [
-  'CASH',
-  'BANK',
-  'MAYA(IGI)',
-  'MAYA(ATC)',
-  'SBCOLLECT(IGI)',
-  'SBCOLLECT(ATC)',
-  'EWALLET',
-  'CHEQUE',
-  'EPOINTS',
-  'CONSIGNMENT',
-  'AR(CSA)',
-  'AR(LEADERSUPPORT)',
+// Mirrors EncoderTab primaryPaymentModes
+const SALES_PAYMENT_MODES = [
+  'CASH', 'BANK', 'MAYA(IGI)', 'MAYA(ATC)', 'SBCOLLECT(IGI)', 'SBCOLLECT(ATC)',
+  'EWALLET', 'CHEQUE', 'EPOINTS', 'CONSIGNMENT', 'AR(CSA)', 'AR(LEADERSUPPORT)',
 ] as const;
 
-type PaymentMode = (typeof PAYMENT_MODES)[number];
+// Bill payment methods from billing schema
+const BILL_PAYMENT_METHODS = [
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+  { value: 'check', label: 'Check' },
+  { value: 'cash', label: 'Cash' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+type BillPaymentMethod = (typeof BILL_PAYMENT_METHODS)[number]['value'];
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -62,12 +61,17 @@ function calcRange(type: RangeType, from: string, to: string): { from: string; t
 const peso = (v: number) =>
   `₱${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+function methodLabel(value: string) {
+  return BILL_PAYMENT_METHODS.find((m) => m.value === value)?.label ?? value;
+}
+
 // ── types ─────────────────────────────────────────────────────────────────────
 
 type BalanceRow = {
   date: string;
   salesByMode: Record<string, number>;
   totalSales: number;
+  expensesByPaymentMethod: Record<string, number>;
   expensesByCategory: Record<string, number>;
   totalExpenses: number;
   balance: number;
@@ -78,137 +82,69 @@ type ApiResponse = {
   rows: BalanceRow[];
   totals: { totalSales: number; totalExpenses: number; balance: number };
   allPaymentModes: string[];
-  allExpenseCategories: string[];
+  allBillPaymentMethods: string[];
 };
 
-// ── SalesExemptionFilter — dropdown style matching EncoderTab MOP ─────────────
+// ── ExemptionDropdown — reusable Select + chips ───────────────────────────────
 
-function SalesExemptionFilter({
-  excluded,
-  onAdd,
-  onRemove,
-}: {
-  excluded: string[];
-  onAdd: (mode: string) => void;
-  onRemove: (mode: string) => void;
-}) {
-  const available = PAYMENT_MODES.filter((m) => !excluded.includes(m));
-
-  return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        Sales — Mode of Payment Exemptions
-      </p>
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="w-56">
-          <Select
-            value=""
-            onValueChange={(val) => { if (val) onAdd(val); }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select mode to exempt…" />
-            </SelectTrigger>
-            <SelectContent>
-              {available.map((mode) => (
-                <SelectItem key={mode} value={mode}>
-                  {mode}
-                </SelectItem>
-              ))}
-              {available.length === 0 && (
-                <SelectItem value="__none__" disabled>
-                  All modes exempted
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {excluded.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {excluded.map((mode) => (
-              <span
-                key={mode}
-                className="inline-flex items-center gap-1 rounded bg-destructive/10 border border-destructive/30 px-2 py-0.5 text-xs text-destructive"
-              >
-                {mode}
-                <button
-                  onClick={() => onRemove(mode)}
-                  className="hover:text-destructive/70 transition-colors"
-                  aria-label={`Remove ${mode} exemption`}
-                >
-                  <X size={10} />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── ExpensesExemptionFilter — same dropdown pattern for expense categories ────
-
-function ExpensesExemptionFilter({
+function ExemptionDropdown({
+  label,
   options,
   excluded,
   onAdd,
   onRemove,
 }: {
-  options: string[];
+  label: string;
+  options: { value: string; label: string }[];
   excluded: string[];
-  onAdd: (cat: string) => void;
-  onRemove: (cat: string) => void;
+  onAdd: (value: string) => void;
+  onRemove: (value: string) => void;
 }) {
-  const available = options.filter((c) => !excluded.includes(c));
-  if (!options.length) return null;
+  const available = options.filter((o) => !excluded.includes(o.value));
 
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        Expenses — Category Exemptions
+        {label} — Exemptions
       </p>
       <div className="flex flex-wrap items-start gap-3">
         <div className="w-56">
-          <Select
-            value=""
-            onValueChange={(val) => { if (val) onAdd(val); }}
-          >
+          <Select value="" onValueChange={(val) => { if (val) onAdd(val); }}>
             <SelectTrigger>
-              <SelectValue placeholder="Select category to exempt…" />
+              <SelectValue placeholder="Select to exempt…" />
             </SelectTrigger>
             <SelectContent>
-              {available.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
+              {available.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
                 </SelectItem>
               ))}
               {available.length === 0 && (
-                <SelectItem value="__none__" disabled>
-                  All categories exempted
-                </SelectItem>
+                <SelectItem value="__none__" disabled>All exempted</SelectItem>
               )}
             </SelectContent>
           </Select>
         </div>
-
         {excluded.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {excluded.map((cat) => (
-              <span
-                key={cat}
-                className="inline-flex items-center gap-1 rounded bg-destructive/10 border border-destructive/30 px-2 py-0.5 text-xs text-destructive"
-              >
-                {cat}
-                <button
-                  onClick={() => onRemove(cat)}
-                  className="hover:text-destructive/70 transition-colors"
-                  aria-label={`Remove ${cat} exemption`}
+            {excluded.map((val) => {
+              const found = options.find((o) => o.value === val);
+              return (
+                <span
+                  key={val}
+                  className="inline-flex items-center gap-1 rounded bg-destructive/10 border border-destructive/30 px-2 py-0.5 text-xs text-destructive"
                 >
-                  <X size={10} />
-                </button>
-              </span>
-            ))}
+                  {found?.label ?? val}
+                  <button
+                    onClick={() => onRemove(val)}
+                    className="hover:text-destructive/70 transition-colors"
+                    aria-label={`Remove exemption`}
+                  >
+                    <X size={10} />
+                  </button>
+                </span>
+              );
+            })}
           </div>
         )}
       </div>
@@ -228,7 +164,7 @@ export function BalanceReportTab() {
   const [error, setError] = useState<string | null>(null);
 
   const [excludedPaymentModes, setExcludedPaymentModes] = useState<string[]>([]);
-  const [excludedExpenseCategories, setExcludedExpenseCategories] = useState<string[]>([]);
+  const [excludedBillMethods, setExcludedBillMethods] = useState<string[]>([]);
 
   const activeRange = useMemo(
     () => calcRange(rangeType, fromDate, toDate),
@@ -248,7 +184,7 @@ export function BalanceReportTab() {
       if (!json.success) throw new Error('Failed to load balance report.');
       setRawData(json);
       setExcludedPaymentModes([]);
-      setExcludedExpenseCategories([]);
+      setExcludedBillMethods([]);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error');
     } finally {
@@ -263,8 +199,9 @@ export function BalanceReportTab() {
   const filteredRows = useMemo<BalanceRow[]>(() => {
     if (!rawData) return [];
     return rawData.rows.map((row) => {
-      const filteredSalesByMode: Record<string, number> = {};
+      // Filter sales by excluded payment modes
       let filteredSales = 0;
+      const filteredSalesByMode: Record<string, number> = {};
       for (const [mode, amount] of Object.entries(row.salesByMode)) {
         if (!excludedPaymentModes.includes(mode)) {
           filteredSalesByMode[mode] = amount;
@@ -272,25 +209,43 @@ export function BalanceReportTab() {
         }
       }
 
-      const filteredExpensesByCategory: Record<string, number> = {};
+      // Filter expenses by excluded bill payment methods
       let filteredExpenses = 0;
-      for (const [cat, amount] of Object.entries(row.expensesByCategory)) {
-        if (!excludedExpenseCategories.includes(cat)) {
-          filteredExpensesByCategory[cat] = amount;
+      const filteredExpByMethod: Record<string, number> = {};
+      // Track which bill methods are excluded to proportionally reduce category totals
+      const excludedMethodAmounts = Object.entries(row.expensesByPaymentMethod)
+        .filter(([m]) => excludedBillMethods.includes(m))
+        .reduce((sum, [, a]) => sum + a, 0);
+      const totalBillAmount = Object.values(row.expensesByPaymentMethod).reduce((a, b) => a + b, 0);
+
+      for (const [method, amount] of Object.entries(row.expensesByPaymentMethod)) {
+        if (!excludedBillMethods.includes(method)) {
+          filteredExpByMethod[method] = amount;
           filteredExpenses += amount;
         }
+      }
+
+      // Scale categories proportionally when methods are excluded
+      const scale = totalBillAmount > 0
+        ? (totalBillAmount - excludedMethodAmounts) / totalBillAmount
+        : 1;
+      const filteredExpByCategory: Record<string, number> = {};
+      for (const [cat, amount] of Object.entries(row.expensesByCategory)) {
+        const scaled = amount * scale;
+        if (scaled > 0) filteredExpByCategory[cat] = scaled;
       }
 
       return {
         ...row,
         salesByMode: filteredSalesByMode,
         totalSales: filteredSales,
-        expensesByCategory: filteredExpensesByCategory,
+        expensesByPaymentMethod: filteredExpByMethod,
+        expensesByCategory: filteredExpByCategory,
         totalExpenses: filteredExpenses,
         balance: filteredSales - filteredExpenses,
       };
     });
-  }, [rawData, excludedPaymentModes, excludedExpenseCategories]);
+  }, [rawData, excludedPaymentModes, excludedBillMethods]);
 
   const grandTotals = useMemo(
     () =>
@@ -315,15 +270,17 @@ export function BalanceReportTab() {
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [filteredRows]);
 
-  const addPaymentMode = (mode: string) =>
-    setExcludedPaymentModes((prev) => (prev.includes(mode) ? prev : [...prev, mode]));
-  const removePaymentMode = (mode: string) =>
-    setExcludedPaymentModes((prev) => prev.filter((m) => m !== mode));
+  const salesModeOptions = useMemo(
+    () => SALES_PAYMENT_MODES.map((m) => ({ value: m, label: m })),
+    []
+  );
 
-  const addExpenseCategory = (cat: string) =>
-    setExcludedExpenseCategories((prev) => (prev.includes(cat) ? prev : [...prev, cat]));
-  const removeExpenseCategory = (cat: string) =>
-    setExcludedExpenseCategories((prev) => prev.filter((c) => c !== cat));
+  const billMethodOptions = useMemo(
+    () => BILL_PAYMENT_METHODS.filter((m) =>
+      !rawData || rawData.allBillPaymentMethods.includes(m.value)
+    ),
+    [rawData]
+  );
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -353,10 +310,7 @@ export function BalanceReportTab() {
               <label className="text-xs text-muted-foreground">Anchor date</label>
               <DatePicker
                 value={toDate}
-                onChange={(val) => {
-                  setToDate(val);
-                  setFromDate(val);
-                }}
+                onChange={(val) => { setToDate(val); setFromDate(val); }}
               />
             </div>
           )}
@@ -379,21 +333,21 @@ export function BalanceReportTab() {
           </Button>
         </div>
 
-        {/* ── Exemption filters (shown after data loads) ── */}
         <div className="border-t pt-3 space-y-4">
-          <SalesExemptionFilter
+          <ExemptionDropdown
+            label="Sales (Mode of Payment)"
+            options={salesModeOptions}
             excluded={excludedPaymentModes}
-            onAdd={addPaymentMode}
-            onRemove={removePaymentMode}
+            onAdd={(v) => setExcludedPaymentModes((p) => p.includes(v) ? p : [...p, v])}
+            onRemove={(v) => setExcludedPaymentModes((p) => p.filter((m) => m !== v))}
           />
-          {rawData && rawData.allExpenseCategories.length > 0 && (
-            <ExpensesExemptionFilter
-              options={rawData.allExpenseCategories}
-              excluded={excludedExpenseCategories}
-              onAdd={addExpenseCategory}
-              onRemove={removeExpenseCategory}
-            />
-          )}
+          <ExemptionDropdown
+            label="Expenses (Payment Method)"
+            options={[...BILL_PAYMENT_METHODS]}
+            excluded={excludedBillMethods}
+            onAdd={(v) => setExcludedBillMethods((p) => p.includes(v) ? p : [...p, v])}
+            onRemove={(v) => setExcludedBillMethods((p) => p.filter((m) => m !== v))}
+          />
         </div>
       </Card>
 
@@ -409,9 +363,10 @@ export function BalanceReportTab() {
                 ? activeRange.from
                 : `${activeRange.from} to ${activeRange.to}`}
             </h2>
-            {excludedPaymentModes.length > 0 && (
+            {(excludedPaymentModes.length > 0 || excludedBillMethods.length > 0) && (
               <p className="text-xs text-muted-foreground mt-0.5">
-                Sales excludes: {excludedPaymentModes.join(', ')}
+                {excludedPaymentModes.length > 0 && `Sales excludes: ${excludedPaymentModes.join(', ')}. `}
+                {excludedBillMethods.length > 0 && `Expenses excludes: ${excludedBillMethods.map(methodLabel).join(', ')}.`}
               </p>
             )}
           </div>
@@ -421,7 +376,7 @@ export function BalanceReportTab() {
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Date</th>
                   <th className="text-right px-4 py-2 font-medium">Sales</th>
-                  <th className="text-right px-4 py-2 font-medium">Expenses</th>
+                  <th className="text-right px-4 py-2 font-medium">Budget (Expenses)</th>
                   <th className="text-right px-4 py-2 font-medium">Balance</th>
                 </tr>
               </thead>
@@ -433,12 +388,10 @@ export function BalanceReportTab() {
                     <td className="px-4 py-2 text-right tabular-nums text-destructive/80">
                       {row.totalExpenses > 0 ? `(${peso(row.totalExpenses)})` : '—'}
                     </td>
-                    <td
-                      className={[
-                        'px-4 py-2 text-right tabular-nums font-medium',
-                        row.balance < 0 ? 'text-destructive' : 'text-green-600',
-                      ].join(' ')}
-                    >
+                    <td className={[
+                      'px-4 py-2 text-right tabular-nums font-medium',
+                      row.balance < 0 ? 'text-destructive' : 'text-green-600',
+                    ].join(' ')}>
                       {peso(row.balance)}
                     </td>
                   </tr>
@@ -447,20 +400,14 @@ export function BalanceReportTab() {
               <tfoot className="border-t-2 bg-muted/50 font-semibold">
                 <tr>
                   <td className="px-4 py-2">Total</td>
-                  <td className="px-4 py-2 text-right tabular-nums">
-                    {peso(grandTotals.totalSales)}
-                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">{peso(grandTotals.totalSales)}</td>
                   <td className="px-4 py-2 text-right tabular-nums text-destructive/80">
-                    {grandTotals.totalExpenses > 0
-                      ? `(${peso(grandTotals.totalExpenses)})`
-                      : '—'}
+                    {grandTotals.totalExpenses > 0 ? `(${peso(grandTotals.totalExpenses)})` : '—'}
                   </td>
-                  <td
-                    className={[
-                      'px-4 py-2 text-right tabular-nums',
-                      grandTotals.balance < 0 ? 'text-destructive' : 'text-green-600',
-                    ].join(' ')}
-                  >
+                  <td className={[
+                    'px-4 py-2 text-right tabular-nums',
+                    grandTotals.balance < 0 ? 'text-destructive' : 'text-green-600',
+                  ].join(' ')}>
                     {peso(grandTotals.balance)}
                   </td>
                 </tr>
@@ -470,11 +417,11 @@ export function BalanceReportTab() {
         </Card>
       )}
 
-      {/* ── Expenses by Category ── */}
+      {/* ── Budget Expenses by Category ── */}
       {categoryTotals.length > 0 && (
         <Card className="overflow-hidden">
           <div className="px-4 py-3 border-b">
-            <h2 className="text-sm font-semibold">Expenses by Category</h2>
+            <h2 className="text-sm font-semibold">Budget Expenses by Category</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -482,7 +429,7 @@ export function BalanceReportTab() {
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Category</th>
                   <th className="text-right px-4 py-2 font-medium">Amount</th>
-                  <th className="text-right px-4 py-2 font-medium">% of Expenses</th>
+                  <th className="text-right px-4 py-2 font-medium">% of Budget</th>
                 </tr>
               </thead>
               <tbody>
@@ -501,9 +448,7 @@ export function BalanceReportTab() {
               <tfoot className="border-t-2 bg-muted/50 font-semibold">
                 <tr>
                   <td className="px-4 py-2">Total</td>
-                  <td className="px-4 py-2 text-right tabular-nums">
-                    {peso(grandTotals.totalExpenses)}
-                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">{peso(grandTotals.totalExpenses)}</td>
                   <td className="px-4 py-2 text-right tabular-nums">100%</td>
                 </tr>
               </tfoot>

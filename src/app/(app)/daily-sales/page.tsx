@@ -9,7 +9,6 @@ import { ReportsTab } from "@/components/daily-sales/tabs/ReportsTab";
 import { SalesReportTab } from "@/components/daily-sales/tabs/SalesReportTab";
 import { SalesMetricsTab } from "@/components/daily-sales/tabs/SalesMetricsTab";
 import { UsersTab } from "@/components/daily-sales/tabs/UsersTab";
-import { BalanceReportTab } from "@/components/daily-sales/tabs/BalanceReportTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TAB_ITEMS = [
@@ -18,7 +17,6 @@ const TAB_ITEMS = [
   { id: "reports", label: "Reports" },
   { id: "inventory-report", label: "Inventory Report" },
   { id: "sales-report", label: "Sales Report" },
-  { id: "balance-report", label: "Balance Report" },
   { id: "users", label: "Users" },
   { id: "sales-metrics", label: "Sales Metrics" },
 ] as const;
@@ -58,9 +56,6 @@ export default function DailySalesPage() {
         </TabsContent>
         <TabsContent value="sales-report" className="mt-6">
           {activeTab === "sales-report" && <SalesReportTab />}
-        </TabsContent>
-        <TabsContent value="balance-report" className="mt-6">
-          {activeTab === "balance-report" && <BalanceReportTab />}
         </TabsContent>
         <TabsContent value="users" className="mt-6">
           {activeTab === "users" && <UsersTab />}

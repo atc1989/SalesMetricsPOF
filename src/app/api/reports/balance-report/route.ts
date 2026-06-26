@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
 
   const supabase = getSupabaseAdminClient();
 
-  const [salesResult, expensesResult] = await Promise.all([
+  const [salesResult, billsResult] = await Promise.all([
+    // Sales from daily_sales
     supabase
       .from("daily_sales")
       .select(
@@ -32,13 +33,17 @@ export async function GET(request: NextRequest) {
       .lte("trans_date", dateTo)
       .order("trans_date", { ascending: true }),
 
+    // Expenses from bills (total budget), excluding void/rejected
+    // Join bill_breakdowns for category breakdown
     supabase
-      .from("pcf_transactions")
-      .select("date, amount_out, description, payee")
-      .eq("transaction_type", "expense")
-      .gte("date", dateFrom)
-      .lte("date", dateTo)
-      .order("date", { ascending: true }),
+      .from("bills")
+      .select(
+        "id, request_date, total_amount, payment_method, status, bill_breakdowns(category, amount)"
+      )
+      .gte("request_date", dateFrom)
+      .lte("request_date", dateTo)
+      .not("status", "in", '("void","rejected")')
+      .order("request_date", { ascending: true }),
   ]);
 
   if (salesResult.error) {
@@ -48,15 +53,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (expensesResult.error) {
+  if (billsResult.error) {
     return NextResponse.json(
-      { success: false, message: expensesResult.error.message },
+      { success: false, message: billsResult.error.message },
       { status: 500 }
     );
   }
 
-  // --- Build per-date sales map keyed by payment mode ---
-  // salesByDate[date][paymentMode] = amount
+  // --- Sales: per-date, per-payment-mode ---
   const salesByDate = new Map<string, Map<string, number>>();
 
   for (const row of salesResult.data ?? []) {
@@ -78,23 +82,40 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // --- Build per-date expenses map keyed by category (description || payee) ---
+  // --- Expenses (bills): per-date, per-payment-method; categories from bill_breakdowns ---
+  // expensesByDate[date][paymentMethod] = total bill amount
   const expensesByDate = new Map<string, Map<string, number>>();
+  // categoriesByDate[date][category] = total breakdown amount
+  const categoriesByDate = new Map<string, Map<string, number>>();
 
-  for (const row of expensesResult.data ?? []) {
-    const date = (row.date as string) ?? "";
+  for (const bill of billsResult.data ?? []) {
+    const date = (bill.request_date as string) ?? "";
     if (!date) continue;
 
-    const category =
-      ((row.description as string) || (row.payee as string) || "Uncategorized").trim() ||
-      "Uncategorized";
+    const method = (bill.payment_method as string) || "other";
+    const billAmount = toNum(bill.total_amount);
 
     if (!expensesByDate.has(date)) expensesByDate.set(date, new Map());
-    const dateMap = expensesByDate.get(date)!;
-    dateMap.set(category, (dateMap.get(category) ?? 0) + toNum(row.amount_out));
+    const expMap = expensesByDate.get(date)!;
+    expMap.set(method, (expMap.get(method) ?? 0) + billAmount);
+
+    // Categories from bill_breakdowns
+    if (!categoriesByDate.has(date)) categoriesByDate.set(date, new Map());
+    const catMap = categoriesByDate.get(date)!;
+
+    const breakdowns = (bill.bill_breakdowns as { category: string | null; amount: unknown }[]) ?? [];
+    if (breakdowns.length > 0) {
+      for (const bd of breakdowns) {
+        const cat = (bd.category || "Uncategorized").trim() || "Uncategorized";
+        catMap.set(cat, (catMap.get(cat) ?? 0) + toNum(bd.amount));
+      }
+    } else {
+      // No breakdown rows — bucket under "Uncategorized"
+      catMap.set("Uncategorized", (catMap.get("Uncategorized") ?? 0) + billAmount);
+    }
   }
 
-  // --- Collect all unique dates, payment modes, and expense categories ---
+  // --- Collect all unique dates ---
   const allDates = new Set<string>([
     ...salesByDate.keys(),
     ...expensesByDate.keys(),
@@ -102,33 +123,29 @@ export async function GET(request: NextRequest) {
   const sortedDates = Array.from(allDates).sort();
 
   const allPaymentModes = new Set<string>();
-  for (const dateMap of salesByDate.values()) {
-    for (const mode of dateMap.keys()) allPaymentModes.add(mode);
-  }
+  for (const m of salesByDate.values()) for (const k of m.keys()) allPaymentModes.add(k);
 
-  const allExpenseCategories = new Set<string>();
-  for (const dateMap of expensesByDate.values()) {
-    for (const cat of dateMap.keys()) allExpenseCategories.add(cat);
-  }
+  const allBillPaymentMethods = new Set<string>();
+  for (const m of expensesByDate.values()) for (const k of m.keys()) allBillPaymentMethods.add(k);
 
   // --- Build result rows ---
   const rows = sortedDates.map((date) => {
     const salesModeMap = salesByDate.get(date) ?? new Map();
-    const expCatMap = expensesByDate.get(date) ?? new Map();
+    const expMethodMap = expensesByDate.get(date) ?? new Map();
+    const catMap = categoriesByDate.get(date) ?? new Map();
 
-    const salesByMode: Record<string, number> = {};
-    for (const [mode, amount] of salesModeMap) salesByMode[mode] = amount;
-
-    const expensesByCategory: Record<string, number> = {};
-    for (const [cat, amount] of expCatMap) expensesByCategory[cat] = amount;
+    const salesByMode: Record<string, number> = Object.fromEntries(salesModeMap);
+    const expensesByPaymentMethod: Record<string, number> = Object.fromEntries(expMethodMap);
+    const expensesByCategory: Record<string, number> = Object.fromEntries(catMap);
 
     const totalSales = Array.from(salesModeMap.values()).reduce((a, b) => a + b, 0);
-    const totalExpenses = Array.from(expCatMap.values()).reduce((a, b) => a + b, 0);
+    const totalExpenses = Array.from(expMethodMap.values()).reduce((a, b) => a + b, 0);
 
     return {
       date,
       salesByMode,
       totalSales,
+      expensesByPaymentMethod,
       expensesByCategory,
       totalExpenses,
       balance: totalSales - totalExpenses,
@@ -149,6 +166,6 @@ export async function GET(request: NextRequest) {
     rows,
     totals,
     allPaymentModes: Array.from(allPaymentModes).sort(),
-    allExpenseCategories: Array.from(allExpenseCategories).sort(),
+    allBillPaymentMethods: Array.from(allBillPaymentMethods).sort(),
   });
 }
