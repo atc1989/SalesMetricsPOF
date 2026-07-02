@@ -119,6 +119,7 @@ const paymentTypeTableIds: Array<{ id: string; title: string; label: string }> =
   { id: 'tblCreditCard', title: 'Credit Card', label: 'Credit Card' },
   { id: 'tblCheque', title: 'Cheque', label: 'Cheque' },
   { id: 'tblEpoints', title: 'Epoints', label: 'E-Points' },
+  { id: 'tblConsignment', title: 'Consignment', label: 'Consignment' },
 ];
 
 const cashDenominations: Array<{ label: string; id: CashFieldId; spanId: string; multiplier: number }> = [
@@ -172,6 +173,7 @@ const defaultSnapshot: SnapshotData = {
     { label: 'Accounts Receivable - Leaders Support', amount: 0 },
     { label: 'Cheque', amount: 0 },
     { label: 'E-Points', amount: 0 },
+    { label: 'Consignment', amount: 0 },
   ],
   newAccounts: { silver: 0, gold: 0, platinum: 0 },
   upgrades: { silver: 0, gold: 0, platinum: 0 },
@@ -201,6 +203,7 @@ const paymentLabelToModes: Record<string, string[]> = {
   'Accounts Receivable - Leaders Support': ['AR(LEADERSUPPORT)', 'AR LEADER SUPPORT'],
   Cheque: ['CHEQUE'],
   'E-Points': ['EPOINTS', 'E-POINTS'],
+  Consignment: ['CONSIGNMENT'],
 };
 
 const paymentTitleToModes: Record<string, string[]> = {
@@ -215,6 +218,7 @@ const paymentTitleToModes: Record<string, string[]> = {
   'CREDIT CARD': ['CREDIT CARD'],
   CHEQUE: ['CHEQUE'],
   EPOINTS: ['EPOINTS', 'E-POINTS'],
+  CONSIGNMENT: ['CONSIGNMENT'],
 };
 
 const normalizeKey = (value: string) => value.trim().toUpperCase();
