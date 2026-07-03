@@ -30,6 +30,12 @@ type AmountRow = {
   amount: number;
 };
 
+type UpgradePackageRow = {
+  label: string;
+  packageType: string;
+  amount: number;
+};
+
 type SnapshotData = {
   packageRows: PackageRow[];
   msPackageRows: PackageRow[];
@@ -40,6 +46,7 @@ type SnapshotData = {
   paymentBreakdownRows: AmountRow[];
   newAccounts: { silver: number; gold: number; platinum: number };
   upgrades: { silver: number; gold: number; platinum: number };
+  upgradePackages: UpgradePackageRow[];
 };
 
 type PackageTotalsApiRow = {
@@ -177,6 +184,11 @@ const defaultSnapshot: SnapshotData = {
   ],
   newAccounts: { silver: 0, gold: 0, platinum: 0 },
   upgrades: { silver: 0, gold: 0, platinum: 0 },
+  upgradePackages: [
+    { label: 'USilverGold', packageType: 'USILVERGOLD', amount: 0 },
+    { label: 'UGoldPlatinum', packageType: 'UGOLDPLATINUM', amount: 0 },
+    { label: 'USilverPlatinum', packageType: 'USILVERPLATINUM', amount: 0 },
+  ],
 };
 
 const defaultCashPieces: Record<CashFieldId, number> = {
@@ -626,6 +638,10 @@ export function SalesReportTab() {
         paymentBreakdownRows,
         newAccounts: salesPayload.newAccounts ?? defaultSnapshot.newAccounts,
         upgrades: salesPayload.upgrades ?? defaultSnapshot.upgrades,
+        upgradePackages: defaultSnapshot.upgradePackages.map((row) => {
+          const totals = packageMap.get(row.packageType);
+          return { ...row, amount: totals?.total_sales ?? 0 };
+        }),
       }));
       setPackageTotals(salesPayload.packageTotals ?? []);
       setPaymentSummary(backendPaymentSummary);
@@ -896,6 +912,14 @@ export function SalesReportTab() {
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {paymentTypeRows.map((table) => (
                 <PaymentTable key={table.id} id={table.id} title={table.title} rows={table.rows} />
+              ))}
+              {snapshot.upgradePackages.map((row) => (
+                <PaymentTable
+                  key={row.packageType}
+                  id={`tbl${row.packageType}`}
+                  title={row.label}
+                  rows={[{ label: row.label, amount: row.amount }]}
+                />
               ))}
             </div>
 
