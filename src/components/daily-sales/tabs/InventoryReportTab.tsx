@@ -495,7 +495,7 @@ export function InventoryReportTab() {
   const totals = sumInventoryRows(sortedRows);
 
   return (
-    <section id="inventory-report" className="mt-4 space-y-4">
+    <section id="inventory-report" className="mt-4 w-full min-w-0 space-y-4 overflow-hidden">
       <Card className="p-3">
         <div className="grid gap-2 md:grid-cols-4">
           <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
