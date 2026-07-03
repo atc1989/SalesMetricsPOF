@@ -556,7 +556,7 @@ export function InventoryReportTab() {
         {errorMessage ? (
           <p className="px-4 pb-2 text-xs text-amber-500">{errorMessage}</p>
         ) : null}
-        <div className="app-table-scroll">
+        <div className="app-table-scroll w-full">
           <table id="tblDailyInventory" className="min-w-[2400px] text-sm">
             <thead className="bg-muted/50 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
               <tr>

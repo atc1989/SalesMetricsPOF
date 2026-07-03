@@ -25,7 +25,7 @@ export default function DailySalesPage() {
   const [activeTab, setActiveTab] = useState<(typeof TAB_ITEMS)[number]["id"]>("dashboard");
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Daily Sales</h1>
         <p className="text-sm text-muted-foreground">
