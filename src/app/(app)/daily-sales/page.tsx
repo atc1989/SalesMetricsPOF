@@ -51,7 +51,7 @@ export default function DailySalesPage() {
         <TabsContent value="reports" className="mt-6">
           {activeTab === "reports" && <ReportsTab />}
         </TabsContent>
-        <TabsContent value="inventory-report" className="mt-6">
+        <TabsContent value="inventory-report" className="mt-6 min-w-0 overflow-hidden">
           {activeTab === "inventory-report" && <InventoryReportTab />}
         </TabsContent>
         <TabsContent value="sales-report" className="mt-6">

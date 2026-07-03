@@ -30,13 +30,6 @@ type AmountRow = {
   amount: number;
 };
 
-type UpgradePackageRow = {
-  label: string;
-  packageType: string;
-  qty: number;
-  amount: number;
-};
-
 type SnapshotData = {
   packageRows: PackageRow[];
   msPackageRows: PackageRow[];
@@ -47,7 +40,6 @@ type SnapshotData = {
   paymentBreakdownRows: AmountRow[];
   newAccounts: { silver: number; gold: number; platinum: number };
   upgrades: { silver: number; gold: number; platinum: number };
-  upgradePackages: UpgradePackageRow[];
 };
 
 type PackageTotalsApiRow = {
@@ -185,11 +177,6 @@ const defaultSnapshot: SnapshotData = {
   ],
   newAccounts: { silver: 0, gold: 0, platinum: 0 },
   upgrades: { silver: 0, gold: 0, platinum: 0 },
-  upgradePackages: [
-    { label: 'USilverGold', packageType: 'USILVERGOLD', qty: 0, amount: 0 },
-    { label: 'UGoldPlatinum', packageType: 'UGOLDPLATINUM', qty: 0, amount: 0 },
-    { label: 'USilverPlatinum', packageType: 'USILVERPLATINUM', qty: 0, amount: 0 },
-  ],
 };
 
 const defaultCashPieces: Record<CashFieldId, number> = {
@@ -639,14 +626,6 @@ export function SalesReportTab() {
         paymentBreakdownRows,
         newAccounts: salesPayload.newAccounts ?? defaultSnapshot.newAccounts,
         upgrades: salesPayload.upgrades ?? defaultSnapshot.upgrades,
-        upgradePackages: defaultSnapshot.upgradePackages.map((row) => {
-          const totals = packageMap.get(row.packageType);
-          return {
-            ...row,
-            qty: totals?.total_quantity ?? 0,
-            amount: totals?.total_sales ?? 0,
-          };
-        }),
       }));
       setPackageTotals(salesPayload.packageTotals ?? []);
       setPaymentSummary(backendPaymentSummary);
@@ -863,7 +842,7 @@ export function SalesReportTab() {
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2">
               <div className="app-table-scroll overflow-hidden rounded-md border border-border">
                 <table id="tblNewAccounts" className="min-w-full border-collapse text-xs">
                   <thead className="bg-muted/50 text-left text-[10px] uppercase text-muted-foreground">
@@ -912,35 +891,6 @@ export function SalesReportTab() {
                 </table>
               </div>
 
-              <div className="app-table-scroll overflow-hidden rounded-md border border-border md:col-span-2 xl:col-span-1">
-                <table id="tblUpgradePackages" className="min-w-full border-collapse text-xs">
-                  <thead className="bg-muted/50 text-left text-[10px] uppercase text-muted-foreground">
-                    <tr>
-                      <th className="border-b border-border px-2 py-1.5 font-medium" colSpan={3}>
-                        Upgrade Packages
-                      </th>
-                    </tr>
-                    <tr>
-                      <th className="border-b border-border px-2 py-1.5 font-medium">Package</th>
-                      <th className="border-b border-border px-2 py-1.5 font-medium">Qty</th>
-                      <th className="border-b border-border px-2 py-1.5 font-medium">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {snapshot.upgradePackages.map((row) => (
-                      <tr key={row.packageType} className="border-t border-border">
-                        <td className="px-2 py-1.5 font-medium">{row.label}</td>
-                        <td className="px-2 py-1.5 tabular-nums">{row.qty}</td>
-                        <td className="px-2 py-1.5 tabular-nums">
-                          {row.amount > 0
-                            ? row.amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                            : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
