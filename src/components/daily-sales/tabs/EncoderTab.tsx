@@ -305,11 +305,9 @@ const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOve
   const sales = manualOverrides.sales ? input.sales : Math.max(price * quantity - oneTimeDiscount, 0);
   const released = manualOverrides.released ? input.released : noOfBottles;
   const releasedBlpk = manualOverrides.releasedBlpk ? input.releasedBlpk : blisterCount;
-  const normalizedSalesTwo = manualOverrides.salesTwo
-    ? input.salesTwo
-    : hasSecondaryPayment(input.paymentModeTwo)
-      ? Math.min(Math.max(input.salesTwo, 0), sales)
-      : 0;
+  const normalizedSalesTwo = hasSecondaryPayment(input.paymentModeTwo)
+    ? Math.min(Math.max(input.salesTwo, 0), sales)
+    : 0;
 
   return {
     ...input,

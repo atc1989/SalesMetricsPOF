@@ -144,6 +144,28 @@ function buildDirectInsertPayload(payload: JsonObject): DailySalesInsertRow {
   };
 }
 
+function hasPaymentMode(value: unknown) {
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  const normalized = value.trim().toUpperCase();
+  return normalized.length > 0 && normalized !== "N/A";
+}
+
+function validatePaymentAmounts(payload: JsonObject) {
+  const sales = readNumber(payload.sales) ?? 0;
+  const salesTwo = hasPaymentMode(payload.mode_of_payment_two)
+    ? readNumber(payload.sales_two) ?? 0
+    : 0;
+
+  if (salesTwo > sales) {
+    return "Amount (2) cannot be greater than the net payable amount.";
+  }
+
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   const payload = (await request.json().catch(() => null)) as unknown;
 
@@ -155,6 +177,15 @@ export async function POST(request: NextRequest) {
   }
 
   const normalizedPayload = normalizeDailySalesPayload(payload);
+  const paymentValidationError = validatePaymentAmounts(normalizedPayload);
+
+  if (paymentValidationError) {
+    return NextResponse.json(
+      { success: false, message: paymentValidationError },
+      { status: 400 },
+    );
+  }
+
   const hasAncillaryColumns =
     typeof normalizedPayload.bag_type === "string" ||
     typeof normalizedPayload.marketing_tool === "string";
