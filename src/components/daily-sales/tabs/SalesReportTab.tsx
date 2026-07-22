@@ -937,7 +937,7 @@ export function SalesReportTab() {
               <div>
                 <p>CHECKED BY:</p>
                 <p id="txtCheckedBy" className="font-semibold">
-                  Erica Villaester
+                  Carlie Jean Gitacay
                 </p>
               </div>
             </div>
