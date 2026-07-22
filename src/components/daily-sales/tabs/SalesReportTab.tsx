@@ -923,7 +923,7 @@ export function SalesReportTab() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 pt-2 text-center text-xs text-muted-foreground md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 pt-2 text-center text-xs text-muted-foreground md:grid-cols-4">
               <div>
                 <p>PREPARED BY:</p>
                 <p id="txtPreparedBy" className="font-semibold">
