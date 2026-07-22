@@ -928,16 +928,32 @@ export function SalesReportTab() {
                 <p>PREPARED BY:</p>
                 <p id="txtPreparedBy" className="font-semibold">
                   Alaiza Jane Emoylan
+                  <br />
+                  CSR
                 </p>
               </div>
               <div>
                 <p>PREPARED BY:</p>
-                <p className="font-semibold">Mary Grace Damasin</p>
+                <p className="font-semibold">
+                  Angelique Blythe Mabul
+                  <br />
+                  CSR
+                </p>
+              </div>
+              <div>
+                <p>PREPARED BY:</p>
+                <p className="font-semibold">
+                  Mary Grace Damasin
+                  <br />
+                  CSR
+                </p>
               </div>
               <div>
                 <p>CHECKED BY:</p>
                 <p id="txtCheckedBy" className="font-semibold">
                   Carlie Jean Gitacay
+                  <br />
+                  Accounting Staff
                 </p>
               </div>
             </div>
