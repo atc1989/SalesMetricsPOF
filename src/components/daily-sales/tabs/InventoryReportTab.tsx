@@ -353,7 +353,8 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
       <br />
       <div class="form-row" style="justify-content: space-around;">
         <p>Prepared By:<br /><span id="txtPreparedBy" style="font-weight: bold;">Alaiza Jane Emoylan</span><br />CSR</p>
-        <p>Prepared By:<br /><span style="font-weight: bold;">Mary Grace Damasin</span><br />CSR</p>
+        <p>Prepared By:<br /><span id="txtPreparedBy" style="font-weight: bold;">Angelique Blythe Mabul</span><br />CSR</p>
+        <p>Prepared By:<br /><span id="txtPreparedBy" style="font-weight: bold;">Mary Grace Damasin</span><br />CSR</p>
         <p>Checked By:<br /><span id="txtCheckedBy" style="font-weight: bold;">Carlie Jean Gitacay</span><br />Accounting Staff</p>
       </div>
     </div>
