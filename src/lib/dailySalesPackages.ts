@@ -135,6 +135,20 @@ export const dailySalesPackageCatalog: Record<
     bundledBlisterCount: 1,
     defaultIsToBlister: '1',
   },
+  CD_PLATINUM: {
+    label: 'CD Platinum (10 bottles + 10 blisters)',
+    originalPrice: 0,
+    bottleCount: 10,
+    bundledBlisterCount: 10,
+    defaultIsToBlister: '0',
+  },
+  CD_GOLD: {
+    label: 'CD Gold (3 bottles + 3 blisters)',
+    originalPrice: 0,
+    bottleCount: 3,
+    bundledBlisterCount: 3,
+    defaultIsToBlister: '0',
+  },
 };
 
 export const encoderPackageOptions = (
@@ -168,6 +182,8 @@ export const dailySalesDiscountMatrix: Record<
     SILVER_RETAIL_BLISTER: 130,
     GOLD_RETAIL_BLISTER: 260,
     PLATINUM_RETAIL_BLISTER: 520,
+    CD_PLATINUM: 0,
+    CD_GOLD: 0,
   },
   STOCKIST: {
     SILVER: 50,
@@ -187,6 +203,8 @@ export const dailySalesDiscountMatrix: Record<
     SILVER_RETAIL_BLISTER: 195,
     GOLD_RETAIL_BLISTER: 325,
     PLATINUM_RETAIL_BLISTER: 585,
+    CD_PLATINUM: 0,
+    CD_GOLD: 0,
   },
   'CITY STOCKIST': {
     SILVER: 180,
@@ -206,6 +224,8 @@ export const dailySalesDiscountMatrix: Record<
     SILVER_RETAIL_BLISTER: 227,
     GOLD_RETAIL_BLISTER: 357,
     PLATINUM_RETAIL_BLISTER: 617,
+    CD_PLATINUM: 0,
+    CD_GOLD: 0,
   },
   CENTER: {
     SILVER: 240,
@@ -225,6 +245,8 @@ export const dailySalesDiscountMatrix: Record<
     SILVER_RETAIL_BLISTER: 260,
     GOLD_RETAIL_BLISTER: 390,
     PLATINUM_RETAIL_BLISTER: 649,
+    CD_PLATINUM: 0,
+    CD_GOLD: 0,
   },
   'NON-MEMBER': {
     SILVER: 0,
@@ -244,6 +266,8 @@ export const dailySalesDiscountMatrix: Record<
     SILVER_RETAIL_BLISTER: 0,
     GOLD_RETAIL_BLISTER: 0,
     PLATINUM_RETAIL_BLISTER: 0,
+    CD_PLATINUM: 0,
+    CD_GOLD: 0,
   },
 };
 
@@ -351,6 +375,14 @@ export function normalizeDailySalesPackageType(
 
   if (normalized.includes('USILVERGOLD')) {
     return 'USILVERGOLD';
+  }
+
+  if (normalized.includes('CD') && normalized.includes('PLATINUM')) {
+    return 'CD_PLATINUM';
+  }
+
+  if (normalized.includes('CD') && normalized.includes('GOLD')) {
+    return 'CD_GOLD';
   }
 
   if (normalized.includes('PLATINUM')) {

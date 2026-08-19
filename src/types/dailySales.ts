@@ -121,7 +121,9 @@ export type EncoderPackageTypeOption =
   | 'PLATINUM_RETAIL_BOTTLE'
   | 'SILVER_RETAIL_BLISTER'
   | 'GOLD_RETAIL_BLISTER'
-  | 'PLATINUM_RETAIL_BLISTER';
+  | 'PLATINUM_RETAIL_BLISTER'
+  | 'CD_PLATINUM'
+  | 'CD_GOLD';
 
 export type EncoderBlisterOption = '0' | '1';
 

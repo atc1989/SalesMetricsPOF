@@ -84,6 +84,10 @@ function normalizePackageType(value: string | null) {
     case "GOLD_RETAIL_BLISTER":
     case "PLATINUM_RETAIL_BLISTER":
       return "BLISTER";
+    case "CD_PLATINUM":
+      return "PLATINUM";
+    case "CD_GOLD":
+      return "GOLD";
     default:
       return normalized ?? rawValue.toUpperCase();
   }

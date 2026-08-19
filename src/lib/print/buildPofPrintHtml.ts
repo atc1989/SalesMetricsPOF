@@ -68,8 +68,10 @@ function getPackageBottleLabel(packageType: string) {
     case "SILVER":
       return 1;
     case "GOLD":
+    case "CD_GOLD":
       return 3;
     case "PLATINUM":
+    case "CD_PLATINUM":
       return 10;
     case "OLD_SILVER":
       return 1;

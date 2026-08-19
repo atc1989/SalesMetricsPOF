@@ -398,8 +398,14 @@ const mapApiRowToReportRow = (
     ggTransNo: formatZeroOne(row.username) || '-',
     memberType: abbreviateMemberType(row.member_type) || 'N/A',
     pofNumber: formatPofNumber(row.pof_number) || '-',
-    platinum: normalizedPackageType === 'PLATINUM' ? totalQuantity : 0,
-    gold: normalizedPackageType === 'GOLD' ? totalQuantity : 0,
+    platinum:
+      normalizedPackageType === 'PLATINUM' || normalizedPackageType === 'CD_PLATINUM'
+        ? totalQuantity
+        : 0,
+    gold:
+      normalizedPackageType === 'GOLD' || normalizedPackageType === 'CD_GOLD'
+        ? totalQuantity
+        : 0,
     silver: normalizedPackageType === 'SILVER' ? totalQuantity : 0,
     oldPlatinum: normalizedPackageType === 'OLD_PLATINUM' ? totalQuantity : 0,
     oldGold: normalizedPackageType === 'OLD_GOLD' ? totalQuantity : 0,
