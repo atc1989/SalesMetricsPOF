@@ -88,6 +88,8 @@ function normalizePackageType(value: string | null) {
       return "PLATINUM";
     case "CD_GOLD":
       return "GOLD";
+    case "CD_SILVER":
+      return "SILVER";
     default:
       return normalized ?? rawValue.toUpperCase();
   }

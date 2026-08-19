@@ -149,6 +149,13 @@ export const dailySalesPackageCatalog: Record<
     bundledBlisterCount: 3,
     defaultIsToBlister: '0',
   },
+  CD_SILVER: {
+    label: 'CD Silver (1 bottle + 1 blister)',
+    originalPrice: 0,
+    bottleCount: 1,
+    bundledBlisterCount: 1,
+    defaultIsToBlister: '0',
+  },
 };
 
 export const encoderPackageOptions = (
@@ -184,6 +191,7 @@ export const dailySalesDiscountMatrix: Record<
     PLATINUM_RETAIL_BLISTER: 520,
     CD_PLATINUM: 0,
     CD_GOLD: 0,
+    CD_SILVER: 0,
   },
   STOCKIST: {
     SILVER: 50,
@@ -205,6 +213,7 @@ export const dailySalesDiscountMatrix: Record<
     PLATINUM_RETAIL_BLISTER: 585,
     CD_PLATINUM: 0,
     CD_GOLD: 0,
+    CD_SILVER: 0,
   },
   'CITY STOCKIST': {
     SILVER: 180,
@@ -226,6 +235,7 @@ export const dailySalesDiscountMatrix: Record<
     PLATINUM_RETAIL_BLISTER: 617,
     CD_PLATINUM: 0,
     CD_GOLD: 0,
+    CD_SILVER: 0,
   },
   CENTER: {
     SILVER: 240,
@@ -247,6 +257,7 @@ export const dailySalesDiscountMatrix: Record<
     PLATINUM_RETAIL_BLISTER: 649,
     CD_PLATINUM: 0,
     CD_GOLD: 0,
+    CD_SILVER: 0,
   },
   'NON-MEMBER': {
     SILVER: 0,
@@ -268,6 +279,7 @@ export const dailySalesDiscountMatrix: Record<
     PLATINUM_RETAIL_BLISTER: 0,
     CD_PLATINUM: 0,
     CD_GOLD: 0,
+    CD_SILVER: 0,
   },
 };
 
@@ -383,6 +395,10 @@ export function normalizeDailySalesPackageType(
 
   if (normalized.includes('CD') && normalized.includes('GOLD')) {
     return 'CD_GOLD';
+  }
+
+  if (normalized.includes('CD') && normalized.includes('SILVER')) {
+    return 'CD_SILVER';
   }
 
   if (normalized.includes('PLATINUM')) {

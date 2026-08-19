@@ -406,7 +406,10 @@ const mapApiRowToReportRow = (
       normalizedPackageType === 'GOLD' || normalizedPackageType === 'CD_GOLD'
         ? totalQuantity
         : 0,
-    silver: normalizedPackageType === 'SILVER' ? totalQuantity : 0,
+    silver:
+      normalizedPackageType === 'SILVER' || normalizedPackageType === 'CD_SILVER'
+        ? totalQuantity
+        : 0,
     oldPlatinum: normalizedPackageType === 'OLD_PLATINUM' ? totalQuantity : 0,
     oldGold: normalizedPackageType === 'OLD_GOLD' ? totalQuantity : 0,
     oldSilver: normalizedPackageType === 'OLD_SILVER' ? totalQuantity : 0,

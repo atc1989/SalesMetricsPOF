@@ -66,6 +66,7 @@ function hasPaymentMode(value: string) {
 function getPackageBottleLabel(packageType: string) {
   switch (packageType.toUpperCase()) {
     case "SILVER":
+    case "CD_SILVER":
       return 1;
     case "GOLD":
     case "CD_GOLD":
