@@ -62,7 +62,7 @@ const secondaryPaymentModes: EncoderPaymentModeOption[] = ['N/A', ...primaryPaym
 
 const paymentTypeOptionsByMode: Partial<Record<Exclude<EncoderPaymentModeOption, 'N/A'>, PaymentTypeOption[]>> = {
   BANK: [
-    { label: 'Security Bank', value: 'SECURITYBANK' },
+    { label: 'Maya Bank', value: 'MAYABANK' },
     { label: 'BPI', value: 'BPI' },
     { label: 'BDO', value: 'BDO' },
     { label: 'GoTyme', value: 'GOTYME' },

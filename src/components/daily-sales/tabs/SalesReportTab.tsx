@@ -116,7 +116,7 @@ type CashFieldId =
 
 const paymentTypeTableIds: Array<{ id: string; title: string; label: string }> = [
   { id: 'tblEwallet', title: 'Ewallet', label: 'E-Wallet' },
-  { id: 'tblBank', title: 'Bank', label: 'Bank Transfer - Security Bank' },
+  { id: 'tblBank', title: 'Bank', label: 'Bank Transfer - Maya Bank' },
   { id: 'tblMayaIgi', title: 'Maya(IGI)', label: 'Maya (IGI)' },
   { id: 'tblMayaAtc', title: 'Maya(ATC)', label: 'Maya (ATC)' },
   { id: 'tblSbCollectIgi', title: 'SbCollect(IGI)', label: 'SB Collect (IGI)' },
@@ -171,7 +171,7 @@ const defaultSnapshot: SnapshotData = {
   paymentBreakdownRows: [
     { label: 'Cash on hand', amount: 0 },
     { label: 'E-Wallet', amount: 0 },
-    { label: 'Bank Transfer - Security Bank', amount: 0 },
+    { label: 'Bank Transfer - Maya Bank', amount: 0 },
     { label: 'Maya (IGI)', amount: 0 },
     { label: 'Maya (ATC)', amount: 0 },
     { label: 'SB Collect (IGI)', amount: 0 },
@@ -206,7 +206,7 @@ const defaultCashPieces: Record<CashFieldId, number> = {
 
 const paymentLabelToModes: Record<string, string[]> = {
   'E-Wallet': ['EWALLET', 'E-WALLET'],
-  'Bank Transfer - Security Bank': ['BANK'],
+  'Bank Transfer - Maya Bank': ['BANK'],
   'Maya (IGI)': ['MAYA(IGI)'],
   'Maya (ATC)': ['MAYA(ATC)'],
   'SB Collect (IGI)': ['SBCOLLECT(IGI)', 'SBCOLLECT (IGI)'],
