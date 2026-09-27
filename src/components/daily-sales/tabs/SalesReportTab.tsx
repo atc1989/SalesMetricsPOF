@@ -162,11 +162,11 @@ const defaultSnapshot: SnapshotData = {
     { label: 'Silver', qty: 0, price: getDailySalesNetPrice('CENTER', 'SILVER') },
   ],
   retailRows: [
-    { label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2280 },
+    { label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2580 },
     { label: 'SynBIOTIC+ (Blister)', qty: 0, price: 1299 },
     { label: 'Employees Discount', qty: 0, price: 1200 },
   ],
-  msRetailRows: [{ label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2280 }],
+  msRetailRows: [{ label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2580 }],
   cdRetailRows: [{ label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 1900 }],
   paymentBreakdownRows: [
     { label: 'Cash on hand', amount: 0 },
