@@ -115,6 +115,7 @@ export type EncoderPackageTypeOption =
   | 'UGOLDPLATINUM'
   | 'USILVERPLATINUM'
   | 'RETAIL'
+  | 'RETAIL_MM'
   | 'BLISTER'
   | 'SILVER_RETAIL_BOTTLE'
   | 'GOLD_RETAIL_BOTTLE'

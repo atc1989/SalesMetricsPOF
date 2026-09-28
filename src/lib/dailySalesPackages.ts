@@ -86,6 +86,13 @@ export const dailySalesPackageCatalog: Record<
     bundledBlisterCount: 0,
     defaultIsToBlister: '0',
   },
+  RETAIL_MM: {
+    label: 'Retail MM (1 bottle)',
+    originalPrice: 4300,
+    bottleCount: 1,
+    bundledBlisterCount: 0,
+    defaultIsToBlister: '0',
+  },
   BLISTER: {
     label: 'Blister (1 blister pack)',
     originalPrice: 780,
@@ -182,6 +189,7 @@ export const dailySalesDiscountMatrix: Record<
     UGOLDPLATINUM: 0,
     USILVERPLATINUM: 0,
     RETAIL: 1720,
+    RETAIL_MM: 1720,
     BLISTER: 0,
     SILVER_RETAIL_BOTTLE: 430,
     GOLD_RETAIL_BOTTLE: 860,
@@ -203,7 +211,8 @@ export const dailySalesDiscountMatrix: Record<
     USILVERGOLD: 100,
     UGOLDPLATINUM: 350,
     USILVERPLATINUM: 450,
-    RETAIL: 1710,
+    RETAIL: 1935,
+    RETAIL_MM: 2210,
     BLISTER: 0,
     SILVER_RETAIL_BOTTLE: 570,
     GOLD_RETAIL_BOTTLE: 950,
@@ -225,7 +234,8 @@ export const dailySalesDiscountMatrix: Record<
     USILVERGOLD: 360,
     UGOLDPLATINUM: 1260,
     USILVERPLATINUM: 1620,
-    RETAIL: 1805,
+    RETAIL: 2042,
+    RETAIL_MM: 2305,
     BLISTER: 0,
     SILVER_RETAIL_BOTTLE: 665,
     GOLD_RETAIL_BOTTLE: 1045,
@@ -247,7 +257,8 @@ export const dailySalesDiscountMatrix: Record<
     USILVERGOLD: 480,
     UGOLDPLATINUM: 1680,
     USILVERPLATINUM: 2160,
-    RETAIL: 2400,
+    RETAIL: 2150,
+    RETAIL_MM: 2400,
     BLISTER: 0,
     SILVER_RETAIL_BOTTLE: 760,
     GOLD_RETAIL_BOTTLE: 1140,
@@ -270,6 +281,7 @@ export const dailySalesDiscountMatrix: Record<
     UGOLDPLATINUM: 0,
     USILVERPLATINUM: 0,
     RETAIL: 0,
+    RETAIL_MM: 0,
     BLISTER: 0,
     SILVER_RETAIL_BOTTLE: 0,
     GOLD_RETAIL_BOTTLE: 0,
@@ -411,6 +423,10 @@ export function normalizeDailySalesPackageType(
 
   if (normalized.includes('SILVER')) {
     return 'SILVER';
+  }
+
+  if (normalized.includes('RETAIL') && normalized.includes('MM')) {
+    return 'RETAIL_MM';
   }
 
   if (normalized === 'RETAIL' || normalized.includes('RETAIL')) {

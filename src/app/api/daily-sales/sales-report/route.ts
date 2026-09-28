@@ -79,6 +79,7 @@ function normalizePackageType(value: string | null) {
     case "SILVER_RETAIL_BOTTLE":
     case "GOLD_RETAIL_BOTTLE":
     case "PLATINUM_RETAIL_BOTTLE":
+    case "RETAIL_MM":
       return "RETAIL";
     case "SILVER_RETAIL_BLISTER":
     case "GOLD_RETAIL_BLISTER":

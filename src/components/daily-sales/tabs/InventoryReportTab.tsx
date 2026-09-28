@@ -374,6 +374,7 @@ const mapApiRowToReportRow = (
     normalizedPackageType === 'PLATINUM_RETAIL_BLISTER';
   const isRetail =
     normalizedPackageType === 'RETAIL' ||
+    normalizedPackageType === 'RETAIL_MM' ||
     normalizedPackageType === 'SILVER_RETAIL_BOTTLE' ||
     normalizedPackageType === 'GOLD_RETAIL_BOTTLE' ||
     normalizedPackageType === 'PLATINUM_RETAIL_BOTTLE';
