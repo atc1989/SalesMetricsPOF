@@ -163,7 +163,7 @@ const defaultSnapshot: SnapshotData = {
   ],
   retailRows: [
     { label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2580 },
-    { label: 'SynBIOTIC+ (Blister)', qty: 0, price: 1299 },
+    { label: 'SynBIOTIC+ (Blister)', qty: 0, price: 1499 },
     { label: 'Employees Discount', qty: 0, price: 1200 },
   ],
   msRetailRows: [{ label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2580 }],
