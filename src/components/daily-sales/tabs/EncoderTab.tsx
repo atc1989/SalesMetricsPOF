@@ -150,7 +150,11 @@ const encoderDiscountOptions: Array<{ label: string; value: number }> = [
   { label: 'Center - P2400', value: 2400 },
   { label: 'Blister - P520', value: 520 },
   { label: 'Blister - P585', value: 585 },
+  { label: 'Blister - P599.60', value: 599.6 },
   { label: 'Blister - P618', value: 618 },
+  { label: 'Blister - P674', value: 674 },
+  { label: 'Blister - P712', value: 712 },
+  { label: 'Blister - P749', value: 749 },
 ];
 
 void discountOptions;
