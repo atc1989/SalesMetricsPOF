@@ -6,9 +6,12 @@ import { Card } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Modal } from '@/components/ui/Modal';
 import {
+  defaultSkuPricing,
   getDailySalesNetPrice,
   getDailySalesPackagePrice,
+  type SkuPricing,
 } from '@/lib/dailySalesPackages';
+import { useSkuPricing } from '@/lib/useSkuPricing';
 import { openSalesReportPrintWindow } from '@/lib/salesReportPrint';
 
 type PackageRow = {
@@ -144,22 +147,22 @@ const cashDenominations: Array<{ label: string; id: CashFieldId; spanId: string;
 
 const reportDateToday = new Date().toISOString().slice(0, 10);
 
-const defaultSnapshot: SnapshotData = {
+const buildDefaultSnapshot = (pricing: SkuPricing): SnapshotData => ({
   packageRows: [
     { label: 'Mobile Stockist', qty: 0, price: 250000 },
-    { label: 'Platinum', qty: 0, price: getDailySalesPackagePrice('PLATINUM') },
-    { label: 'Gold', qty: 0, price: getDailySalesPackagePrice('GOLD') },
-    { label: 'Silver', qty: 0, price: getDailySalesPackagePrice('SILVER') },
+    { label: 'Platinum', qty: 0, price: getDailySalesPackagePrice('PLATINUM', pricing) },
+    { label: 'Gold', qty: 0, price: getDailySalesPackagePrice('GOLD', pricing) },
+    { label: 'Silver', qty: 0, price: getDailySalesPackagePrice('SILVER', pricing) },
   ],
   msPackageRows: [
-    { label: 'Platinum', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'PLATINUM') },
-    { label: 'Gold', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'GOLD') },
-    { label: 'Silver', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'SILVER') },
+    { label: 'Platinum', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'PLATINUM', pricing) },
+    { label: 'Gold', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'GOLD', pricing) },
+    { label: 'Silver', qty: 0, price: getDailySalesNetPrice('STOCKIST', 'SILVER', pricing) },
   ],
   cdPackageRows: [
-    { label: 'Platinum', qty: 0, price: getDailySalesNetPrice('CENTER', 'PLATINUM') },
-    { label: 'Gold', qty: 0, price: getDailySalesNetPrice('CENTER', 'GOLD') },
-    { label: 'Silver', qty: 0, price: getDailySalesNetPrice('CENTER', 'SILVER') },
+    { label: 'Platinum', qty: 0, price: getDailySalesNetPrice('CENTER', 'PLATINUM', pricing) },
+    { label: 'Gold', qty: 0, price: getDailySalesNetPrice('CENTER', 'GOLD', pricing) },
+    { label: 'Silver', qty: 0, price: getDailySalesNetPrice('CENTER', 'SILVER', pricing) },
   ],
   retailRows: [
     { label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2580 },
@@ -189,7 +192,7 @@ const defaultSnapshot: SnapshotData = {
     { label: 'UGoldPlatinum', packageType: 'UGOLDPLATINUM', amount: 0 },
     { label: 'USilverPlatinum', packageType: 'USILVERPLATINUM', amount: 0 },
   ],
-};
+});
 
 const defaultCashPieces: Record<CashFieldId, number> = {
   cohOneThousand: 0,
@@ -377,7 +380,9 @@ function PaymentTable({ id, title, rows }: { id: string; title: string; rows: Am
 export function SalesReportTab() {
   const [transDateDailySales, setTransDateDailySales] = useState(reportDateToday);
   const [selectedDate, setSelectedDate] = useState(reportDateToday);
-  const [snapshot, setSnapshot] = useState<SnapshotData>(defaultSnapshot);
+  const { pricing } = useSkuPricing();
+  const defaultSnapshot = useMemo(() => buildDefaultSnapshot(pricing), [pricing]);
+  const [snapshot, setSnapshot] = useState<SnapshotData>(() => buildDefaultSnapshot(defaultSkuPricing));
   const [cashPieces, setCashPieces] = useState<Record<CashFieldId, number>>(defaultCashPieces);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isActionNoticeOpen, setIsActionNoticeOpen] = useState(false);

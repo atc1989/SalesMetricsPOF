@@ -295,12 +295,64 @@ export const dailySalesDiscountMatrix: Record<
   },
 };
 
+export type SkuPricing = {
+  prices: Record<EncoderPackageTypeOption, number>;
+  discounts: Record<EncoderMemberTypeOption, Record<EncoderPackageTypeOption, number>>;
+};
+
+// DB column per editable member tier in public.sku_prices; NON-MEMBER is always 0.
+export const skuDiscountColumns = {
+  DISTRIBUTOR: 'distributor_discount',
+  STOCKIST: 'stockist_discount',
+  'CITY STOCKIST': 'city_stockist_discount',
+  CENTER: 'center_discount',
+} as const;
+
+export type SkuDiscountMemberType = keyof typeof skuDiscountColumns;
+
+export type SkuPriceRow = {
+  package_type: string;
+  original_price: number | string;
+} & Record<(typeof skuDiscountColumns)[SkuDiscountMemberType], number | string>;
+
+export const defaultSkuPricing: SkuPricing = {
+  prices: Object.fromEntries(
+    Object.entries(dailySalesPackageCatalog).map(([type, config]) => [type, config.originalPrice]),
+  ) as SkuPricing['prices'],
+  discounts: dailySalesDiscountMatrix,
+};
+
+export function isEncoderPackageType(value: string): value is EncoderPackageTypeOption {
+  return Object.hasOwn(dailySalesPackageCatalog, value);
+}
+
+// DB rows override the code defaults; package types without a row keep the defaults.
+export function mergeSkuPriceRows(rows: SkuPriceRow[]): SkuPricing {
+  const prices = { ...defaultSkuPricing.prices };
+  const discounts = Object.fromEntries(
+    Object.entries(dailySalesDiscountMatrix).map(([member, byPackage]) => [member, { ...byPackage }]),
+  ) as SkuPricing['discounts'];
+
+  for (const row of rows) {
+    if (!isEncoderPackageType(row.package_type)) continue;
+    prices[row.package_type] = Number(row.original_price);
+    for (const [member, column] of Object.entries(skuDiscountColumns)) {
+      discounts[member as SkuDiscountMemberType][row.package_type] = Number(row[column]);
+    }
+  }
+
+  return { prices, discounts };
+}
+
 export function getDailySalesPackageConfig(packageType: EncoderPackageTypeOption) {
   return dailySalesPackageCatalog[packageType];
 }
 
-export function getDailySalesPackagePrice(packageType: EncoderPackageTypeOption) {
-  return getDailySalesPackageConfig(packageType).originalPrice;
+export function getDailySalesPackagePrice(
+  packageType: EncoderPackageTypeOption,
+  pricing: SkuPricing = defaultSkuPricing,
+) {
+  return pricing.prices[packageType];
 }
 
 export function getDailySalesPackageBottleCount(
@@ -332,16 +384,19 @@ export function getDailySalesPackageBlisterCount(
 export function getDailySalesDiscount(
   memberType: EncoderMemberTypeOption,
   packageType: EncoderPackageTypeOption,
+  pricing: SkuPricing = defaultSkuPricing,
 ) {
-  return dailySalesDiscountMatrix[memberType][packageType];
+  return pricing.discounts[memberType][packageType];
 }
 
 export function getDailySalesNetPrice(
   memberType: EncoderMemberTypeOption,
   packageType: EncoderPackageTypeOption,
+  pricing: SkuPricing = defaultSkuPricing,
 ) {
   return Math.max(
-    getDailySalesPackagePrice(packageType) - getDailySalesDiscount(memberType, packageType),
+    getDailySalesPackagePrice(packageType, pricing) -
+      getDailySalesDiscount(memberType, packageType, pricing),
     0,
   );
 }

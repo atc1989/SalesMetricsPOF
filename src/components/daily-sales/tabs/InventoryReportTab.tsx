@@ -65,7 +65,7 @@ type DailyInventoryApiRow = {
   released_blpk_count: number;
   to_follow_count: number;
   to_follow_blpk_count: number;
-  sales: number;
+  sales: number | null;
   mode_of_payment: string;
   mode_of_payment_two: string;
   mode_of_payment_three: string;
@@ -380,8 +380,9 @@ const mapApiRowToReportRow = (
     normalizedPackageType === 'PLATINUM_RETAIL_BOTTLE';
   const upperBagType = (row.bag_type ?? '').toUpperCase();
   const upperMarketingTool = (row.marketing_tool ?? '').toUpperCase();
+  // Stored sales is real cash (after member + voucher discounts), even when 0; list price only if missing.
   const amountMultiplier =
-    row.sales > 0
+    row.sales != null
       ? 0
       : normalizedPackageType
         ? getDailySalesPackagePrice(normalizedPackageType)
@@ -430,7 +431,7 @@ const mapApiRowToReportRow = (
     releasedBlister: row.released_blpk_count ?? 0,
     toFollowBottle: row.to_follow_count ?? 0,
     toFollowBlister: row.to_follow_blpk_count ?? 0,
-    amount: row.sales > 0 ? row.sales : totalQuantity * amountMultiplier,
+    amount: row.sales != null ? Number(row.sales) : totalQuantity * amountMultiplier,
     modeOfPayment: formatModeOfPayment(
       row.mode_of_payment,
       row.mode_of_payment_two,

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   getDailySalesNetPrice,
   getDailySalesPackagePrice,
+  mergeSkuPriceRows,
   normalizeDailySalesPackageType,
 } from '../src/lib/dailySalesPackages';
 import type { EncoderMemberTypeOption } from '../src/types/dailySales';
@@ -27,5 +28,30 @@ for (const label of [
     assert.equal(getDailySalesNetPrice(memberType, packageType), expectedPrice, `${label}: ${memberType}`);
   }
 }
+
+// SKU Management overrides: DB rows replace defaults, missing/unknown rows don't.
+const overridden = mergeSkuPriceRows([
+  {
+    package_type: 'SILVER',
+    original_price: '4400.00',
+    distributor_discount: 0,
+    stockist_discount: 60,
+    city_stockist_discount: 180,
+    center_discount: 240,
+  },
+  {
+    package_type: 'NOT_A_SKU',
+    original_price: 1,
+    distributor_discount: 0,
+    stockist_discount: 0,
+    city_stockist_discount: 0,
+    center_discount: 0,
+  },
+]);
+assert.equal(getDailySalesPackagePrice('SILVER', overridden), 4400);
+assert.equal(getDailySalesNetPrice('STOCKIST', 'SILVER', overridden), 4340);
+assert.equal(getDailySalesNetPrice('NON-MEMBER', 'SILVER', overridden), 4400);
+assert.equal(getDailySalesPackagePrice('GOLD', overridden), 13500);
+assert.equal(getDailySalesPackagePrice('SILVER'), 4500, 'defaults must not be mutated');
 
 console.log('All blister options use the correct member prices.');

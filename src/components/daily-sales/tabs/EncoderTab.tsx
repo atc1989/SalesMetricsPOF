@@ -20,14 +20,17 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
-  dailySalesDiscountMatrix,
+  defaultSkuPricing,
   encoderPackageOptions,
+  getDailySalesDiscount,
   getDailySalesPackageBlisterCount,
   getDailySalesPackageBottleCount,
   getDailySalesPackageConfig,
   getDailySalesPackagePrice,
   hasBundledPackageBlisters,
+  type SkuPricing,
 } from '@/lib/dailySalesPackages';
+import { useSkuPricing } from '@/lib/useSkuPricing';
 import type {
   EncoderBagTypeOption,
   EncoderBlisterOption,
@@ -211,7 +214,8 @@ function hasSecondaryPayment(mode: EncoderPaymentModeOption) {
 function applyMemberPackageRules(
   current: EncoderFormModel,
   memberType: EncoderMemberTypeOption,
-  packageType: EncoderPackageTypeOption
+  packageType: EncoderPackageTypeOption,
+  pricing: SkuPricing,
 ): EncoderFormModel {
   const packageConfig = getDailySalesPackageConfig(packageType);
 
@@ -219,13 +223,13 @@ function applyMemberPackageRules(
     ...current,
     memberType,
     packageType,
-    originalPrice: packageConfig.originalPrice,
-    discount: dailySalesDiscountMatrix[memberType][packageType],
+    originalPrice: getDailySalesPackagePrice(packageType, pricing),
+    discount: packageType.startsWith('OLD_') ? 0 : getDailySalesDiscount(memberType, packageType, pricing),
     isToBlister: packageConfig.defaultIsToBlister,
   };
 }
 
-const buildInitialForm = (): EncoderFormModel => {
+const buildInitialForm = (pricing: SkuPricing = defaultSkuPricing): EncoderFormModel => {
   const base: EncoderFormModel = {
     event: 'DAVAO',
     date: today,
@@ -264,7 +268,7 @@ const buildInitialForm = (): EncoderFormModel => {
     collectedBy: 'Jake Roldan Laurente',
   };
 
-  return applyMemberPackageRules(base, base.memberType, base.packageType);
+  return applyMemberPackageRules(base, base.memberType, base.packageType, pricing);
 };
 
 type ManualOverrideKey =
@@ -361,6 +365,11 @@ export function EncoderTab() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const isBundledPackage = hasBundledPackageBlisters(form.packageType);
   const isZeroDiscountPackage = form.packageType.startsWith('OLD_');
+  const { pricing } = useSkuPricing();
+  // SKU Management can set discounts that aren't in the preset list; show them instead of a blank select.
+  const discountSelectOptions = encoderDiscountOptions.some((option) => option.value === form.discount)
+    ? encoderDiscountOptions
+    : [...encoderDiscountOptions, { label: `SKU price - P${form.discount}`, value: form.discount }];
 
   const primaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentMode), [form.paymentMode]);
   const secondaryPaymentTypeOptions = useMemo(() => getPaymentTypeOptions(form.paymentModeTwo), [form.paymentModeTwo]);
@@ -368,7 +377,7 @@ export function EncoderTab() {
   const secondaryTypeIsReadOnly = secondaryPaymentTypeOptions.length === 1 && secondaryPaymentTypeOptions[0].value === 'N/A';
 
   const resetForm = () => {
-    setForm(applyComputedFields(buildInitialForm(), initialManualOverrides));
+    setForm(applyComputedFields(buildInitialForm(pricing), initialManualOverrides));
     setManualOverrides(initialManualOverrides);
     setIsPofManuallyEdited(false);
     setUserSearchResults([]);
@@ -397,6 +406,21 @@ export function EncoderTab() {
       isCancelled = true;
     };
   }, []);
+
+  // Re-price the current form once SKU Management prices arrive (initial render used code defaults).
+  const [formPricing, setFormPricing] = useState(pricing);
+  if (formPricing !== pricing) {
+    setFormPricing(pricing);
+    setForm((prev) =>
+      applyComputedFields(
+        {
+          ...applyMemberPackageRules(prev, prev.memberType, prev.packageType, pricing),
+          isToBlister: prev.isToBlister,
+        },
+        manualOverrides,
+      ),
+    );
+  }
 
   useEffect(() => {
     const query = form.username.trim();
@@ -576,20 +600,14 @@ export function EncoderTab() {
   const onMemberTypeChange = (value: EncoderMemberTypeOption) => {
     const nextOverrides = resetDerivedOverrides(manualOverrides);
     setManualOverrides(nextOverrides);
-    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, value, prev.packageType), nextOverrides));
+    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, value, prev.packageType, pricing), nextOverrides));
   };
 
   const onPackageTypeChange = (value: EncoderPackageTypeOption) => {
     const nextOverrides = resetDerivedOverrides(manualOverrides);
     setManualOverrides(nextOverrides);
     setForm((prev) =>
-      applyComputedFields(
-        {
-          ...applyMemberPackageRules(prev, prev.memberType, value),
-          discount: value.startsWith('OLD_') ? 0 : dailySalesDiscountMatrix[prev.memberType][value],
-        },
-        nextOverrides,
-      ),
+      applyComputedFields(applyMemberPackageRules(prev, prev.memberType, value, pricing), nextOverrides),
     );
   };
 
@@ -885,7 +903,7 @@ export function EncoderTab() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {encoderDiscountOptions.map((option) => (
+                    {discountSelectOptions.map((option) => (
                       <SelectItem key={`discount-${option.value}`} value={String(option.value)}>
                         {option.label}
                       </SelectItem>
@@ -907,7 +925,7 @@ export function EncoderTab() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-                One-time Discount
+                One-time / Voucher Discount
                 <input
                   id="oneTimeDiscount"
                   type="number"
