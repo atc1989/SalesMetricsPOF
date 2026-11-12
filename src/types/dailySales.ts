@@ -28,6 +28,7 @@ export type RecentSale = {
   sales: number;
   paymentMode: Exclude<PaymentMode, 'ALL'>;
   status: SaleStatus;
+  remarks?: string;
 };
 
 export type ReportRow = {

@@ -141,6 +141,7 @@ export function DashboardTab() {
             blister_count: number;
             sales: number;
             mode_of_payment: string | null;
+            remarks: string | null;
           }>;
           totals?: {
             totalSales: number;
@@ -169,6 +170,7 @@ export function DashboardTab() {
           sales: row.sales ?? 0,
           paymentMode: normalizePaymentMode(row.mode_of_payment),
           status: "Released",
+          remarks: row.remarks ?? "",
         }));
 
         setRows(mappedRows);
@@ -198,7 +200,8 @@ export function DashboardTab() {
           !row.pofNumber.toLowerCase().includes(search) &&
           !row.memberName.toLowerCase().includes(search) &&
           !row.ggTransNo.toLowerCase().includes(search) &&
-          !row.paymentMode.toLowerCase().includes(search)
+          !row.paymentMode.toLowerCase().includes(search) &&
+          !(row.remarks ?? "").toLowerCase().includes(search)
         ) {
           return false;
         }
@@ -235,6 +238,7 @@ export function DashboardTab() {
       "Blisters",
       "Sales",
       "Mode of Payment",
+      "Remarks",
       "Status",
     ];
     const toCsv = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
@@ -251,6 +255,7 @@ export function DashboardTab() {
           row.blisters,
           row.sales,
           row.paymentMode,
+          row.remarks ?? "",
           row.status,
         ]
           .map((value) => toCsv(value))
@@ -420,6 +425,7 @@ export function DashboardTab() {
                     <TableHead className="text-right">Blisters</TableHead>
                     <TableHead className="text-right">Sales</TableHead>
                     <TableHead>Mode of Payment</TableHead>
+                    <TableHead>Remarks</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -437,6 +443,7 @@ export function DashboardTab() {
                         PHP {row.sales.toLocaleString()}
                       </TableCell>
                       <TableCell>{row.paymentMode}</TableCell>
+                      <TableCell className="max-w-64 whitespace-normal break-words text-sm">{row.remarks}</TableCell>
                       <TableCell>{row.status}</TableCell>
                     </TableRow>
                   ))}

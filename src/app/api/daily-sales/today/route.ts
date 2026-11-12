@@ -16,6 +16,7 @@ type DailySalesRow = {
   mode_of_payment: string | null;
   payment_type: string | null;
   is_new_member: boolean | null;
+  remarks: string | null;
 };
 
 function toNumber(value: unknown) {
@@ -55,6 +56,7 @@ function normalizeRow(row: DailySalesRow) {
     mode_of_payment: row.mode_of_payment,
     payment_type: row.payment_type,
     is_new_member: toBoolean(row.is_new_member),
+    remarks: row.remarks,
   };
 }
 
@@ -74,7 +76,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("daily_sales")
     .select(
-      "daily_sales_id,trans_date,pof_number,member_name,username,package_type,bottle_count,blister_count,sales,mode_of_payment,payment_type,is_new_member",
+      "daily_sales_id,trans_date,pof_number,member_name,username,package_type,bottle_count,blister_count,sales,mode_of_payment,payment_type,is_new_member,remarks",
     )
     .gte("trans_date", dateFrom)
     .lte("trans_date", dateTo)
