@@ -105,7 +105,10 @@ export type EncoderMemberTypeOption =
   | 'CENTER'
   | 'NON-MEMBER';
 
-export type EncoderPackageTypeOption =
+// Package types the code knows about; SKU Management can add more (any uppercase SKU ID).
+export type EncoderPackageTypeOption = BuiltinPackageType | (string & {});
+
+export type BuiltinPackageType =
   | 'SILVER'
   | 'GOLD'
   | 'PLATINUM'

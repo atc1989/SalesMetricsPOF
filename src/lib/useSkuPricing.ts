@@ -1,40 +1,45 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  defaultSkuPricing,
-  mergeSkuPriceRows,
-  type SkuPricing,
+  buildSkuCatalog,
+  defaultSkuCatalog,
+  type SkuCatalog,
   type SkuPriceRow,
 } from '@/lib/dailySalesPackages';
 
-// Loads SKU Management prices once; keeps the code defaults if the fetch fails.
-export function useSkuPricing() {
-  const [state, setState] = useState<{ pricing: SkuPricing; loaded: boolean }>({
-    pricing: defaultSkuPricing,
+async function fetchSkuCatalog(): Promise<SkuCatalog> {
+  try {
+    const response = await fetch('/api/daily-sales/sku-prices', { cache: 'no-store' });
+    const json = (await response.json()) as { success?: boolean; rows?: SkuPriceRow[] };
+    return json.success && json.rows ? buildSkuCatalog(json.rows) : defaultSkuCatalog;
+  } catch {
+    return defaultSkuCatalog;
+  }
+}
+
+// Loads the SKU Management catalog; keeps the code defaults if the fetch fails.
+export function useSkuCatalog() {
+  const [state, setState] = useState<{ catalog: SkuCatalog; loaded: boolean }>({
+    catalog: defaultSkuCatalog,
     loaded: false,
   });
 
+  const reload = useCallback(async () => {
+    const catalog = await fetchSkuCatalog();
+    setState({ catalog, loaded: true });
+    return catalog;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-
-    fetch('/api/daily-sales/sku-prices', { cache: 'no-store' })
-      .then((response) => response.json())
-      .then((json: { success?: boolean; rows?: SkuPriceRow[] }) => {
-        if (cancelled) return;
-        setState({
-          pricing: json.success && json.rows ? mergeSkuPriceRows(json.rows) : defaultSkuPricing,
-          loaded: true,
-        });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ pricing: defaultSkuPricing, loaded: true });
-      });
-
+    fetchSkuCatalog().then((catalog) => {
+      if (!cancelled) setState({ catalog, loaded: true });
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return state;
+  return { ...state, reload };
 }

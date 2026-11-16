@@ -9,8 +9,10 @@ export async function GET() {
     const { data, error } = await getSupabaseAdminClient()
       .from("sku_prices")
       .select(
-        "package_type,original_price,distributor_discount,stockist_discount,city_stockist_discount,center_discount,updated_at",
-      );
+        "package_type,label,category,bottle_count,bundled_blister_count,default_is_to_blister,sort_order,is_active,is_builtin,original_price,distributor_discount,stockist_discount,city_stockist_discount,center_discount,updated_at",
+      )
+      .order("sort_order")
+      .order("package_type");
 
     if (error) {
       return NextResponse.json(

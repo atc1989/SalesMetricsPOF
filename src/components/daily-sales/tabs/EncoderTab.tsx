@@ -20,17 +20,17 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
-  defaultSkuPricing,
-  encoderPackageOptions,
+  defaultSkuCatalog,
   getDailySalesDiscount,
   getDailySalesPackageBlisterCount,
   getDailySalesPackageBottleCount,
   getDailySalesPackageConfig,
   getDailySalesPackagePrice,
+  getEncoderPackageOptions,
   hasBundledPackageBlisters,
-  type SkuPricing,
+  type SkuCatalog,
 } from '@/lib/dailySalesPackages';
-import { useSkuPricing } from '@/lib/useSkuPricing';
+import { useSkuCatalog } from '@/lib/useSkuPricing';
 import type {
   EncoderBagTypeOption,
   EncoderBlisterOption,
@@ -215,21 +215,21 @@ function applyMemberPackageRules(
   current: EncoderFormModel,
   memberType: EncoderMemberTypeOption,
   packageType: EncoderPackageTypeOption,
-  pricing: SkuPricing,
+  catalog: SkuCatalog,
 ): EncoderFormModel {
-  const packageConfig = getDailySalesPackageConfig(packageType);
+  const packageConfig = getDailySalesPackageConfig(packageType, catalog);
 
   return {
     ...current,
     memberType,
     packageType,
-    originalPrice: getDailySalesPackagePrice(packageType, pricing),
-    discount: packageType.startsWith('OLD_') ? 0 : getDailySalesDiscount(memberType, packageType, pricing),
+    originalPrice: getDailySalesPackagePrice(packageType, catalog),
+    discount: packageType.startsWith('OLD_') ? 0 : getDailySalesDiscount(memberType, packageType, catalog),
     isToBlister: packageConfig.defaultIsToBlister,
   };
 }
 
-const buildInitialForm = (pricing: SkuPricing = defaultSkuPricing): EncoderFormModel => {
+const buildInitialForm = (catalog: SkuCatalog = defaultSkuCatalog): EncoderFormModel => {
   const base: EncoderFormModel = {
     event: 'DAVAO',
     date: today,
@@ -268,7 +268,7 @@ const buildInitialForm = (pricing: SkuPricing = defaultSkuPricing): EncoderFormM
     collectedBy: 'Jake Roldan Laurente',
   };
 
-  return applyMemberPackageRules(base, base.memberType, base.packageType, pricing);
+  return applyMemberPackageRules(base, base.memberType, base.packageType, catalog);
 };
 
 type ManualOverrideKey =
@@ -307,15 +307,19 @@ function resetDerivedOverrides(overrides: ManualOverrides): ManualOverrides {
   };
 }
 
-const applyComputedFields = (input: EncoderFormModel, manualOverrides: ManualOverrides): EncoderFormModel => {
+const applyComputedFields = (
+  input: EncoderFormModel,
+  manualOverrides: ManualOverrides,
+  catalog: SkuCatalog = defaultSkuCatalog,
+): EncoderFormModel => {
   const quantity = Math.max(input.quantity, 0);
   const discount = Math.max(input.discount, 0);
   const oneTimeDiscount = manualOverrides.oneTimeDiscount ? input.oneTimeDiscount : Math.max(input.oneTimeDiscount, 0);
   const price = manualOverrides.price ? input.price : Math.max(input.originalPrice - discount, 0);
   const blisterCount = manualOverrides.blisterCount
     ? Math.max(input.blisterCount, 0)
-    : getDailySalesPackageBlisterCount(input.packageType, quantity, input.isToBlister);
-  const noOfBottles = getDailySalesPackageBottleCount(input.packageType, quantity);
+    : getDailySalesPackageBlisterCount(input.packageType, quantity, input.isToBlister, catalog);
+  const noOfBottles = getDailySalesPackageBottleCount(input.packageType, quantity, catalog);
   const sales = manualOverrides.sales ? input.sales : Math.max(price * quantity - oneTimeDiscount, 0);
   const released = manualOverrides.released ? input.released : noOfBottles;
   const releasedBlpk = manualOverrides.releasedBlpk ? input.releasedBlpk : blisterCount;
@@ -363,9 +367,10 @@ export function EncoderTab() {
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [paymentModeTwoError, setPaymentModeTwoError] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const isBundledPackage = hasBundledPackageBlisters(form.packageType);
   const isZeroDiscountPackage = form.packageType.startsWith('OLD_');
-  const { pricing } = useSkuPricing();
+  const { catalog } = useSkuCatalog();
+  const isBundledPackage = hasBundledPackageBlisters(form.packageType, catalog);
+  const packageOptions = getEncoderPackageOptions(catalog, form.packageType);
   // SKU Management can set discounts that aren't in the preset list; show them instead of a blank select.
   const discountSelectOptions = encoderDiscountOptions.some((option) => option.value === form.discount)
     ? encoderDiscountOptions
@@ -377,7 +382,7 @@ export function EncoderTab() {
   const secondaryTypeIsReadOnly = secondaryPaymentTypeOptions.length === 1 && secondaryPaymentTypeOptions[0].value === 'N/A';
 
   const resetForm = () => {
-    setForm(applyComputedFields(buildInitialForm(pricing), initialManualOverrides));
+    setForm(applyComputedFields(buildInitialForm(catalog), initialManualOverrides, catalog));
     setManualOverrides(initialManualOverrides);
     setIsPofManuallyEdited(false);
     setUserSearchResults([]);
@@ -393,7 +398,8 @@ export function EncoderTab() {
         const nextPofNumber = await fetchNextPofNumber(today);
 
         if (!isCancelled) {
-          setForm((prev) => applyComputedFields({ ...prev, pofNumber: nextPofNumber }, initialManualOverrides));
+          // POF number doesn't feed any computed field, so no recompute (and no stale catalog) here.
+          setForm((prev) => ({ ...prev, pofNumber: nextPofNumber }));
         }
       } catch {
         // Keep the date-based fallback if next POF lookup fails.
@@ -408,16 +414,17 @@ export function EncoderTab() {
   }, []);
 
   // Re-price the current form once SKU Management prices arrive (initial render used code defaults).
-  const [formPricing, setFormPricing] = useState(pricing);
-  if (formPricing !== pricing) {
-    setFormPricing(pricing);
+  const [formPricing, setFormPricing] = useState(catalog);
+  if (formPricing !== catalog) {
+    setFormPricing(catalog);
     setForm((prev) =>
       applyComputedFields(
         {
-          ...applyMemberPackageRules(prev, prev.memberType, prev.packageType, pricing),
+          ...applyMemberPackageRules(prev, prev.memberType, prev.packageType, catalog),
           isToBlister: prev.isToBlister,
         },
         manualOverrides,
+        catalog,
       ),
     );
   }
@@ -470,13 +477,13 @@ export function EncoderTab() {
   }, [form.username]);
 
   const updateField = <K extends keyof EncoderFormModel>(key: K, value: EncoderFormModel[K]) => {
-    setForm((prev) => applyComputedFields({ ...prev, [key]: value }, manualOverrides));
+    setForm((prev) => applyComputedFields({ ...prev, [key]: value }, manualOverrides, catalog));
   };
 
   const onDateChange = (value: string) => {
     setForm((prev) => {
       const nextPof = isPofManuallyEdited ? prev.pofNumber : formatPofBaseFromDate(value);
-      return applyComputedFields({ ...prev, date: value, pofNumber: nextPof }, manualOverrides);
+      return applyComputedFields({ ...prev, date: value, pofNumber: nextPof }, manualOverrides, catalog);
     });
 
     if (!isPofManuallyEdited) {
@@ -489,7 +496,7 @@ export function EncoderTab() {
               return prev;
             }
 
-            return applyComputedFields({ ...prev, pofNumber: nextPofNumber }, manualOverrides);
+            return applyComputedFields({ ...prev, pofNumber: nextPofNumber }, manualOverrides, catalog);
           });
         })
         .catch(() => {
@@ -523,7 +530,7 @@ export function EncoderTab() {
       setManualOverrides(nextOverrides);
     }
 
-    setForm((prev) => applyComputedFields({ ...prev, [key]: numericValue }, nextOverrides));
+    setForm((prev) => applyComputedFields({ ...prev, [key]: numericValue }, nextOverrides, catalog));
   };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -585,7 +592,7 @@ export function EncoderTab() {
       setIsSavedOpen(true);
       resetForm();
       if (nextPofNumber) {
-        setForm((prev) => applyComputedFields({ ...prev, pofNumber: nextPofNumber }, initialManualOverrides));
+        setForm((prev) => applyComputedFields({ ...prev, pofNumber: nextPofNumber }, initialManualOverrides, catalog));
       }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Failed to save daily sales entry.');
@@ -600,14 +607,14 @@ export function EncoderTab() {
   const onMemberTypeChange = (value: EncoderMemberTypeOption) => {
     const nextOverrides = resetDerivedOverrides(manualOverrides);
     setManualOverrides(nextOverrides);
-    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, value, prev.packageType, pricing), nextOverrides));
+    setForm((prev) => applyComputedFields(applyMemberPackageRules(prev, value, prev.packageType, catalog), nextOverrides, catalog));
   };
 
   const onPackageTypeChange = (value: EncoderPackageTypeOption) => {
     const nextOverrides = resetDerivedOverrides(manualOverrides);
     setManualOverrides(nextOverrides);
     setForm((prev) =>
-      applyComputedFields(applyMemberPackageRules(prev, prev.memberType, value, pricing), nextOverrides),
+      applyComputedFields(applyMemberPackageRules(prev, prev.memberType, value, catalog), nextOverrides, catalog),
     );
   };
 
@@ -633,7 +640,7 @@ export function EncoderTab() {
           paymentModeTwo: 'N/A',
           paymentTypeTwo: 'N/A',
           referenceNoTwo: 'N/A',
-        }, manualOverrides);
+        }, manualOverrides, catalog);
       }
 
       return applyComputedFields({
@@ -642,7 +649,7 @@ export function EncoderTab() {
         paymentType: nextPaymentType,
         referenceNo: nextReferenceNo,
         salesTwo: nextSalesTwo,
-      }, manualOverrides);
+      }, manualOverrides, catalog);
     });
   };
 
@@ -655,7 +662,7 @@ export function EncoderTab() {
           paymentModeTwo: 'N/A',
           paymentTypeTwo: 'N/A',
           referenceNoTwo: 'N/A',
-        }, manualOverrides)
+        }, manualOverrides, catalog)
       );
       return;
     }
@@ -671,7 +678,7 @@ export function EncoderTab() {
         paymentModeTwo: value,
         paymentTypeTwo: nextPaymentTypeTwo,
         referenceNoTwo: nextReferenceNoTwo,
-      }, manualOverrides)
+      }, manualOverrides, catalog)
     );
   };
 
@@ -684,6 +691,7 @@ export function EncoderTab() {
           bagQuantity: value === 'N/A' ? 0 : prev.bagQuantity,
         },
         manualOverrides,
+        catalog,
       ),
     );
   };
@@ -697,6 +705,7 @@ export function EncoderTab() {
           marketingQuantity: value === 'N/A' ? 0 : prev.marketingQuantity,
         },
         manualOverrides,
+        catalog,
       ),
     );
   };
@@ -833,7 +842,7 @@ export function EncoderTab() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {encoderPackageOptions.map((option) => (
+                    {packageOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>

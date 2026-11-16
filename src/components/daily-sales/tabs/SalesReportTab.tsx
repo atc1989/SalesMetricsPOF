@@ -6,12 +6,12 @@ import { Card } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Modal } from '@/components/ui/Modal';
 import {
-  defaultSkuPricing,
+  defaultSkuCatalog,
   getDailySalesNetPrice,
   getDailySalesPackagePrice,
-  type SkuPricing,
+  type SkuCatalog,
 } from '@/lib/dailySalesPackages';
-import { useSkuPricing } from '@/lib/useSkuPricing';
+import { useSkuCatalog } from '@/lib/useSkuPricing';
 import { openSalesReportPrintWindow } from '@/lib/salesReportPrint';
 
 type PackageRow = {
@@ -147,7 +147,7 @@ const cashDenominations: Array<{ label: string; id: CashFieldId; spanId: string;
 
 const reportDateToday = new Date().toISOString().slice(0, 10);
 
-const buildDefaultSnapshot = (pricing: SkuPricing): SnapshotData => ({
+const buildDefaultSnapshot = (pricing: SkuCatalog): SnapshotData => ({
   packageRows: [
     { label: 'Mobile Stockist', qty: 0, price: 250000 },
     { label: 'Platinum', qty: 0, price: getDailySalesPackagePrice('PLATINUM', pricing) },
@@ -380,9 +380,9 @@ function PaymentTable({ id, title, rows }: { id: string; title: string; rows: Am
 export function SalesReportTab() {
   const [transDateDailySales, setTransDateDailySales] = useState(reportDateToday);
   const [selectedDate, setSelectedDate] = useState(reportDateToday);
-  const { pricing } = useSkuPricing();
+  const { catalog: pricing } = useSkuCatalog();
   const defaultSnapshot = useMemo(() => buildDefaultSnapshot(pricing), [pricing]);
-  const [snapshot, setSnapshot] = useState<SnapshotData>(() => buildDefaultSnapshot(defaultSkuPricing));
+  const [snapshot, setSnapshot] = useState<SnapshotData>(() => buildDefaultSnapshot(defaultSkuCatalog));
   const [cashPieces, setCashPieces] = useState<Record<CashFieldId, number>>(defaultCashPieces);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isActionNoticeOpen, setIsActionNoticeOpen] = useState(false);

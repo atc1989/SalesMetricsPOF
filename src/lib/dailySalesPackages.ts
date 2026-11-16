@@ -1,4 +1,5 @@
 import type {
+  BuiltinPackageType,
   EncoderBlisterOption,
   EncoderMemberTypeOption,
   EncoderPackageTypeOption,
@@ -12,8 +13,9 @@ type DailySalesPackageDefinition = {
   defaultIsToBlister: EncoderBlisterOption;
 };
 
+// Built-in SKUs: seed values and fallback when public.sku_prices is unavailable.
 export const dailySalesPackageCatalog: Record<
-  EncoderPackageTypeOption,
+  BuiltinPackageType,
   DailySalesPackageDefinition
 > = {
   SILVER: {
@@ -165,18 +167,9 @@ export const dailySalesPackageCatalog: Record<
   },
 };
 
-export const encoderPackageOptions = (
-  Object.entries(dailySalesPackageCatalog) as Array<
-    [EncoderPackageTypeOption, DailySalesPackageDefinition]
-  >
-).map(([value, config]) => ({
-  value,
-  label: config.label,
-}));
-
 export const dailySalesDiscountMatrix: Record<
   EncoderMemberTypeOption,
-  Record<EncoderPackageTypeOption, number>
+  Record<BuiltinPackageType, number>
 > = {
   DISTRIBUTOR: {
     SILVER: 0,
@@ -295,10 +288,7 @@ export const dailySalesDiscountMatrix: Record<
   },
 };
 
-export type SkuPricing = {
-  prices: Record<EncoderPackageTypeOption, number>;
-  discounts: Record<EncoderMemberTypeOption, Record<EncoderPackageTypeOption, number>>;
-};
+const memberTypes = Object.keys(dailySalesDiscountMatrix) as EncoderMemberTypeOption[];
 
 // DB column per editable member tier in public.sku_prices; NON-MEMBER is always 0.
 export const skuDiscountColumns = {
@@ -310,69 +300,190 @@ export const skuDiscountColumns = {
 
 export type SkuDiscountMemberType = keyof typeof skuDiscountColumns;
 
+export const skuCategories = ['package', 'retail', 'cd', 'protocol', 'trial'] as const;
+
+export type SkuProduct = {
+  type: EncoderPackageTypeOption;
+  label: string;
+  category: string;
+  price: number;
+  bottleCount: number;
+  bundledBlisterCount: number;
+  defaultIsToBlister: EncoderBlisterOption;
+  discounts: Record<EncoderMemberTypeOption, number>;
+  isActive: boolean;
+  isBuiltin: boolean;
+  sortOrder: number;
+};
+
+export type SkuCatalog = {
+  products: SkuProduct[];
+  byType: Record<string, SkuProduct>;
+};
+
+// Row shape of public.sku_prices; catalog columns are optional so older rows still parse.
 export type SkuPriceRow = {
   package_type: string;
   original_price: number | string;
+  label?: string | null;
+  category?: string | null;
+  bottle_count?: number | string | null;
+  bundled_blister_count?: number | string | null;
+  default_is_to_blister?: boolean | null;
+  sort_order?: number | string | null;
+  is_active?: boolean | null;
+  is_builtin?: boolean | null;
 } & Record<(typeof skuDiscountColumns)[SkuDiscountMemberType], number | string>;
 
-export const defaultSkuPricing: SkuPricing = {
-  prices: Object.fromEntries(
-    Object.entries(dailySalesPackageCatalog).map(([type, config]) => [type, config.originalPrice]),
-  ) as SkuPricing['prices'],
-  discounts: dailySalesDiscountMatrix,
+function builtinCategory(type: BuiltinPackageType) {
+  if (type.startsWith('CD_')) return 'cd';
+  if (type.includes('RETAIL') || type === 'BLISTER') return 'retail';
+  return 'package';
+}
+
+function buildCatalog(products: SkuProduct[]): SkuCatalog {
+  const sorted = [...products].sort(
+    (a, b) => a.sortOrder - b.sortOrder || a.type.localeCompare(b.type),
+  );
+  return { products: sorted, byType: Object.fromEntries(sorted.map((p) => [p.type, p])) };
+}
+
+export const defaultSkuCatalog: SkuCatalog = buildCatalog(
+  (Object.entries(dailySalesPackageCatalog) as Array<[BuiltinPackageType, DailySalesPackageDefinition]>).map(
+    ([type, config], index) => ({
+      type,
+      label: config.label,
+      category: builtinCategory(type),
+      price: config.originalPrice,
+      bottleCount: config.bottleCount,
+      bundledBlisterCount: config.bundledBlisterCount,
+      defaultIsToBlister: config.defaultIsToBlister,
+      discounts: Object.fromEntries(
+        memberTypes.map((member) => [member, dailySalesDiscountMatrix[member][type]]),
+      ) as SkuProduct['discounts'],
+      isActive: true,
+      isBuiltin: true,
+      sortOrder: (index + 1) * 10,
+    }),
+  ),
+);
+
+const skuIdPattern = /^[A-Z0-9_]+$/;
+
+export function isValidSkuId(value: string) {
+  return skuIdPattern.test(value);
+}
+
+// e.g. "trial-blister" becomes "TRIAL_BLISTER"
+export function toSkuId(value: string) {
+  return value.trim().toUpperCase().replace(/[\s-]+/g, '_');
+}
+
+const toNumber = (value: unknown, fallback: number) => {
+  if (value === null || value === undefined || value === '') return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-export function isEncoderPackageType(value: string): value is EncoderPackageTypeOption {
-  return Object.hasOwn(dailySalesPackageCatalog, value);
-}
-
-// DB rows override the code defaults; package types without a row keep the defaults.
-export function mergeSkuPriceRows(rows: SkuPriceRow[]): SkuPricing {
-  const prices = { ...defaultSkuPricing.prices };
-  const discounts = Object.fromEntries(
-    Object.entries(dailySalesDiscountMatrix).map(([member, byPackage]) => [member, { ...byPackage }]),
-  ) as SkuPricing['discounts'];
+// DB rows override or add to the code defaults; built-ins without a row keep the defaults.
+export function buildSkuCatalog(rows: SkuPriceRow[]): SkuCatalog {
+  const byType: Record<string, SkuProduct> = Object.fromEntries(
+    defaultSkuCatalog.products.map((product) => [
+      product.type,
+      { ...product, discounts: { ...product.discounts } },
+    ]),
+  );
 
   for (const row of rows) {
-    if (!isEncoderPackageType(row.package_type)) continue;
-    prices[row.package_type] = Number(row.original_price);
+    if (!isValidSkuId(row.package_type)) continue;
+    const base = byType[row.package_type];
+    const discounts = { ...(base?.discounts ?? {}) } as SkuProduct['discounts'];
     for (const [member, column] of Object.entries(skuDiscountColumns)) {
-      discounts[member as SkuDiscountMemberType][row.package_type] = Number(row[column]);
+      discounts[member as SkuDiscountMemberType] = toNumber(row[column], 0);
     }
+    discounts['NON-MEMBER'] = 0;
+
+    byType[row.package_type] = {
+      type: row.package_type,
+      label: row.label?.trim() || base?.label || row.package_type,
+      category: row.category?.trim() || base?.category || 'package',
+      price: toNumber(row.original_price, base?.price ?? 0),
+      bottleCount: toNumber(row.bottle_count, base?.bottleCount ?? 0),
+      bundledBlisterCount: toNumber(row.bundled_blister_count, base?.bundledBlisterCount ?? 0),
+      defaultIsToBlister:
+        row.default_is_to_blister == null
+          ? (base?.defaultIsToBlister ?? '0')
+          : row.default_is_to_blister
+            ? '1'
+            : '0',
+      discounts,
+      isActive: row.is_active ?? true,
+      isBuiltin: base?.isBuiltin ?? false,
+      sortOrder: toNumber(row.sort_order, base?.sortOrder ?? 1000),
+    };
   }
 
-  return { prices, discounts };
+  return buildCatalog(Object.values(byType));
 }
 
-export function getDailySalesPackageConfig(packageType: EncoderPackageTypeOption) {
-  return dailySalesPackageCatalog[packageType];
+// Encoder dropdown: active products, plus the current selection if it was archived.
+export function getEncoderPackageOptions(catalog: SkuCatalog = defaultSkuCatalog, current?: string) {
+  return catalog.products
+    .filter((product) => product.isActive || product.type === current)
+    .map((product) => ({ value: product.type, label: product.label }));
+}
+
+const unknownProduct = (type: string): SkuProduct => ({
+  type,
+  label: type,
+  category: 'package',
+  price: 0,
+  bottleCount: 0,
+  bundledBlisterCount: 0,
+  defaultIsToBlister: '0',
+  discounts: Object.fromEntries(memberTypes.map((member) => [member, 0])) as SkuProduct['discounts'],
+  isActive: false,
+  isBuiltin: false,
+  sortOrder: Number.MAX_SAFE_INTEGER,
+});
+
+export function getDailySalesPackageConfig(
+  packageType: EncoderPackageTypeOption,
+  catalog: SkuCatalog = defaultSkuCatalog,
+) {
+  return catalog.byType[packageType] ?? unknownProduct(packageType);
 }
 
 export function getDailySalesPackagePrice(
   packageType: EncoderPackageTypeOption,
-  pricing: SkuPricing = defaultSkuPricing,
+  catalog: SkuCatalog = defaultSkuCatalog,
 ) {
-  return pricing.prices[packageType];
+  return getDailySalesPackageConfig(packageType, catalog).price;
 }
 
 export function getDailySalesPackageBottleCount(
   packageType: EncoderPackageTypeOption,
   quantity: number,
+  catalog: SkuCatalog = defaultSkuCatalog,
 ) {
-  return Math.max(quantity, 0) * getDailySalesPackageConfig(packageType).bottleCount;
+  return Math.max(quantity, 0) * getDailySalesPackageConfig(packageType, catalog).bottleCount;
 }
 
-export function hasBundledPackageBlisters(packageType: EncoderPackageTypeOption) {
-  return getDailySalesPackageConfig(packageType).bundledBlisterCount > 0;
+export function hasBundledPackageBlisters(
+  packageType: EncoderPackageTypeOption,
+  catalog: SkuCatalog = defaultSkuCatalog,
+) {
+  return getDailySalesPackageConfig(packageType, catalog).bundledBlisterCount > 0;
 }
 
 export function getDailySalesPackageBlisterCount(
   packageType: EncoderPackageTypeOption,
   quantity: number,
   isToBlister: EncoderBlisterOption,
+  catalog: SkuCatalog = defaultSkuCatalog,
 ) {
   const normalizedQuantity = Math.max(quantity, 0);
-  const config = getDailySalesPackageConfig(packageType);
+  const config = getDailySalesPackageConfig(packageType, catalog);
 
   if (config.bundledBlisterCount > 0) {
     return normalizedQuantity * config.bundledBlisterCount;
@@ -384,26 +495,33 @@ export function getDailySalesPackageBlisterCount(
 export function getDailySalesDiscount(
   memberType: EncoderMemberTypeOption,
   packageType: EncoderPackageTypeOption,
-  pricing: SkuPricing = defaultSkuPricing,
+  catalog: SkuCatalog = defaultSkuCatalog,
 ) {
-  return pricing.discounts[memberType][packageType];
+  return getDailySalesPackageConfig(packageType, catalog).discounts[memberType] ?? 0;
 }
 
 export function getDailySalesNetPrice(
   memberType: EncoderMemberTypeOption,
   packageType: EncoderPackageTypeOption,
-  pricing: SkuPricing = defaultSkuPricing,
+  catalog: SkuCatalog = defaultSkuCatalog,
 ) {
   return Math.max(
-    getDailySalesPackagePrice(packageType, pricing) -
-      getDailySalesDiscount(memberType, packageType, pricing),
+    getDailySalesPackagePrice(packageType, catalog) -
+      getDailySalesDiscount(memberType, packageType, catalog),
     0,
   );
 }
 
+// Exact SKU IDs (built-in or added in SKU Management) win; legacy free-text labels fall back to keyword rules.
 export function normalizeDailySalesPackageType(
   value: string,
+  catalog: SkuCatalog = defaultSkuCatalog,
 ): EncoderPackageTypeOption | null {
+  const skuId = toSkuId(value);
+  if (catalog.byType[skuId]) {
+    return skuId;
+  }
+
   const normalized = value.trim().toUpperCase();
   const hasOldPackageMarker =
     /(^|[\s_-])OLD([\s_-]|$)/.test(normalized) || /^OLD(SILVER|GOLD|PLATINUM)/.test(normalized);

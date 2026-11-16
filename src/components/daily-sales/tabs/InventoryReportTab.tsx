@@ -13,9 +13,13 @@ import {
 import { Modal } from '@/components/ui/Modal';
 import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import {
+  defaultSkuCatalog,
+  getDailySalesPackageConfig,
   getDailySalesPackagePrice,
   normalizeDailySalesPackageType,
+  type SkuCatalog,
 } from '@/lib/dailySalesPackages';
+import { useSkuCatalog } from '@/lib/useSkuPricing';
 import { openPrintWindow } from '@/lib/print/openPrintWindow';
 
 type InventoryReportRow = {
@@ -364,20 +368,28 @@ const renderInventoryPrintHtml = (rows: InventoryReportRow[], dateRange: string)
 const mapApiRowToReportRow = (
   row: DailyInventoryApiRow,
   index: number,
+  catalog: SkuCatalog = defaultSkuCatalog,
 ): InventoryReportRow => {
   const upperPackageType = row.package_type.toUpperCase();
-  const normalizedPackageType = normalizeDailySalesPackageType(row.package_type);
+  const normalizedPackageType = normalizeDailySalesPackageType(row.package_type, catalog);
+  // SKUs added in SKU Management have no column of their own; count their stock in the SynBIOTIC+ columns.
+  const customProduct =
+    normalizedPackageType && catalog.byType[normalizedPackageType] && !catalog.byType[normalizedPackageType].isBuiltin
+      ? getDailySalesPackageConfig(normalizedPackageType, catalog)
+      : null;
   const isBlister =
     normalizedPackageType === 'BLISTER' ||
     normalizedPackageType === 'SILVER_RETAIL_BLISTER' ||
     normalizedPackageType === 'GOLD_RETAIL_BLISTER' ||
-    normalizedPackageType === 'PLATINUM_RETAIL_BLISTER';
+    normalizedPackageType === 'PLATINUM_RETAIL_BLISTER' ||
+    (customProduct?.bundledBlisterCount ?? 0) > 0;
   const isRetail =
     normalizedPackageType === 'RETAIL' ||
     normalizedPackageType === 'RETAIL_MM' ||
     normalizedPackageType === 'SILVER_RETAIL_BOTTLE' ||
     normalizedPackageType === 'GOLD_RETAIL_BOTTLE' ||
-    normalizedPackageType === 'PLATINUM_RETAIL_BOTTLE';
+    normalizedPackageType === 'PLATINUM_RETAIL_BOTTLE' ||
+    (customProduct?.bottleCount ?? 0) > 0;
   const upperBagType = (row.bag_type ?? '').toUpperCase();
   const upperMarketingTool = (row.marketing_tool ?? '').toUpperCase();
   // Stored sales is real cash (after member + voucher discounts), even when 0; list price only if missing.
@@ -385,7 +397,7 @@ const mapApiRowToReportRow = (
     row.sales != null
       ? 0
       : normalizedPackageType
-        ? getDailySalesPackagePrice(normalizedPackageType)
+        ? getDailySalesPackagePrice(normalizedPackageType, catalog)
         : 0;
   const totalQuantity = row.quantity ?? 0;
   const totalBottles = row.bottle_count ?? 0;
@@ -453,6 +465,7 @@ const formatDateDMYY = (value: string) => {
 };
 
 export function InventoryReportTab() {
+  const { catalog } = useSkuCatalog();
   const defaultInventoryDate = new Date().toISOString().slice(0, 10);
   const [pendingFromDate, setPendingFromDate] = useState('');
   const [pendingToDate, setPendingToDate] = useState('');
@@ -486,7 +499,7 @@ export function InventoryReportTab() {
         throw new Error(payload.message ?? 'Request failed');
       }
 
-      const mappedRows = (payload.rows ?? []).map((row, index) => mapApiRowToReportRow(row, index));
+      const mappedRows = (payload.rows ?? []).map((row, index) => mapApiRowToReportRow(row, index, catalog));
       setRows(mappedRows);
       setHasLoaded(true);
     } catch {

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
-import { normalizeDailySalesPackageType } from "@/lib/dailySalesPackages";
+import {
+  buildSkuCatalog,
+  defaultSkuCatalog,
+  normalizeDailySalesPackageType,
+  type SkuCatalog,
+  type SkuPriceRow,
+} from "@/lib/dailySalesPackages";
 
 export const dynamic = "force-dynamic";
 
@@ -71,9 +77,9 @@ function hasPaymentMode(value: string | null) {
   return normalized.length > 0 && normalized.toUpperCase() !== "N/A";
 }
 
-function normalizePackageType(value: string | null) {
+function normalizePackageType(value: string | null, catalog: SkuCatalog) {
   const rawValue = normalizeText(value, "UNKNOWN");
-  const normalized = normalizeDailySalesPackageType(rawValue);
+  const normalized = normalizeDailySalesPackageType(rawValue, catalog);
 
   switch (normalized) {
     case "SILVER_RETAIL_BOTTLE":
@@ -248,12 +254,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = getSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from("daily_sales")
-      .select(
-        "package_type, member_type, is_new_member, quantity, bottle_count, blister_count, released_count, released_blpk_count, sales, mode_of_payment, sales_two, mode_of_payment_two, sales_three, mode_of_payment_three",
-      )
-      .eq("trans_date", transDate);
+    const [{ data, error }, skuResult] = await Promise.all([
+      supabase
+        .from("daily_sales")
+        .select(
+          "package_type, member_type, is_new_member, quantity, bottle_count, blister_count, released_count, released_blpk_count, sales, mode_of_payment, sales_two, mode_of_payment_two, sales_three, mode_of_payment_three",
+        )
+        .eq("trans_date", transDate),
+      supabase.from("sku_prices").select("*"),
+    ]);
+    // SKUs added in SKU Management must resolve by exact ID (e.g. TRIAL_BLISTER is not BLISTER).
+    const catalog = skuResult.error ? defaultSkuCatalog : buildSkuCatalog((skuResult.data ?? []) as SkuPriceRow[]);
 
     if (error) {
       return NextResponse.json(
@@ -279,7 +290,7 @@ export async function GET(request: NextRequest) {
 
     for (const record of data ?? []) {
       const row = record as DailySalesRow;
-      const packageType = normalizePackageType(row.package_type);
+      const packageType = normalizePackageType(row.package_type, catalog);
       const memberType = normalizeMemberType(row.member_type);
       const isNewMember = toBoolean(row.is_new_member);
       const modeOfPayment = normalizeText(row.mode_of_payment, "UNKNOWN");
