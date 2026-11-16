@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Search } from "lucide-react";
+import { Pencil, Search } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -100,6 +100,48 @@ export function DashboardTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rows, setRows] = useState<RecentSale[]>([]);
+  // Inline remarks edit: changes only that sale line's remarks, nothing else on the POF.
+  const [editingRemarks, setEditingRemarks] = useState<{ id: string; value: string } | null>(null);
+  const [isSavingRemarks, setIsSavingRemarks] = useState(false);
+  const [remarksError, setRemarksError] = useState<string | null>(null);
+
+  const startEditRemarks = (row: RecentSale) => {
+    setRemarksError(null);
+    setEditingRemarks({ id: row.id, value: row.remarks ?? "" });
+  };
+
+  const saveRemarks = async () => {
+    if (!editingRemarks) return;
+    setIsSavingRemarks(true);
+    setRemarksError(null);
+
+    try {
+      const response = await fetch("/api/daily-sales/modify-remarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dailySalesId: editingRemarks.id, remarks: editingRemarks.value }),
+      });
+      const payload = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        row?: { remarks: string | null };
+      };
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message ?? "Failed to save remarks.");
+      }
+
+      const savedId = editingRemarks.id;
+      setRows((prev) =>
+        prev.map((row) => (row.id === savedId ? { ...row, remarks: payload.row?.remarks ?? "" } : row)),
+      );
+      setEditingRemarks(null);
+    } catch (error) {
+      setRemarksError(error instanceof Error ? error.message : "Failed to save remarks.");
+    } finally {
+      setIsSavingRemarks(false);
+    }
+  };
   const [totals, setTotals] = useState({
     totalSales: 0,
     totalBottles: 0,
@@ -443,7 +485,57 @@ export function DashboardTab() {
                         PHP {row.sales.toLocaleString()}
                       </TableCell>
                       <TableCell>{formatPaymentMode(row.paymentMode)}</TableCell>
-                      <TableCell className="max-w-64 whitespace-normal break-words text-sm">{row.remarks}</TableCell>
+                      <TableCell className="max-w-64 whitespace-normal break-words text-sm">
+                        {editingRemarks?.id === row.id ? (
+                          <div className="flex min-w-56 flex-col gap-1.5">
+                            <Input
+                              autoFocus
+                              aria-label={`Remarks for POF ${row.pofNumber}`}
+                              value={editingRemarks.value}
+                              maxLength={1000}
+                              disabled={isSavingRemarks}
+                              onChange={(event) =>
+                                setEditingRemarks({ id: row.id, value: event.target.value })
+                              }
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") void saveRemarks();
+                                if (event.key === "Escape") setEditingRemarks(null);
+                              }}
+                            />
+                            <div className="flex gap-1.5">
+                              <Button size="sm" onClick={() => void saveRemarks()} disabled={isSavingRemarks}>
+                                {isSavingRemarks ? "Saving..." : "Save"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingRemarks(null)}
+                                disabled={isSavingRemarks}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                            {remarksError ? (
+                              <span className="text-xs text-destructive">{remarksError}</span>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div className="flex items-start gap-1.5">
+                            <span className="flex-1">{row.remarks}</span>
+                            {/^\d+$/.test(row.id) ? (
+                              <button
+                                type="button"
+                                className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                aria-label={`Edit remarks for POF ${row.pofNumber}`}
+                                title="Edit remarks"
+                                onClick={() => startEditRemarks(row)}
+                              >
+                                <Pencil className="size-3.5" />
+                              </button>
+                            ) : null}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>{row.status}</TableCell>
                     </TableRow>
                   ))}
