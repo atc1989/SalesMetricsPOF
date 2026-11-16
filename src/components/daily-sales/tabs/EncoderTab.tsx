@@ -31,6 +31,7 @@ import {
   type SkuCatalog,
 } from '@/lib/dailySalesPackages';
 import { useSkuCatalog } from '@/lib/useSkuPricing';
+import { formatPaymentMode } from '@/lib/dailySalesDisplay';
 import type {
   EncoderBagTypeOption,
   EncoderBlisterOption,
@@ -1062,7 +1063,7 @@ export function EncoderTab() {
                   <SelectContent>
                     {primaryPaymentModes.map((mode) => (
                       <SelectItem key={mode} value={mode}>
-                        {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : mode}
+                        {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : formatPaymentMode(mode)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1110,7 +1111,7 @@ export function EncoderTab() {
                   <SelectContent>
                     {secondaryPaymentModes.map((mode) => (
                       <SelectItem key={`mode-two-${mode}`} value={mode}>
-                        {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : mode}
+                        {mode === 'AR(LEADERSUPPORT)' ? 'AR (LEADER SUPPORT)' : formatPaymentMode(mode)}
                       </SelectItem>
                     ))}
                   </SelectContent>

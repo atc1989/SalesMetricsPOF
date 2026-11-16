@@ -118,7 +118,7 @@ type CashFieldId =
   | 'cohCents';
 
 const paymentTypeTableIds: Array<{ id: string; title: string; label: string }> = [
-  { id: 'tblEwallet', title: 'Ewallet', label: 'E-Wallet' },
+  { id: 'tblEwallet', title: 'BPI', label: 'BPI' },
   { id: 'tblBank', title: 'Bank', label: 'Bank Transfer - Maya Bank' },
   { id: 'tblMayaIgi', title: 'Maya(IGI)', label: 'Maya (IGI)' },
   { id: 'tblMayaAtc', title: 'Maya(ATC)', label: 'Maya (ATC)' },
@@ -173,7 +173,7 @@ const buildDefaultSnapshot = (pricing: SkuCatalog): SnapshotData => ({
   cdRetailRows: [{ label: 'SynBIOTIC+ (Bottle)', qty: 0, price: 2150 }],
   paymentBreakdownRows: [
     { label: 'Cash on hand', amount: 0 },
-    { label: 'E-Wallet', amount: 0 },
+    { label: 'BPI', amount: 0 },
     { label: 'Bank Transfer - Maya Bank', amount: 0 },
     { label: 'Maya (IGI)', amount: 0 },
     { label: 'Maya (ATC)', amount: 0 },
@@ -208,7 +208,7 @@ const defaultCashPieces: Record<CashFieldId, number> = {
 };
 
 const paymentLabelToModes: Record<string, string[]> = {
-  'E-Wallet': ['EWALLET', 'E-WALLET'],
+  BPI: ['EWALLET', 'E-WALLET'], // shown as BPI; stored as EWALLET
   'Bank Transfer - Maya Bank': ['BANK'],
   'Maya (IGI)': ['MAYA(IGI)'],
   'Maya (ATC)': ['MAYA(ATC)'],
@@ -222,7 +222,7 @@ const paymentLabelToModes: Record<string, string[]> = {
 };
 
 const paymentTitleToModes: Record<string, string[]> = {
-  EWALLET: ['EWALLET', 'E-WALLET'],
+  BPI: ['EWALLET', 'E-WALLET'],
   BANK: ['BANK'],
   'MAYA(IGI)': ['MAYA(IGI)'],
   'MAYA(ATC)': ['MAYA(ATC)'],

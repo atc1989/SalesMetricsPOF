@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/Modal';
-import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
+import { formatMemberName, formatPaymentMode, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import { buildPofPrintHtml } from '@/lib/print/buildPofPrintHtml';
 import { openPrintWindow } from '@/lib/print/openPrintWindow';
 import type { RecentSale } from '@/types/dailySales';
@@ -359,6 +359,7 @@ export function ReportsTab() {
         row.memberName,
         row.sales.toString(),
         row.paymentMode,
+        row.paymentModes.map(formatPaymentMode).join(' '),
         row.bottles.toString(),
         row.blisters.toString(),
       ]
@@ -689,7 +690,7 @@ export function ReportsTab() {
           row.pofNumber,
           row.ggTransNo,
           row.sales,
-          row.paymentMode,
+          row.paymentModes.map(formatPaymentMode).join(', ') || 'CASH',
           row.bottles,
           row.blisters,
         ]
@@ -805,7 +806,7 @@ export function ReportsTab() {
                         checked={selectedPaymentMethods.includes(method)}
                         onChange={() => onTogglePaymentMethod(method)}
                       />
-                      <span>{method}</span>
+                      <span>{formatPaymentMode(method)}</span>
                     </label>
                   ))}
                 </div>
@@ -854,7 +855,7 @@ export function ReportsTab() {
                     <td className="px-3 py-2">{row.pofNumber}</td>
                     <td className="px-3 py-2">{row.ggTransNo}</td>
                     <td className="px-3 py-2">{formatPeso(row.sales)}</td>
-                    <td className="px-3 py-2">{row.paymentMode}</td>
+                    <td className="px-3 py-2">{row.paymentModes.map(formatPaymentMode).join(", ") || "CASH"}</td>
                     <td className="px-3 py-2">{row.bottles}</td>
                     <td className="px-3 py-2">{row.blisters}</td>
                     <td className="px-3 py-2">

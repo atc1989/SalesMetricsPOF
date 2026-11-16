@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPaymentMode } from "@/lib/dailySalesDisplay";
+
 type DailySalesPrintDetail = {
   pof_number: string;
   member_name: string;
@@ -129,7 +131,7 @@ function renderPaymentRows(rows: DailySalesPrintDetail[]) {
 
   return Array.from(paymentMap.values())
     .map((entry) => {
-      const type = entry.mode;
+      const type = formatPaymentMode(entry.mode);
 
       return `
         <tr>

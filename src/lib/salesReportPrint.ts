@@ -105,7 +105,7 @@ function tableIdForTitle(title: string) {
       return 'tblNewAccounts';
     case 'Upgrades':
       return 'tblUpgrades';
-    case 'Ewallet':
+    case 'BPI':
       return 'tblEwallet';
     case 'Bank':
       return 'tblBank';

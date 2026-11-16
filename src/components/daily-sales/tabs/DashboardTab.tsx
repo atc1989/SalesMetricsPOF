@@ -42,7 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatMemberName, formatPofNumber, formatZeroOne } from "@/lib/dailySalesDisplay";
+import { formatMemberName, formatPaymentMode, formatPofNumber, formatZeroOne } from "@/lib/dailySalesDisplay";
 import type { PaymentMode, RecentSale } from "@/types/dailySales";
 
 const paymentModes: PaymentMode[] = [
@@ -200,7 +200,7 @@ export function DashboardTab() {
           !row.pofNumber.toLowerCase().includes(search) &&
           !row.memberName.toLowerCase().includes(search) &&
           !row.ggTransNo.toLowerCase().includes(search) &&
-          !row.paymentMode.toLowerCase().includes(search) &&
+          !formatPaymentMode(row.paymentMode).toLowerCase().includes(search) &&
           !(row.remarks ?? "").toLowerCase().includes(search)
         ) {
           return false;
@@ -254,7 +254,7 @@ export function DashboardTab() {
           row.bottles,
           row.blisters,
           row.sales,
-          row.paymentMode,
+          formatPaymentMode(row.paymentMode),
           row.remarks ?? "",
           row.status,
         ]
@@ -325,7 +325,7 @@ export function DashboardTab() {
                   <SelectContent>
                     {paymentModes.map((mode) => (
                       <SelectItem key={mode} value={mode}>
-                        {mode}
+                        {formatPaymentMode(mode)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -442,7 +442,7 @@ export function DashboardTab() {
                       <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums">
                         PHP {row.sales.toLocaleString()}
                       </TableCell>
-                      <TableCell>{row.paymentMode}</TableCell>
+                      <TableCell>{formatPaymentMode(row.paymentMode)}</TableCell>
                       <TableCell className="max-w-64 whitespace-normal break-words text-sm">{row.remarks}</TableCell>
                       <TableCell>{row.status}</TableCell>
                     </TableRow>

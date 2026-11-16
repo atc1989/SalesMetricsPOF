@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
+import { formatPaymentMode } from '@/lib/dailySalesDisplay';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Card } from '@/components/ui/card';
@@ -271,7 +272,7 @@ export function BalanceReportTab() {
   }, [filteredRows]);
 
   const salesModeOptions = useMemo(
-    () => SALES_PAYMENT_MODES.map((m) => ({ value: m, label: m })),
+    () => SALES_PAYMENT_MODES.map((m) => ({ value: m, label: formatPaymentMode(m) })),
     []
   );
 

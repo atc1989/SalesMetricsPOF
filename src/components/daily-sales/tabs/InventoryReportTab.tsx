@@ -11,7 +11,7 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { Modal } from '@/components/ui/Modal';
-import { formatMemberName, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
+import { formatMemberName, formatPaymentMode, formatPofNumber, formatZeroOne } from '@/lib/dailySalesDisplay';
 import {
   defaultSkuCatalog,
   getDailySalesPackageConfig,
@@ -97,7 +97,7 @@ const formatAmount = (value: number) => `PHP ${value.toLocaleString('en-US', { m
 
 const formatModeOfPayment = (...values: Array<string | null | undefined>) => {
   const uniqueModes = values
-    .map((value) => value?.trim())
+    .map((value) => formatPaymentMode(value))
     .filter((value): value is string => Boolean(value && value.length > 0 && value.toUpperCase() !== 'N/A'))
     .filter((value, index, list) => list.indexOf(value) === index);
 

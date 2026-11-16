@@ -13,3 +13,9 @@ export function formatZeroOne(value: string | null | undefined) {
 export function formatMemberName(value: string | null | undefined) {
   return value?.trim() ?? "";
 }
+
+// Display name for a saved mode_of_payment. EWALLET is shown as BPI; the stored value stays EWALLET.
+export function formatPaymentMode(value: string | null | undefined) {
+  const mode = value?.trim() ?? "";
+  return /^E-?WALLET$/i.test(mode) ? "BPI" : mode;
+}
